@@ -3,7 +3,7 @@ import { getMessaging } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCME2CYaIso7PngM2wihV4LZGB_JzZoKjc",
-  authDomain: "silema.firebaseapp.com",
+  authDomain: "demo.365equipo.com",
   projectId: "silema",
   storageBucket: "silema.appspot.com",
   messagingSenderId: "565898129046",

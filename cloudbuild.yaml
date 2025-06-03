@@ -7,7 +7,7 @@ steps:
 
   - name: "node:22"
     entrypoint: "npm"
-    args: ["run", "build:prod"]
+    args: ["run", "build"]
 
   - name: "node:22"
     entrypoint: "bash"

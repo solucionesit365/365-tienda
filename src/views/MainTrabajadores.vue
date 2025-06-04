@@ -5,6 +5,7 @@
       , {{ currentUser.idSql }}
     </span>
   </h3>
+
   <span style="color: #243746">Bienvenido al portal 365</span>
 
   <!-- Diseño Home para escritorio y tabletas -->

@@ -89,7 +89,7 @@ function entrarConEmail() {
   letter-spacing: 0.05rem;
   padding: 0.75rem 1rem;
   color: white;
-  background: #291c63;
+  background: #e66c5a;
 }
 
 .btn-google {

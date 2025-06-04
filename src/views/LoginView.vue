@@ -27,11 +27,6 @@
             </div>
           </form>
 
-          <div class="form-check mb-3 text-center text-muted">
-            <router-link to="/restablecer" class="text-dark text-decoration-none">
-              ¿Olvidaste tu contraseña?
-            </router-link>
-          </div>
           <div class="d-grid">
             <button class="btn btn-login text-uppercase fw-bold" @click="entrarConEmail()">
               Entrar
@@ -39,7 +34,7 @@
           </div>
 
           <!-- Nuevo botón de Microsoft -->
-          <!-- <div class="d-grid mt-2">
+          <div class="d-grid mt-2">
             <button
               class="btn btn-microsoft text-uppercase fw-bold d-flex align-items-center justify-content-center"
               @click="accederConMicrosoft()"
@@ -51,12 +46,6 @@
               />
               <span>Acceder con Microsoft</span>
             </button>
-          </div> -->
-
-          <div class="d-grid mt-2">
-            <MDBBtn @click="goTo('/registro')" color="warning" class="fw-bold" size="lg"
-              >Date de alta</MDBBtn
-            >
           </div>
 
           <div class="d-grid mt-2">
@@ -77,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { accederConEmail } from "@/components/firebase/authentication";
+import { accederConEmail, accederConMicrosoft } from "@/components/firebase/authentication";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 
@@ -94,4 +83,41 @@ function entrarConEmail() {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.btn-login {
+  font-size: 0.9rem;
+  letter-spacing: 0.05rem;
+  padding: 0.75rem 1rem;
+  color: white;
+  background: #291c63;
+}
+
+.btn-google {
+  color: white !important;
+  background: linear-gradient(
+    270deg,
+    rgb(216, 42, 36) 0%,
+    rgb(223, 67, 61) 0%,
+    rgb(236, 98, 74) 34%
+  );
+}
+
+.btn-microsoft {
+  font-size: 0.9rem;
+  letter-spacing: 0.05rem;
+  padding: 0.75rem 1rem;
+  color: #000;
+  background-color: #fff;
+  border: 1px solid #dcdcdc;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #f3f3f3;
+  }
+
+  .microsoft-logo {
+    width: 20px;
+    height: 20px;
+  }
+}
+</style>

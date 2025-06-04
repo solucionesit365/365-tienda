@@ -1,13 +1,6 @@
-<<<<<<< Updated upstream
-<script setup lang="ts">
-import { RouterView } from "vue-router";
-// import HelloWorld from "./components/HelloWorld.vue";
-</script>
-
-=======
->>>>>>> Stashed changes
 <template>
   <div class="container">
+    <BackButton />
     <RouterView />
   </div>
 </template>

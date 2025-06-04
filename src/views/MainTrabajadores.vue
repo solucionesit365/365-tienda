@@ -18,36 +18,6 @@
         icono="fas fa-clock"
         link="/cuadrantes-tienda"
       />
-      <ItemMenuDesktop
-        v-if="hasPermission('Fichar')"
-        color="#16d39a"
-        titulo="Mis fichajes"
-        icono="fas fa-user-clock"
-        link="/fichajes"
-      />
-
-      <ItemMenuDesktop
-        v-if="hasPermission('VerNomina')"
-        color="#ffa87d"
-        titulo="Nominas"
-        icono="fas fa-file-invoice-dollar"
-        link="/nominas-personal"
-      />
-      <ItemMenuDesktop
-        v-if="!hasPermission('ModoTienda')"
-        color="#14babd"
-        titulo="Mis vacaciones"
-        icono="fas fa-map-marked-alt"
-        link="/mis-vacaciones"
-      />
-
-      <!-- <ItemMenuDesktop
-        v-if="accesoFichajes"
-        color="#3c1493"
-        titulo="Mis Dias Personales"
-        icono="fas fa-suitcase-rolling"
-        link="/MisdiasPersonales"
-      /> -->
 
       <ItemMenuDesktop
         color="#eb7fed"
@@ -56,28 +26,6 @@
         link="/anuncios"
       />
 
-      <!-- <ItemMenuDesktop
-        v-if="!hasPermission('ModoTienda')"
-        color="#00B8D4"
-        titulo=" Mis Archivos"
-        icono="fas fa-archive"
-        link="/archivoDigital"
-      />
-
-      <ItemMenuDesktop
-        v-if="!hasPermission('ModoTienda')"
-        color="#2722b9"
-        titulo="Mis evaluaciones"
-        icono="fas fa-file-alt"
-        link="/misEvaluaciones"
-      /> -->
-      <ItemMenuDesktop
-        v-if="llevoEquipo"
-        color="#ff7588"
-        titulo="Mi equipo"
-        icono="fas fa-users"
-        link="/gestion-tienda"
-      />
       <ItemMenuDesktop
         v-if="hasPermission('verMiTienda') || llevoEquipo"
         color="#ab6634"
@@ -87,25 +35,10 @@
       />
 
       <ItemMenuDesktop
-        v-if="hasPermission('ProximosCumpleaños')"
-        color="#673AB7"
-        titulo="Próximos Cumpleaños"
-        icono="fas fa-cake-candles"
-        link="/proximosCumples"
-      />
-
-      <ItemMenuDesktop
         color="#648fe0"
         titulo="Necesito ayuda"
         icono="fas fa-question-circle"
         link="/chat"
-      />
-      <ItemMenuDesktop
-        v-if="hasPermission('SANIDAD_ADMIN')"
-        color="#ab6634"
-        titulo="Listado sanidad"
-        icono="fas fa-suitcase-medical"
-        link="/listadoSanidad"
       />
     </div>
   </div>
@@ -121,36 +54,6 @@
         icono="fas fa-clock"
         link="/cuadrantes-tienda"
       />
-      <ItemMenuMobile
-        v-if="hasPermission('Fichar')"
-        color="#16d39a"
-        titulo="Mis fichajes"
-        icono="fas fa-user-clock"
-        link="/fichajes"
-      />
-
-      <ItemMenuMobile
-        v-if="hasPermission('verNomina')"
-        color="#ffa87d"
-        titulo="Nominas"
-        icono="fas fa-file-invoice-dollar"
-        link="/nominas-personal"
-      />
-      <ItemMenuMobile
-        v-if="!hasPermission('ModoTienda')"
-        color="#14babd"
-        titulo="Mis vacaciones"
-        icono="fas fa-map-marked-alt"
-        link="/mis-vacaciones"
-      />
-
-      <!-- <ItemMenuMobile
-        v-if="accesoFichajes"
-        color="#3c1493"
-        titulo="Dia Personal"
-        icono="fas fa-suitcase-rolling"
-        link="/MisdiasPersonales"
-      /> -->
 
       <ItemMenuMobile
         color="#eb7fed"
@@ -159,28 +62,6 @@
         link="/anuncios"
       />
 
-      <!-- <ItemMenuMobile
-        v-if="!hasPermission('ModoTienda')"
-        color="#2722b9"
-        titulo="Mis evaluaciones"
-        icono="fas fa-file-alt"
-        link="/misEvaluaciones"
-      />
-
-      <ItemMenuMobile
-        v-if="!hasPermission('ModoTienda')"
-        color="#00B8D4"
-        titulo="Mis Archivos"
-        icono="fas fa-archive"
-        link="/archivoDigital"
-      /> -->
-      <ItemMenuMobile
-        v-if="llevoEquipo"
-        color="#ff7588"
-        titulo="Mi equipo"
-        icono="fas fa-users"
-        link="/gestion-tienda"
-      />
       <ItemMenuMobile
         v-if="hasPermission('verMiTienda') || llevoEquipo"
         color="#ab6634"
@@ -190,26 +71,16 @@
       />
 
       <ItemMenuMobile
-        v-if="hasPermission('ProximosCumpleaños')"
-        color="#673AB7"
-        titulo="Próximos Cumpleaños"
-        icono="fas fa-cake-candles"
-        link="/proximosCumples"
-      />
-
-      <ItemMenuMobile color="#648fe0" titulo="Necesito ayuda" icono="fas fa-comment" link="/chat" />
-      <ItemMenuMobile
-        v-if="hasPermission('SANIDAD_ADMIN')"
-        color="#ab6634"
-        titulo="Listado sanidad"
-        icono="fas fa-suitcase-medical"
-        link="/listadoSanidad"
+        color="#648fe0"
+        titulo="Necesito ayuda"
+        icono="fas fa-question-circle"
+        link="/chat"
       />
     </div>
   </div>
 
   <!-- Modal con Bootstrap 5 -->
-  <div
+  <!-- <div
     class="modal fade"
     id="modalInfo"
     tabindex="-1"
@@ -227,131 +98,131 @@
         </div>
       </div>
     </div>
-  </div>
+  </div> -->
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, nextTick } from "vue";
-import Swal from "sweetalert2";
+import { computed } from "vue";
+// import Swal from "sweetalert2";
 import ItemMenuDesktop from "@/components/ItemMenuDesktop.vue";
 import ItemMenuMobile from "@/components/ItemMenuMobile.vue";
-import { axiosInstance } from "@/components/axios/axios";
-import { DateTime } from "luxon";
+// import { axiosInstance } from "@/components/axios/axios";
+// import { DateTime } from "luxon";
 import { hasPermission } from "@/components/rolesPermisos";
 import { useUserStore } from "@/stores/user";
-import { Modal } from "bootstrap";
+// import { Modal } from "bootstrap";
 
 const userStore = useUserStore();
-const modalInfo = ref(false);
-const modalInfoRef = ref<HTMLElement | null>(null);
-const modalInstance = ref<Modal | null>(null);
-const datos = ref([]);
-const datos2 = ref([]);
-const mensaje = ref(null);
+// const modalInfo = ref(false);
+// const modalInfoRef = ref<HTMLElement | null>(null);
+// const modalInstance = ref<Modal | null>(null);
+// const datos = ref([]);
+// const datos2 = ref([]);
+// const mensaje = ref(null);
 const llevoEquipo = userStore.$state.user.llevaEquipo;
 const currentUser = computed(() => userStore.user);
 
 defineEmits(["update:user", "toggleFooter"]);
 
-// Función para abrir el modal
-const openModal = async () => {
-  await nextTick();
-  if (modalInfoRef.value && !modalInstance.value) {
-    modalInstance.value = new Modal(modalInfoRef.value);
-  }
-  modalInstance.value?.show();
-};
+// // Función para abrir el modal
+// const openModal = async () => {
+//   await nextTick();
+//   if (modalInfoRef.value && !modalInstance.value) {
+//     modalInstance.value = new Modal(modalInfoRef.value);
+//   }
+//   modalInstance.value?.show();
+// };
 
-// Función para cerrar el modal
-const closeModal = () => {
-  modalInstance.value?.hide();
-  modalInfo.value = false;
-};
+// // Función para cerrar el modal
+// const closeModal = () => {
+//   modalInstance.value?.hide();
+//   modalInfo.value = false;
+// };
 
-async function getDistribucionMensajes() {
-  try {
-    const response = await axiosInstance.get("distribucion-mensajes/getOneMessage");
+// async function getDistribucionMensajes() {
+//   try {
+//     const response = await axiosInstance.get("distribucion-mensajes/getOneMessage");
 
-    if (response.data.data) {
-      const hoy = DateTime.now().startOf("day");
-      const fechaInicio = DateTime.fromISO(response.data.data.fechaInicio).startOf("day");
-      const fechaFin = DateTime.fromISO(response.data.data.fechaFin).startOf("day");
+//     if (response.data.data) {
+//       const hoy = DateTime.now().startOf("day");
+//       const fechaInicio = DateTime.fromISO(response.data.data.fechaInicio).startOf("day");
+//       const fechaFin = DateTime.fromISO(response.data.data.fechaFin).startOf("day");
 
-      // Comparar solo las fechas (sin horas)
-      if (hoy >= fechaInicio && hoy <= fechaFin) {
-        mensaje.value = response.data.data.mensaje;
-        modalInfo.value = true;
-        await openModal();
-      }
-    }
-  } catch (error) {
-    console.log("Error al obtener el mensaje:", error);
-  }
-}
+//       // Comparar solo las fechas (sin horas)
+//       if (hoy >= fechaInicio && hoy <= fechaFin) {
+//         mensaje.value = response.data.data.mensaje;
+//         modalInfo.value = true;
+//         await openModal();
+//       }
+//     }
+//   } catch (error) {
+//     console.log("Error al obtener el mensaje:", error);
+//   }
+// }
 
-async function getUserNewsletter() {
-  try {
-    const idsql = currentUser.value.idSql;
+// async function getUserNewsletter() {
+//   try {
+//     const idsql = currentUser.value.idSql;
 
-    // Obtener la fecha actual
-    const hoy = new Date();
-    const añoActual = hoy.getFullYear();
+//     // Obtener la fecha actual
+//     const hoy = new Date();
+//     const añoActual = hoy.getFullYear();
 
-    // Revisar si ya se confirmó el Swal este año
-    const swalConfirmedKey = `swalConfirmed_${añoActual}`;
-    const isSwalConfirmed = localStorage.getItem(swalConfirmedKey);
+//     // Revisar si ya se confirmó el Swal este año
+//     const swalConfirmedKey = `swalConfirmed_${añoActual}`;
+//     const isSwalConfirmed = localStorage.getItem(swalConfirmedKey);
 
-    const respGetIdPerfil = await axiosInstance.get("trabajadores/getTrabajadorBySqlId", {
-      params: {
-        id: idsql,
-      },
-    });
-    const respgetAnuncios = await axiosInstance.get("anuncios");
+//     const respGetIdPerfil = await axiosInstance.get("trabajadores/getTrabajadorBySqlId", {
+//       params: {
+//         id: idsql,
+//       },
+//     });
+//     const respgetAnuncios = await axiosInstance.get("anuncios");
 
-    if (respGetIdPerfil.data.ok || respgetAnuncios.data.ok) {
-      datos.value = respGetIdPerfil.data.data;
-      datos2.value = respgetAnuncios.data.data;
+//     if (respGetIdPerfil.data.ok || respgetAnuncios.data.ok) {
+//       datos.value = respGetIdPerfil.data.data;
+//       datos2.value = respgetAnuncios.data.data;
 
-      // Revisar si hay algún anuncio con categoría 'Newsletter' y manejar la caducidad
-      const tieneNewsletter: any = datos2.value
-        ? datos2.value.filter((anuncio: any) => anuncio.categoria === "Newsletter")
-        : false;
+//       // Revisar si hay algún anuncio con categoría 'Newsletter' y manejar la caducidad
+//       const tieneNewsletter: any = datos2.value
+//         ? datos2.value.filter((anuncio: any) => anuncio.categoria === "Newsletter")
+//         : false;
 
-      // Borrar localStorage si el anuncio ha caducado
-      if (tieneNewsletter && tieneNewsletter.length > 0) {
-        tieneNewsletter.forEach((anuncio: any) => {
-          const fechaCaducidad = new Date(anuncio.caducidad);
-          if (hoy >= fechaCaducidad) {
-            localStorage.removeItem(swalConfirmedKey);
-          }
-        });
-      }
+//       // Borrar localStorage si el anuncio ha caducado
+//       if (tieneNewsletter && tieneNewsletter.length > 0) {
+//         tieneNewsletter.forEach((anuncio: any) => {
+//           const fechaCaducidad = new Date(anuncio.caducidad);
+//           if (hoy >= fechaCaducidad) {
+//             localStorage.removeItem(swalConfirmedKey);
+//           }
+//         });
+//       }
 
-      if (!isSwalConfirmed && tieneNewsletter.length > 0) {
-        // Mostrar Swal si hay anuncios con la categoría de Newsletter
-        Swal.fire({
-          icon: "info",
-          text: "¡Hola equipo! Ya está disponible la newsletter del mes",
-          confirmButtonText: "OK",
-        }).then((result) => {
-          if (result.isConfirmed) {
-            // Marcar el Swal como confirmado en el localStorage
-            localStorage.setItem(swalConfirmedKey, "true");
-          }
-        });
-      }
-    } else {
-      datos.value = [];
-    }
-  } catch (error) {
-    console.log(error);
-  }
-}
+//       if (!isSwalConfirmed && tieneNewsletter.length > 0) {
+//         // Mostrar Swal si hay anuncios con la categoría de Newsletter
+//         Swal.fire({
+//           icon: "info",
+//           text: "¡Hola equipo! Ya está disponible la newsletter del mes",
+//           confirmButtonText: "OK",
+//         }).then((result) => {
+//           if (result.isConfirmed) {
+//             // Marcar el Swal como confirmado en el localStorage
+//             localStorage.setItem(swalConfirmedKey, "true");
+//           }
+//         });
+//       }
+//     } else {
+//       datos.value = [];
+//     }
+//   } catch (error) {
+//     console.log(error);
+//   }
+// }
 
-onMounted(() => {
-  getDistribucionMensajes();
-  getUserNewsletter();
-});
+// onMounted(() => {
+//   getDistribucionMensajes();
+//   getUserNewsletter();
+// });
 </script>
 
 <style lang="scss" scoped>

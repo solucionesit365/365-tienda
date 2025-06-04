@@ -1,13 +1,16 @@
 import { createRouter, createWebHistory } from "vue-router";
-import MainTrabajadores from "../views/MainTrabajadores.vue";
+import { checkLogin } from "@/components/firebase/authentication";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: "/",
-      name: "home",
-      component: MainTrabajadores,
+      name: "Home",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../views/MainTrabajadores.vue"),
     },
     {
       path: "/login",
@@ -20,6 +23,19 @@ const router = createRouter({
       component: () => import("../views/PoliticasView.vue"),
     },
   ],
+});
+
+router.beforeEach(async (to, from, next) => {
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+  const logeado = await checkLogin();
+
+  if (requiresAuth && !logeado) {
+    next("login");
+  } else if (to.path === "/login" && logeado) {
+    next(from.path);
+  } else {
+    next();
+  }
 });
 
 export default router;

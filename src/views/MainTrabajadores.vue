@@ -39,7 +39,7 @@
         color="#648fe0"
         titulo="Necesito ayuda"
         icono="fas fa-question-circle"
-        link="/chat"
+        link="/abrir-incidencia"
       />
     </div>
   </div>

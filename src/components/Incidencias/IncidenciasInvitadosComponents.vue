@@ -1,12 +1,20 @@
 <template>
-  <div class="col-xl-12 col-md-8 card-body">
+  <div class="col-xl-8 col-md-8 card-body">
     <div class="mb-3 row">
       <div class="">
-        <div class="format-text">Destinatario</div>
-        <select v-model="destinatario" class="form-select" aria-label="Default select exameple">
+        <div class="form-text">Destinatario</div>
+        <select v-model="destinatario" class="form-select" aria-label="Default select example">
           <option value="tecnicos">Servicio Técnico</option>
           <option value="rrhh">Recursos Humanos</option>
         </select>
+      </div>
+      <div class="mt-1">
+        <div class="form-text">Nombre</div>
+        <input v-model="nombre" class="form-control" id="exampleFormControlInput1" />
+      </div>
+      <div class="mt-1">
+        <div class="form-text">Teléfono</div>
+        <input v-model="telefono" class="form-control" id="exampleFormControlInput1" />
       </div>
       <div class="mt-1">
         <div class="form-text">Categoría</div>
@@ -42,7 +50,7 @@
         </select>
       </div>
       <div class="col-12 col-sm-12 col-xl-12 mt-2">
-        <div class="format-text">Prioridad</div>
+        <div class="form-text">Prioridad</div>
         <select v-model="prioridad" class="form-select" aria-label="Default select example">
           <option value="Urgente">Urgente</option>
           <option value="Muy urgente">Muy urgente</option>
@@ -89,7 +97,7 @@
           class="btn btn-lg text-light mb-8 rounded-8 w-50"
           style="background: #5ebea3"
           @click="enviar()"
-          :class="{ disable: guardando }"
+          :class="{ disabled: guardando }"
         >
           <span
             v-if="guardando"
@@ -97,7 +105,7 @@
             role="status"
             aria-hidden="true"
           ></span>
-          <i class="fas fa-paper-plane" />ENVIAR
+          <i class="fas fa-paper-plane" /> ENVIAR
         </button>
       </div>
     </div>
@@ -105,25 +113,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import { subirArchivoGeneral } from "@/components/firebase/storage";
 import Swal from "sweetalert2";
+import router from "@/router";
 import { axiosInstance } from "@/components/axios/axios";
-import { useUserStore } from "@/stores/user";
 import { DateTime } from "luxon";
 
-const userStore = useUserStore();
 const destinatario = ref(null);
 const categoria = ref(null);
 const descripcion = ref();
 const prioridad = ref(null);
+const nombre = ref(null);
+const telefono = ref("");
 let file: File | null = null;
+let fileUrl: string | null = null;
 const fallo = ref(false);
 const autorizoLlamada = ref(false);
-const verMisIncidencias = ref(true);
 const guardando = ref(false);
-
-const user = computed(() => userStore.user);
 
 //Subir archivo
 function setFile(event: any) {
@@ -131,13 +138,42 @@ function setFile(event: any) {
   console.log(file);
 }
 
-//Enviar incidencia
+//Enviar incidencias
 async function enviar() {
-  if (destinatario.value === null) {
+  guardando.value = true;
+  if (destinatario.value == null) {
+    fallo.value = true;
     Swal.fire({
       icon: "error",
-      title: "Error",
+      title: "Error...",
       text: "Selecciona un destinatario",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    });
+  }
+  if (nombre.value == null) {
+    fallo.value = true;
+    Swal.fire({
+      icon: "error",
+      title: "Error...",
+      text: "Escribe tu nombre y apellidos",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    });
+  }
+  if (
+    telefono.value == null ||
+    telefono.value.length < 9 ||
+    telefono.value.length > 9 ||
+    isNaN(Number(telefono.value))
+  ) {
+    fallo.value = true;
+    Swal.fire({
+      icon: "error",
+      title: "Error...",
+      text: "Escribe tu numero de teléfono",
       showConfirmButton: false,
       timer: 2000,
       timerProgressBar: true,
@@ -147,8 +183,8 @@ async function enviar() {
     fallo.value = true;
     Swal.fire({
       icon: "error",
-      title: "Error",
-      text: "Describe el problema",
+      title: "Error...",
+      text: "Describe el problema ",
       showConfirmButton: false,
       timer: 2000,
       timerProgressBar: true,
@@ -158,7 +194,18 @@ async function enviar() {
     fallo.value = true;
     Swal.fire({
       icon: "error",
-      title: "Error",
+      title: "Error...",
+      text: "Selecciona una categoría",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    });
+  }
+  if (prioridad.value == null) {
+    fallo.value = true;
+    Swal.fire({
+      icon: "error",
+      title: "Error...",
       text: "Selecciona una prioridad",
       showConfirmButton: false,
       timer: 2000,
@@ -166,39 +213,23 @@ async function enviar() {
     });
   }
   if (!fallo.value) {
-    const hoy = DateTime.now().toFormat("dd/MM/yyyy HH:mm");
-    const usuario = user.value;
-    const objEnviar: {
-      destinatario: string | null;
-      categoria: string | null;
-      descripcion: string | undefined;
-      prioridad: string | null;
-      file: File | string | null;
-      autorizoLlamada: boolean;
-      nombre: string;
-      uid: string;
-      mensaje: any[];
-      estado: string;
-      fechaCreacion: string;
-      tienda: string;
-    } = {
+    if (file) {
+      fileUrl = await subirArchivoGeneral(file, `incidencias/${destinatario.value}`);
+    }
+    const objEnviar = {
       destinatario: destinatario.value,
       categoria: categoria.value,
       descripcion: descripcion.value,
       prioridad: prioridad.value,
-      file: file,
+      file: fileUrl,
       autorizoLlamada: autorizoLlamada.value,
-      nombre: usuario.displayName ?? "",
-      uid: usuario.uid ?? "",
-      mensaje: [],
+      nombre: nombre.value,
+      telefono: telefono.value,
+      mensajes: [],
       estado: "PENDIENTE",
-      fechaCreacion: hoy,
-      tienda: usuario.nombreTienda ?? "",
+      fechaCreacion: DateTime.now().toFormat("dd/MM/yyyy HH:mm"),
     };
-    if (file) {
-      objEnviar.file = await subirArchivoGeneral(file, `incidencias/${destinatario.value}`);
-    }
-    axiosInstance.post("incidencias/nuevaIncidencia", objEnviar).then((response) => {
+    axiosInstance.post("incidencias/nuevaIncidenciaInvitado", objEnviar).then((response) => {
       if (response.data.ok) {
         Swal.fire({
           icon: "success",
@@ -210,12 +241,14 @@ async function enviar() {
         }).then(function () {
           guardando.value = false;
           destinatario.value = null;
+          nombre.value = null;
+          telefono.value = "";
           categoria.value = null;
           descripcion.value = null;
           prioridad.value = null;
           file = null;
           autorizoLlamada.value = false;
-          verMisIncidencias.value = true;
+          router.push("/login");
         });
       } else {
         Swal.fire("Oops...", "Error al enviar tu incidencia", "error");
@@ -309,7 +342,7 @@ input[type="checkbox"].form-check-input {
   color: #b0b0b0;
 }
 
-.border{
+.border {
   background: none !important;
 }
 

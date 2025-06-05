@@ -30,6 +30,14 @@ const router = createRouter({
       },
       component: () => import("../components/Incidencias/IncidenciasComponent.vue"),
     },
+    {
+      path: "/abrirIncidenciaInvitado",
+      name: "abrirIncidenciaInvitado",
+      meta: {
+        requiresAuth: false,
+      },
+      component: () => import("../components/Incidencias/IncidenciasInvitadosComponents.vue"),
+    },
   ],
 });
 

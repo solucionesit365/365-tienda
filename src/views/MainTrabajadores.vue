@@ -386,8 +386,6 @@ async function getDistribucionMensajes() {
 
 async function authCoordi(accion: any) {
   accionPendiente.value = accion;
-  console.log(accionPendiente.value);
-
   codigoEmpleado.value = "";
   codigoEmpleadoModal.value = true;
 

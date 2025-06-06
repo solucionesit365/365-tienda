@@ -18,6 +18,14 @@ const router = createRouter({
       component: () => import("../views/LoginView.vue"),
     },
     {
+      path: "/cuadrantes-tienda",
+      name: "crearcuadrantes tienda",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../views/VerCuadrante.vue"),
+    },
+    {
       path: "/privacidad",
       name: "Privacidad",
       component: () => import("../views/PoliticasView.vue"),

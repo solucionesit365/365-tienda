@@ -64,12 +64,8 @@ export async function signInWithCustomToken(customToken: string) {
 /* Entrar con tipo email + contraseña */
 export function accederConEmail(email: string, password: string) {
   signInWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
-      Swal.fire(
-        "Inicio de sesión correcto",
-        "Bienvenid@ al portal de 365Obrador " + userCredential.user.displayName,
-        "success",
-      );
+    .then(() => {
+      Swal.fire("Inicio de sesión correcto", "Bienvenid@ al portal de 365Obrador", "success");
       localStorage.setItem("loggedIn", "true");
       router.push("/");
 

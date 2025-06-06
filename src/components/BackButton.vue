@@ -93,16 +93,20 @@ onMounted(() => {
 // Actualizar el historial cuando cambie la ruta
 watch(
   () => route.fullPath,
-  (newPath) => {
-    // Si la ruta es nueva, añadirla al historial
-    if (!navigationHistory.value.includes(newPath)) {
-      navigationHistory.value.push(newPath);
-      // Guardar en sessionStorage
-      sessionStorage.setItem("navigationHistory", JSON.stringify(navigationHistory.value));
-    }
+  (newPath, oldPath) => {
+    // Eliminar el hash de ambos paths
+    const cleanNewPath = newPath.split("#")[0];
+    const cleanOldPath = oldPath?.split("#")[0];
 
-    // Actualizar canGoBack
-    updateCanGoBack();
+    // Solo continuar si el path limpio ha cambiado realmente
+    if (cleanNewPath !== cleanOldPath) {
+      if (!navigationHistory.value.includes(newPath)) {
+        navigationHistory.value.push(newPath);
+        sessionStorage.setItem("navigationHistory", JSON.stringify(navigationHistory.value));
+      }
+
+      updateCanGoBack();
+    }
   },
   { immediate: true },
 );

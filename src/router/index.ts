@@ -38,6 +38,14 @@ const router = createRouter({
       },
       component: () => import("../components/Incidencias/IncidenciasInvitadosComponents.vue"),
     },
+    {
+      path: "/colorSemanal",
+      name: "Color semanal",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../views/ColorSemanal.vue"),
+    },
   ],
 });
 

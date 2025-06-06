@@ -22,6 +22,22 @@ const router = createRouter({
       name: "Privacidad",
       component: () => import("../views/PoliticasView.vue"),
     },
+    {
+      path: "/abrir-incidencia",
+      name: "Abrir Incidencias",
+      meta: {
+        requiresAuth: false,
+      },
+      component: () => import("../components/Incidencias/IncidenciasComponent.vue"),
+    },
+    {
+      path: "/abrirIncidenciaInvitado",
+      name: "abrirIncidenciaInvitado",
+      meta: {
+        requiresAuth: false,
+      },
+      component: () => import("../components/Incidencias/IncidenciasInvitadosComponents.vue"),
+    },
   ],
 });
 

@@ -1,8 +1,14 @@
 <template>
-  <div class="container">
-    <BackButton />
-    <RouterView />
-  </div>
+  <template v-if="!loading">
+    <NavComponent />
+    <div class="container">
+      <BackButton />
+      <RouterView />
+    </div>
+  </template>
+  <template v-else>
+    <LoaderComponent class="fondo" />
+  </template>
 </template>
 
 <script setup lang="ts">
@@ -14,6 +20,8 @@ import { useUserStore } from "./stores/user";
 import Swal from "sweetalert2";
 import { onMounted, ref } from "vue";
 import { axiosInstance } from "./components/axios/axios";
+import LoaderComponent from "./components/LoaderComponent.vue";
+import NavComponent from "./components/NavComponent.vue";
 
 const auth = getAuth(app);
 const userStore = useUserStore();
@@ -27,7 +35,6 @@ function antiLag() {
 
 async function initializeAuthListener() {
   onAuthStateChanged(auth, async (user) => {
-    console.log("user", user);
     if (user) {
       try {
         if (antiLag()) {

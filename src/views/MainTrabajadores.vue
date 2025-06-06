@@ -272,7 +272,7 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Validar Código de Empleado</h5>
+          <h5 class="modal-title">Introducir Código de Empleado</h5>
           <button
             type="button"
             class="btn-close"
@@ -281,22 +281,31 @@
           ></button>
         </div>
         <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label">Código de Empleado</label>
-            <input
-              type="text"
-              class="form-control"
-              v-model="codigoEmpleado"
-              placeholder="Ingrese el código de empleado"
-            />
+          <div class="row justify-content-center">
+            <div class="col-12 col-xl-6 col-md-6">
+              <h4 class="text-center mt-3">
+                Ingresa tu código de empleado
+                <span
+                  class="tooltip-icon"
+                  title="Puedes encontrar tu código de empleado en tu apartado principal."
+                  style="color: #007bff; cursor: pointer; margin-left: 5px"
+                >
+                  <i class="fas fa-info-circle"></i>
+                </span>
+              </h4>
+              <div class="input-group mt-4">
+                <input id="inputCodigo" type="text" class="form-control" v-model="codigoEmpleado" />
+              </div>
+            </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" @click="codigoEmpleadoModal = false">
-            Cancelar
-          </button>
-          <button type="button" class="btn btn-primary" @click="validarCodigoEmpleado">
-            Validar
+        <div class="d-flex justify-content-center mb-3">
+          <button
+            type="button"
+            class="btn btn-success custom-button"
+            @click="validarCodigoEmpleado"
+          >
+            VALIDAR
           </button>
         </div>
       </div>
@@ -490,6 +499,20 @@ onMounted(() => {
   background-repeat: no-repeat !important; /* No repetir la imagen */
   width: 100% !important; /* Ocupa el 100% del ancho del contenedor */
   height: 100% !important; /* Ocupa el 100% del alto del contenedor */
+}
+
+.custom-button {
+  border-radius: 30px;
+  padding: 0.5rem 2rem;
+  font-weight: bold;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+
+.custom-button:hover {
+  filter: brightness(1.1);
 }
 
 /* Media queries para tamaños de pantalla específicos */

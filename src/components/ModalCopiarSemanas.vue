@@ -1,29 +1,26 @@
 <template>
-  <MDBModal
-    id="modalCopiarSemana"
-    tabindex="-1"
-    labelledby="modalLabel"
-    v-model="modalCopiarSemana"
-  >
-    <MDBModalBody>
+  <BsModal id="modalCopiarSemana" tabindex="-1" labelledby="modalLabel" v-model="modalCopiarSemana">
+    <BsModalBody>
       <div class="row">
         <div class="col">
-          <MDBSelect
-            filter
-            :selectAll="false"
-            size="lg"
-            :searchPlaceholder="'Buscar'"
+          <BsSelect
+            :filter="true"
+            :select-all="false"
+            :search-placeholder="'Buscar'"
             v-model:options="opcionesSemanas"
             v-model:selected="semanaElegida"
+            label="Selecciona una semana"
           />
         </div>
       </div>
-    </MDBModalBody>
-    <MDBModalFooter>
-      <MDBBtn color="warning" size="lg" @click="modalCopiarSemana = false"> Salir </MDBBtn>
-      <MDBBtn color="dark" size="lg" @click="copiarSemana(semanaElegida)"> Copiar semana </MDBBtn>
-    </MDBModalFooter>
-  </MDBModal>
+    </BsModalBody>
+    <BsModalFooter>
+      <BsButton color="warning" size="lg" @click="modalCopiarSemana = false"> Salir </BsButton>
+      <BsButton color="dark" size="lg" @click="copiarSemana(semanaElegida)">
+        Copiar semana
+      </BsButton>
+    </BsModalFooter>
+  </BsModal>
 </template>
 
 <script setup lang="ts">
@@ -31,7 +28,12 @@ import { ref, onMounted } from "vue";
 import { DateTime } from "luxon";
 import { axiosInstance } from "@/components/axios/axios";
 import Swal from "sweetalert2";
-import { MDBModal, MDBBtn, MDBModalBody, MDBModalFooter, MDBSelect } from "mdb-vue-ui-kit";
+// Importar los nuevos componentes
+import BsModal from "@/components/365/BsModal.vue";
+import BsButton from "@/components/365/BsButton.vue";
+import BsModalBody from "@/components/365/BsModalBody.vue";
+import BsModalFooter from "@/components/365/BsModalFooter.vue";
+import BsSelect from "@/components/365/BsSelect.vue";
 
 // Declaración de variables reactivas con anotaciones de tipo
 const modalCopiarSemana = ref<boolean>(false);

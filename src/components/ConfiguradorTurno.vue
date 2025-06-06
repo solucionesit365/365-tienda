@@ -1,12 +1,12 @@
 <template>
-  <MDBModal
+  <BsModal
     id="modalConfiguradorTurno"
     tabindex="-1"
     labelledby="modalLabel"
     v-model="modalConfiguradorTurno"
-    static-backdrop
+    :static-backdrop="true"
   >
-    <MDBModalBody>
+    <BsModalBody>
       <div class="row" v-if="mostrarselectTienda">
         <label for="tiendaSelect">Tienda destino:</label>
         <select v-model="idTiendaSelected" id="tiendaSelect" class="form-select">
@@ -15,36 +15,40 @@
           </option>
         </select>
       </div>
-    </MDBModalBody>
+    </BsModalBody>
 
-    <MDBModalFooter class="d-flex justify-content-center">
+    <BsModalFooter class="d-flex justify-content-center">
       <div class="text-end">
-        <MDBBtn color="primary" size="sm" @click="addCuadrante"
+        <BsButton color="primary" size="sm" @click="addCuadrante"
           ><i class="fas fa-plus me-1"></i> doble turno
-        </MDBBtn>
+        </BsButton>
       </div>
 
       <div class="text-end">
-        <MDBBtn color="success" size="sm" @click="mostrarSelectTienda"
-          ><i class="fas fa-plus me-1"></i>Destino Tienda</MDBBtn
+        <BsButton color="success" size="sm" @click="mostrarSelectTienda"
+          ><i class="fas fa-plus me-1"></i>Destino Tienda</BsButton
         >
       </div>
 
       <div>
-        <MDBBtn color="danger" size="sm" @click="borrar()">Borrar turno</MDBBtn>
+        <BsButton color="danger" size="sm" @click="borrar()">Borrar turno</BsButton>
       </div>
       <div>
-        <MDBBtn color="warning" size="sm" @click="salir()">Salir</MDBBtn>
+        <BsButton color="warning" size="sm" @click="salir()">Salir</BsButton>
       </div>
-    </MDBModalFooter>
-  </MDBModal>
+    </BsModalFooter>
+  </BsModal>
 </template>
 
 <script setup lang="ts">
 import type { DateTime } from "luxon";
-import { MDBModal, MDBBtn, MDBModalBody, MDBModalFooter } from "mdb-vue-ui-kit";
 import Swal from "sweetalert2";
 import { ref, watch, type Ref } from "vue";
+// Importar los nuevos componentes
+import BsModal from "@/components/365/BsModal.vue";
+import BsButton from "@/components/365/BsButton.vue";
+import BsModalBody from "@/components/365/BsModalBody.vue";
+import BsModalFooter from "@/components/365/BsModalFooter.vue";
 
 interface TTiendaEspecial {
   text: string;

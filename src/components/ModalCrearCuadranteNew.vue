@@ -1,12 +1,12 @@
 <template>
-  <MDBModal
+  <BsModal
     id="modalCrearCuadrante"
     tabindex="-1"
     labelledby="modalLabel"
     v-model="modalCrearCuadrante"
-    fullscreen
+    :fullscreen="true"
   >
-    <MDBModalBody>
+    <BsModalBody>
       <div class="row">
         <div class="col">
           <select class="form-select form-select-lg mb-3" v-model="trabajadorSelected">
@@ -42,14 +42,13 @@
             </tbody>
           </table>
           <div v-else>
-            <MDBCard text="white" bg="warning" class="mb-3">
-              <MDBCardBody>
-                <!-- <MDBCardTitle>Selecciona primero a una persona</MDBCardTitle> -->
-                <MDBCardText>
+            <BsCard text="white" bg="warning" class="mb-3">
+              <BsCardBody>
+                <BsCardText>
                   Selecciona primero a una persona para poder configurar su cuadrante semanal
-                </MDBCardText>
-              </MDBCardBody>
-            </MDBCard>
+                </BsCardText>
+              </BsCardBody>
+            </BsCard>
           </div>
         </div>
       </div>
@@ -57,20 +56,20 @@
       <div v-else>
         <LoaderComponent />
       </div>
-    </MDBModalBody>
-    <MDBModalFooter>
-      <MDBBtn color="warning" @click="modalCrearCuadrante = false">Salir</MDBBtn>
-      <MDBBtn color="dark" :class="{ disabled: guardando }" @click="guardarFinal()">
+    </BsModalBody>
+    <BsModalFooter>
+      <BsButton color="warning" @click="modalCrearCuadrante = false">Salir</BsButton>
+      <BsButton color="dark" :disabled="guardando" @click="guardarFinal()">
         <span
           v-if="guardando"
           class="spinner-border spinner-border-sm"
           role="status"
           aria-hidden="true"
-        ></span
-        >Guardar</MDBBtn
-      >
-    </MDBModalFooter>
-  </MDBModal>
+        ></span>
+        Guardar
+      </BsButton>
+    </BsModalFooter>
+  </BsModal>
   <ConfiguradorTurnoComponent
     ref="configuradorRef"
     @add-cuadrante="handleAddCuadrante"
@@ -85,15 +84,15 @@ import { onMounted, ref, computed, watch, inject, type Ref } from "vue";
 import Swal from "sweetalert2";
 import { DateTime } from "luxon";
 import { axiosInstance } from "@/components/axios/axios";
-import {
-  MDBModal,
-  MDBBtn,
-  MDBModalBody,
-  MDBModalFooter,
-  MDBCard,
-  MDBCardBody,
-  MDBCardText,
-} from "mdb-vue-ui-kit";
+// Importar los nuevos componentes
+import BsModal from "@/components/365/BsModal.vue";
+import BsButton from "@/components/365/BsButton.vue";
+import BsModalBody from "@/components/365/BsModalBody.vue";
+import BsModalFooter from "@/components/365/BsModalFooter.vue";
+import BsCard from "@/components/365/BsCard.vue";
+import BsCardBody from "@/components/365/BsCardBody.vue";
+import BsCardText from "@/components/365/BsCardText.vue";
+
 import RowDia from "@/components/RowDiaCrear.vue";
 import ConfiguradorTurnoComponent from "@/components/ConfiguradorTurno.vue";
 import LoaderComponent from "@/components/LoaderCuadrantes.vue";

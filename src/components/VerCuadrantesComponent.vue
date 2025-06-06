@@ -5,9 +5,11 @@
     <span class="me-1" style="font-weight: bold">{{ punteroFecha.weekNumber }} </span>
     de
     {{ punteroFecha.year }}
-    <MDBBtn class="btn-responsive" size="lg" color="secondary" @click="restarSemana()">-</MDBBtn>
-    <MDBBtn class="btn-responsive" size="lg" color="secondary" @click="sumarSemana()">+</MDBBtn>
-    <MDBBtn color="primary" @click="getTurnos()">Ver</MDBBtn>
+    <BsButton class="btn-responsive" size="lg" color="secondary" @click="restarSemana()"
+      >-</BsButton
+    >
+    <BsButton class="btn-responsive" size="lg" color="secondary" @click="sumarSemana()">+</BsButton>
+    <BsButton color="primary" @click="getTurnos()">Ver</BsButton>
   </div>
   <div class="row justify-content-center mt-2">
     <div class="col">
@@ -15,30 +17,30 @@
         <div class="card-body">
           <div class="navegacion" v-if="!hasPermission('ModoTienda')">
             <div class="col">
-              <MDBBtn
+              <BsButton
                 v-if="hasPermission('CrearCuadrante')"
                 class="w-100"
                 color="success"
                 @click="abrirModalCrearCuadrante()"
-                >+ Turno</MDBBtn
+                >+ Turno</BsButton
               >
             </div>
             <div class="col ms-2">
-              <MDBBtn
+              <BsButton
                 v-if="hasPermission('CrearCuadrante')"
                 class="w-100"
                 color="warning"
                 @click="
                   modalCopiarSemanasRef.abrirModal(currentUser.idTienda, punteroFecha.weekNumber)
                 "
-                >Copiar</MDBBtn
+                >Copiar</BsButton
               >
             </div>
           </div>
           <div class="navegacion" v-if="hasPermission('ModoTienda')">
             <div class="col">
-              <MDBBtn class="w-25" color="success" @click="authCoordi('Crear cuadrantes')"
-                ><i class="fas fa-lock"></i> Crear cuadrante</MDBBtn
+              <BsButton class="w-25" color="success" @click="authCoordi('Crear cuadrantes')"
+                ><i class="fas fa-lock"></i> Crear cuadrante</BsButton
               >
             </div>
           </div>
@@ -48,29 +50,29 @@
               <div class="col-auto">
                 <div class="form-text">Tiendas</div>
                 <div class="input-group">
-                  <MDBSelect
+                  <BsSelect
                     v-model:options="arrayTiendas"
                     v-model:selected="tiendaSeleccionada"
-                    filter
+                    :filter="true"
                     :select-all="true"
                     :search-placeholder="'Buscar'"
-                    options-selected-label="tienda/s seleccionada/s"
+                    :options-selected-label="'tienda/s seleccionada/s'"
                     :preselect="false"
                   />
                 </div>
               </div>
 
               <div class="col-auto">
-                <MDBBtn class="w-100, mt-4" color="success" @click="buscarCuadrante()"
-                  >buscar</MDBBtn
+                <BsButton class="w-100, mt-4" color="success" @click="buscarCuadrante()"
+                  >buscar</BsButton
                 >
               </div>
               <div
                 v-if="getRole('Super_Admin', 'RRHH_ADMIN', 'Analisis_Datos', 'Procesos')"
                 class="col-auto"
               >
-                <MDBBtn class="w-100, mt-4" color="primary" @click="getInformeTiendas()"
-                  >todas</MDBBtn
+                <BsButton class="w-100, mt-4" color="primary" @click="getInformeTiendas()"
+                  >todas</BsButton
                 >
               </div>
 
@@ -78,7 +80,7 @@
                 v-if="getRole('Super_Admin', 'RRHH_ADMIN', 'Analisis_Datos', 'Procesos')"
                 class="col-auto mt-3"
               >
-                <MDBBtn
+                <BsButton
                   v-if="getRole('Super_Admin', 'RRHH_ADMIN', 'Analisis_Datos', 'Procesos')"
                   :class="{ disabled: resCuadrantes2.length == 0 }"
                   class="w-100"
@@ -86,34 +88,34 @@
                   @click="nombreExcelModal = true"
                 >
                   <i class="fa-sharp fa-solid fa-file-excel fs-3"></i>
-                </MDBBtn>
+                </BsButton>
               </div>
 
               <div class="col-auto mt-4">
-                <MDBBtn
+                <BsButton
                   v-if="hasPermission('VerResumCuadrantes')"
                   class="w-100"
                   color="info"
                   @click="router.push('/resumenCuadrantes')"
                 >
                   Resumen
-                </MDBBtn>
+                </BsButton>
               </div>
             </div>
           </div>
 
           <div v-if="!loadingCuadrantes" class="table-responsive mt-2">
             <div class="col-12 col-xl-12 col-sm-12 mb-2">
-              <MDBInput
+              <BsInput
                 id="buscador"
-                input-group
+                :input-group="true"
                 :form-outline="false"
                 aria-label="buscar por nombre"
                 placeholder="Buscar por nombre"
                 @keyup="searchByName()"
               >
                 <span class="input-group-text"><i class="fas fa-search" /></span>
-              </MDBInput>
+              </BsInput>
             </div>
             <table id="tabla" class="table">
               <thead class="fw-bold">
@@ -202,7 +204,7 @@
             </table>
           </div>
           <div v-else class="row text-center mt-3">
-            <div><MDBSpinner style="width: 5rem; height: 5rem" /></div>
+            <div><BsSpinner :style="{ width: '5rem', height: '5rem' }" /></div>
           </div>
           <div
             v-if="!loadingCuadrantes && arrayTurnos?.length === 0"
@@ -225,38 +227,38 @@
     </div>
   </div>
 
-  <MDBModal
+  <BsModal
     id="nombreExcelModal"
     tabindex="-1"
     labelledby="nombreExcelModalTitle"
     v-model="nombreExcelModal"
-    centered
+    :centered="true"
   >
-    <MDBModalHeader>
-      <MDBModalTitle id="nombreExcelModalTitle"> ¿Cómo quieres llamar al archivo? </MDBModalTitle>
-    </MDBModalHeader>
-    <MDBModalBody>
-      <MDBInput label="Nombre de archivo" v-model="nombreExcel" />
-    </MDBModalBody>
-    <MDBModalFooter>
-      <MDBBtn color="secondary" @click="nombreExcelModal = false"> Close </MDBBtn>
-      <MDBBtn @click="importExcelxD()" color="success"> Descargar </MDBBtn>
-    </MDBModalFooter>
-  </MDBModal>
+    <BsModalHeader @close="nombreExcelModal = false">
+      <BsModalTitle id="nombreExcelModalTitle"> ¿Cómo quieres llamar al archivo? </BsModalTitle>
+    </BsModalHeader>
+    <BsModalBody>
+      <BsInput label="Nombre de archivo" v-model="nombreExcel" />
+    </BsModalBody>
+    <BsModalFooter>
+      <BsButton color="secondary" @click="nombreExcelModal = false"> Close </BsButton>
+      <BsButton @click="importExcelxD()" color="success"> Descargar </BsButton>
+    </BsModalFooter>
+  </BsModal>
 
   <ModalCrearCuadrante2Component ref="modalCrearCuadrante2Ref" />
   <ModalCopiarSemanas ref="modalCopiarSemanasRef" />
 
-  <MDBModal
+  <BsModal
     id="codigoEmpleadoModal"
     v-model="codigoEmpleadoModal"
     tabindex="-1"
     labelledby="codigoEmpleadoModalLabel"
   >
-    <MDBModalHeader>
-      <MDBModalTitle id="codigoEmpleadoModalLabel"> Introducir Código de Empleado </MDBModalTitle>
-    </MDBModalHeader>
-    <MDBModalBody>
+    <BsModalHeader @close="codigoEmpleadoModal = false">
+      <BsModalTitle id="codigoEmpleadoModalLabel"> Introducir Código de Empleado </BsModalTitle>
+    </BsModalHeader>
+    <BsModalBody>
       <div class="row justify-content-center">
         <div class="col-12 col-xl-6 col-md-6">
           <h4 class="text-center mt-3">
@@ -273,16 +275,16 @@
         </div>
       </div>
       <div class="text-center">
-        <MDBBtn
+        <BsButton
           class="text-light mt-4 m-auto rounded-8 w-auto"
           color="success"
           @click="validarCodigoEmpleado"
         >
           Validar
-        </MDBBtn>
+        </BsButton>
       </div>
-    </MDBModalBody>
-  </MDBModal>
+    </BsModalBody>
+  </BsModal>
 </template>
 
 <script setup lang="ts">
@@ -290,17 +292,17 @@ import { computed, onMounted, ref, provide, type Ref } from "vue";
 import { DateTime } from "luxon";
 import ModalCopiarSemanas from "./ModalCopiarSemanas.vue";
 import { hasPermission } from "@/components/rolesPermisos";
-import {
-  MDBSpinner,
-  MDBBtn,
-  MDBInput,
-  MDBSelect,
-  MDBModal,
-  MDBModalHeader,
-  MDBModalTitle,
-  MDBModalBody,
-  MDBModalFooter,
-} from "mdb-vue-ui-kit";
+// Importar los nuevos componentes
+import BsButton from "@/components/365/BsButton.vue";
+import BsInput from "@/components/365/BsInput.vue";
+import BsSelect from "@/components/365/BsSelect.vue";
+import BsSpinner from "@/components/365/BsSpinner.vue";
+import BsModal from "@/components/365/BsModal.vue";
+import BsModalHeader from "@/components/365/BsModalHeader.vue";
+import BsModalTitle from "@/components/365/BsModalTitle.vue";
+import BsModalBody from "@/components/365/BsModalBody.vue";
+import BsModalFooter from "@/components/365/BsModalFooter.vue";
+
 import { axiosInstance } from "@/components/axios/axios";
 import Swal from "sweetalert2";
 import { getTipoUsuario } from "@/components/equipoGeneral";
@@ -312,6 +314,7 @@ import router from "@/router";
 import { useUserStore } from "@/stores/user";
 import { searchByName } from "./kernel/Generic";
 
+// El resto del código permanece igual...
 const userStore = useUserStore();
 const punteroFecha = ref(DateTime.now().startOf("week").setLocale("es"));
 const arrayTiendas: Ref<any[]> = ref([]);
@@ -336,6 +339,7 @@ const accionPendiente = ref("");
 const uidCoordinadora: Ref<any> = ref(null);
 const codigoEmpleadoModal = ref(false);
 
+// Todas las funciones permanecen exactamente igual
 function restarSemana() {
   punteroFecha.value = punteroFecha.value.minus({ days: 7 });
 }
@@ -450,7 +454,7 @@ async function buscarCuadrante() {
     }
   }
 }
-//Filtrar cuadrantes para la busqueda de idTienda
+
 function filtrarCuadrantesSemanaActual(cuadrantes: any, fechaSeleccionada: any) {
   const inicioSemana = fechaSeleccionada.startOf("week").toUTC();
   const finSemana = fechaSeleccionada.endOf("week").toUTC();
@@ -523,17 +527,6 @@ async function getTurnos() {
   }
 }
 
-// function getTotalHorasCuadranteLinea(data) {
-//   let sum = 0;
-
-//   for (let i = 0; i < data.turnos.length; i += 1) {
-//     for (let j = 0; j < data.turnos[i].length; j += 1) {
-//       sum += data.turnos[i][j].totalHoras;
-//     }
-//   }
-//   return sum;
-// }
-
 function getTotalHorasCuadranteLinea(data: any) {
   let todosTienenPermisoMaternidad = true;
   let horasContrato = 0;
@@ -600,7 +593,6 @@ function ordenarCuadrante(resTurnos: any) {
   }
 }
 
-//function para los roles poner mas de uno
 function getRole(...validRoles: any) {
   if (!currentUser.value || !currentUser.value || !currentUser.value.roles) {
     console.error("Error: No se ha definido correctamente el usuario o sus roles.");
@@ -647,7 +639,6 @@ async function getInformeTiendas() {
   }
 }
 
-//Excel
 function importExcelxD() {
   if (nombreExcel.value) {
     const arrayDeDatos = Object.values(resCuadrantes2.value);

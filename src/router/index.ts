@@ -46,6 +46,14 @@ const router = createRouter({
       },
       component: () => import("../views/ColorSemanal.vue"),
     },
+    {
+      path: "/anuncios",
+      name: "Anuncios",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../views/TablonAnuncios.vue"),
+    },
   ],
 });
 

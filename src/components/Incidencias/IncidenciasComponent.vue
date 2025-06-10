@@ -147,7 +147,14 @@
                           <span>
                             <button
                               class="btn btn-outline-danger btn-circle ms-2"
-                              style="width: 2.2rem; height: 2.2rem; display: flex; align-items: center; justify-content: center; border-radius: 50%;"
+                              style="
+                                width: 2.2rem;
+                                height: 2.2rem;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                border-radius: 50%;
+                              "
                               @click.stop="borrarIncidencia(incidencia._id)"
                               title="Borrar incidencia"
                             >
@@ -170,7 +177,7 @@
             >
               <figure class="figure">
                 <img
-                  src="../../../../public/img/nodata.png"
+                  src="@/assets/img/nodata.png"
                   class="rounded mx-auto d-block mt-3 img-fluid"
                   alt="..."
                   style="width: 70%"
@@ -976,7 +983,9 @@ onMounted(() => {
   opacity: 1;
   margin-left: 1rem;
   position: relative;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .btn-close::before {

@@ -19,7 +19,7 @@ const router = createRouter({
     },
     {
       path: "/cuadrantes-tienda",
-      name: "crearcuadrantes tienda",
+      name: "Cuadrantes",
       meta: {
         requiresAuth: true,
       },

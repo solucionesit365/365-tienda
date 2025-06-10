@@ -3,9 +3,6 @@
     <!-- Header optimizado para tablet -->
     <header class="cuadrantes-header">
       <div class="header-left">
-        <button class="btn-back" @click="$router.go(-1)">
-          <i class="fas fa-arrow-left"></i>
-        </button>
         <div class="semana-controls">
           <h2 class="semana-titulo">
             Semana {{ punteroFecha.weekNumber }} - {{ punteroFecha.year }}

@@ -193,20 +193,13 @@ import LoaderComponent from "@/components/LoaderCuadrantes.vue";
 // Stores e interfaces
 import { useUserStore } from "@/stores/user";
 import type { TCuadranteFrontend, TCuadranteBackend } from "@/interfaces/Cuadrante.interface";
-import type { TTienda } from "@/interfaces/Tienda.interface";
 import type { TTrabajador } from "@/interfaces/Trabajador.interface";
 
-// Interfaz para el configurador
-interface TTiendaEspecial {
-  text: string;
-  value: number;
-  idTienda: number;
-}
 
 // Estado
 const userStore = useUserStore();
-const arrayTiendas: Ref<TTienda[]> = ref([]);
-const arrayTiendasFormateado: Ref<TTiendaEspecial[]> = ref([]);
+const arrayTiendas: Ref<any[]> = ref([]);
+const arrayTiendasFormateado: Ref<any[]> = ref([]);
 const idTiendaDefault = ref(0);
 const trabajadorSelected = ref(null);
 const inicioSemana: Ref<DateTime | null> = ref(null);
@@ -352,15 +345,12 @@ async function eliminarTurnoSeleccionado() {
 }
 
 // Funciones existentes
-async function abrirModal(fechaBetween: Date, tiendas: TTienda[], idTienda: number) {
+async function abrirModal(fechaBetween: Date, tiendas: any[], idTienda: number) {
   if (fechaBetween && tiendas.length > 0 && idTienda) {
     arrayTiendas.value = tiendas;
-    // Formatear tiendas para el configurador con la propiedad idTienda
-    arrayTiendasFormateado.value = tiendas.map((tienda) => ({
-      text: tienda.nombre,
-      value: tienda.id,
-      idTienda: tienda.id,
-    }));
+    // Las tiendas ya vienen con la estructura correcta {text, value, idTienda}
+    arrayTiendasFormateado.value = tiendas;
+    console.log("Tiendas recibidas:", tiendas);
     
     idTiendaDefault.value = idTienda;
     inicioSemana.value = DateTime.fromJSDate(fechaBetween).startOf("week");

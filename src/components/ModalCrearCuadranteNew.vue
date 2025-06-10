@@ -182,6 +182,7 @@ import { axiosInstance } from "@/components/axios/axios";
 // Componentes
 import BsModal from "@/components/365/BsModal.vue";
 import BsButton from "@/components/365/BsButton.vue";
+import BsSelect from "@/components/365/BsSelect.vue";
 import LoaderComponent from "@/components/LoaderCuadrantes.vue";
 
 // Stores e interfaces

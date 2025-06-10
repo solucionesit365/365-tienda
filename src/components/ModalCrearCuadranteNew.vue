@@ -135,7 +135,9 @@
                       v-model:options="arrayTiendasFormateado"
                       v-model:selected="turno.idTienda"
                       :filter="true"
+                      :select-all="false"
                       :search-placeholder="'Buscar tienda'"
+                      :preselect="true"
                       @update:selected="actualizarTiendaTurno(turno, $event)"
                       class="tienda-select"
                     />
@@ -319,8 +321,11 @@ function añadirDobleTurno() {
 }
 
 function actualizarTiendaTurno(turno: any, nuevaIdTienda: number) {
-  turno.idTienda = nuevaIdTienda;
-  updateTurno(turno);
+  const index = buscarIndexFromTurno(turno._id);
+  if (index !== -1) {
+    arrayCuadrantes.value[index].idTienda = nuevaIdTienda;
+    arrayCuadrantes.value = [...arrayCuadrantes.value];
+  }
 }
 
 async function eliminarTurnoSeleccionado() {

@@ -7,29 +7,21 @@
           <i class="fas fa-arrow-left"></i>
         </button>
         <div class="semana-controls">
-          <h2 class="semana-titulo">Semana {{ punteroFecha.weekNumber }} - {{ punteroFecha.year }}</h2>
+          <h2 class="semana-titulo">
+            Semana {{ punteroFecha.weekNumber }} - {{ punteroFecha.year }}
+          </h2>
           <div class="week-navigation">
-            <BsButton 
-              class="nav-btn" 
-              variant="outline" 
-              size="sm" 
-              @click="restarSemana()"
-            >
+            <BsButton class="nav-btn" variant="outline" size="sm" @click="restarSemana()">
               <i class="fas fa-chevron-left"></i>
             </BsButton>
-            <BsButton 
-              class="nav-btn" 
-              variant="outline" 
-              size="sm" 
-              @click="sumarSemana()"
-            >
+            <BsButton class="nav-btn" variant="outline" size="sm" @click="sumarSemana()">
               <i class="fas fa-chevron-right"></i>
             </BsButton>
             <BsButton color="primary" size="sm" @click="getTurnos()">Actualizar</BsButton>
           </div>
         </div>
       </div>
-      
+
       <!-- Controles de acción optimizados -->
       <div class="header-actions">
         <template v-if="!hasPermission('ModoTienda')">
@@ -75,20 +67,20 @@
               class="filtro-select"
             />
           </div>
-          
+
           <div class="filtros-actions">
             <BsButton color="success" @click="buscarCuadrante()">
               <i class="fas fa-search me-1"></i> Buscar
             </BsButton>
-            
-            <BsButton 
+
+            <BsButton
               v-if="getRole('Super_Admin', 'RRHH_ADMIN', 'Analisis_Datos', 'Procesos')"
-              color="primary" 
+              color="primary"
               @click="getInformeTiendas()"
             >
               <i class="fas fa-store me-1"></i> Todas
             </BsButton>
-            
+
             <BsButton
               v-if="getRole('Super_Admin', 'RRHH_ADMIN', 'Analisis_Datos', 'Procesos')"
               :disabled="resCuadrantes2.length == 0"
@@ -98,7 +90,7 @@
             >
               <i class="fas fa-file-excel"></i>
             </BsButton>
-            
+
             <BsButton
               v-if="hasPermission('VerResumCuadrantes')"
               color="info"
@@ -137,14 +129,14 @@
             <thead>
               <tr>
                 <th class="col-nombre sticky-col">Empleado</th>
-                <th 
-                  v-for="(_, index) in 7" 
-                  :key="index" 
-                  class="col-dia"
-                >
+                <th v-for="(_, index) in 7" :key="index" class="col-dia">
                   <div class="dia-header">
-                    <div class="dia-nombre">{{ punteroFecha.plus({ days: index }).toFormat("EEE", { locale: "es" }) }}</div>
-                    <div class="dia-fecha">{{ punteroFecha.plus({ days: index }).toFormat("dd/MM") }}</div>
+                    <div class="dia-nombre">
+                      {{ punteroFecha.plus({ days: index }).toFormat("EEE", { locale: "es" }) }}
+                    </div>
+                    <div class="dia-fecha">
+                      {{ punteroFecha.plus({ days: index }).toFormat("dd/MM") }}
+                    </div>
                   </div>
                 </th>
                 <th class="col-horas">H. Cuadrante</th>
@@ -168,13 +160,17 @@
                   v-for="(turnos2, index2) in turno.turnos"
                   :key="index2"
                   class="col-dia"
-                  :data-th="punteroFecha.plus({ days: index2 }).toFormat('EEE dd', { locale: 'es' })"
+                  :data-th="
+                    punteroFecha.plus({ days: index2 }).toFormat('EEE dd', { locale: 'es' })
+                  "
                 >
                   <div class="turno-cell">
                     <div v-for="(turnoDia, index3) in turnos2" :key="index3" class="turno-item">
                       <template v-if="turnoDia.ausencia">
                         <div class="ausencia-badge">
-                          <span v-if="turnoDia?.ausencia.tipo" class="ausencia-tipo">{{ turnoDia.ausencia.tipo }}</span>
+                          <span v-if="turnoDia?.ausencia.tipo" class="ausencia-tipo">{{
+                            turnoDia.ausencia.tipo
+                          }}</span>
                           <span v-if="!turnoDia.ausencia.completa" class="ausencia-horas">
                             {{ turnoDia.ausencia.horas }}h
                           </span>
@@ -184,10 +180,19 @@
                       <template v-else-if="turnoDia.totalHoras > 0">
                         <div class="turno-horario">
                           <div class="horario">
-                            {{ DateTime.fromISO(turnoDia.inicio).toFormat("HH:mm") }} - 
+                            {{ DateTime.fromISO(turnoDia.inicio).toFormat("HH:mm") }} -
                             {{ DateTime.fromISO(turnoDia.final).toFormat("HH:mm") }}
                           </div>
-                          <div class="tienda-badge">
+                          <div
+                            class="tienda-badge"
+                            :class="{
+                              'tienda-diferente':
+                                turnoDia.idTienda !==
+                                (turno.idTiendaOrigen ||
+                                  tiendaSeleccionada ||
+                                  currentUser.idTienda),
+                            }"
+                          >
                             {{ getNombreTienda(turnoDia.idTienda) }}
                           </div>
                         </div>
@@ -201,22 +206,28 @@
                 <td class="col-horas" data-th="H. Cuadrante">
                   <strong>{{ getTotalHorasCuadranteLinea(turno).toFixed(2) }}h</strong>
                 </td>
-                
+
                 <td class="col-horas" data-th="H. Contrato">
                   <span v-if="turno.turnos[0][0].horasContrato">
                     {{ turno.turnos[0][0].horasContrato.toFixed(2) }}h
                   </span>
                   <span v-else>-</span>
                 </td>
-                
+
                 <td class="col-horas diferencia" data-th="Diferencia">
-                  <span 
+                  <span
                     :class="{
-                      'diferencia-positiva': (getTotalHorasCuadranteLinea(turno) - turno.turnos[0][0].horasContrato) > 0,
-                      'diferencia-negativa': (getTotalHorasCuadranteLinea(turno) - turno.turnos[0][0].horasContrato) < 0
+                      'diferencia-positiva':
+                        getTotalHorasCuadranteLinea(turno) - turno.turnos[0][0].horasContrato > 0,
+                      'diferencia-negativa':
+                        getTotalHorasCuadranteLinea(turno) - turno.turnos[0][0].horasContrato < 0,
                     }"
                   >
-                    {{ (getTotalHorasCuadranteLinea(turno) - turno.turnos[0][0].horasContrato).toFixed(2) }}h
+                    {{
+                      (
+                        getTotalHorasCuadranteLinea(turno) - turno.turnos[0][0].horasContrato
+                      ).toFixed(2)
+                    }}h
                   </span>
                 </td>
               </tr>
@@ -230,7 +241,7 @@
         <BsSpinner :style="{ width: '3rem', height: '3rem' }" />
         <p class="loading-text">Cargando cuadrantes...</p>
       </div>
-      
+
       <!-- Empty state -->
       <div v-if="!loadingCuadrantes && arrayTurnos?.length === 0" class="empty-state">
         <div class="empty-icon">
@@ -330,7 +341,6 @@ import { getEquipoDe } from "@/components/equipoGeneral";
 import * as XLSX from "xlsx";
 import router from "@/router";
 import { useUserStore } from "@/stores/user";
-import { searchByName } from "./kernel/Generic";
 
 const userStore = useUserStore();
 const punteroFecha = ref(DateTime.now().startOf("week").setLocale("es"));
@@ -355,6 +365,44 @@ const codigoEmpleado = ref("");
 const accionPendiente = ref("");
 const uidCoordinadora: Ref<any> = ref(null);
 const codigoEmpleadoModal = ref(false);
+
+// Función searchByName corregida
+function searchByName() {
+  const input = document.getElementById("buscador") as HTMLInputElement;
+  if (!input) return;
+
+  const filter = input.value.toUpperCase().trim();
+  const table = document.querySelector(".cuadrantes-table");
+  if (!table) return;
+
+  const tbody = table.querySelector("tbody");
+  if (!tbody) return;
+
+  const rows = tbody.getElementsByTagName("tr");
+
+  // Si no hay filtro, mostrar todas las filas
+  if (!filter) {
+    for (let i = 0; i < rows.length; i++) {
+      rows[i].style.display = "";
+    }
+    return;
+  }
+
+  for (let i = 0; i < rows.length; i++) {
+    const nombreCell = rows[i].querySelector(".col-nombre .empleado-nombre") as HTMLElement;
+
+    if (nombreCell && nombreCell.textContent) {
+      const txtValue = nombreCell.textContent.toUpperCase();
+
+      // Búsqueda más flexible: busca si el filtro está contenido en el nombre
+      if (txtValue.includes(filter)) {
+        rows[i].style.display = "";
+      } else {
+        rows[i].style.display = "none";
+      }
+    }
+  }
+}
 
 function restarSemana() {
   punteroFecha.value = punteroFecha.value.minus({ days: 7 });
@@ -527,6 +575,7 @@ async function getTurnos() {
     if (!resTurnos.data.ok) throw Error("No se ha podido cargar el cuadrante");
 
     arrayTurnos.value = estructurarTurnos(resTurnos.data.data);
+    console.log("arrayTurnos.value", arrayTurnos.value);
     ordenarCuadrante(resTurnos.data.data);
     pintarSemana(resTurnos.data.data);
   } catch (err) {
@@ -684,7 +733,7 @@ async function validarCodigoEmpleado() {
     Swal.fire("Error", "Debe ingresar un código de empleado", "error");
     return;
   }
-  
+
   Swal.fire({
     title: "Validando...",
     text: "Por favor, espere",
@@ -752,13 +801,13 @@ onMounted(() => {
   background: white;
   border-bottom: 2px solid #e9ecef;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  
+
   .header-left {
     display: flex;
     align-items: center;
     gap: 1rem;
   }
-  
+
   .btn-back {
     background: #6c757d;
     color: white;
@@ -771,32 +820,32 @@ onMounted(() => {
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    
+
     &:hover {
       background: #495057;
       transform: scale(1.05);
     }
   }
-  
+
   .semana-controls {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .semana-titulo {
     margin: 0;
     font-size: 1.5rem;
     font-weight: 600;
     color: #2c3e50;
   }
-  
+
   .week-navigation {
     display: flex;
     gap: 0.5rem;
     align-items: center;
   }
-  
+
   .nav-btn {
     min-width: 36px;
     height: 36px;
@@ -804,7 +853,7 @@ onMounted(() => {
     align-items: center;
     justify-content: center;
   }
-  
+
   .header-actions {
     display: flex;
     gap: 0.75rem;
@@ -890,7 +939,8 @@ onMounted(() => {
   border-collapse: collapse;
   font-size: 0.875rem;
 
-  th, td {
+  th,
+  td {
     padding: 0.75rem 0.5rem;
     border-bottom: 1px solid #e9ecef;
     text-align: center;
@@ -916,7 +966,7 @@ onMounted(() => {
   .col-nombre {
     min-width: 120px;
     text-align: left;
-    
+
     &.sticky-col {
       position: sticky;
       left: 0;
@@ -934,7 +984,7 @@ onMounted(() => {
   .col-horas {
     min-width: 80px;
     width: 80px;
-    
+
     &.diferencia {
       min-width: 90px;
     }
@@ -1004,6 +1054,26 @@ onMounted(() => {
   font-size: 0.65rem;
   font-weight: 500;
   margin-top: 0.125rem;
+  transition: all 0.3s ease;
+
+  // Cuando es una tienda diferente
+  &.tienda-diferente {
+    background: #dc3545; // Rojo
+    animation: pulse 2s infinite;
+  }
+}
+
+// Animación opcional para llamar la atención
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 .ausencia-badge {
@@ -1029,11 +1099,11 @@ onMounted(() => {
 // Fila del usuario actual
 .fila-usuario {
   background: linear-gradient(90deg, #fff3e0 0%, #ffffff 100%);
-  
+
   .col-nombre.sticky-col {
     background: linear-gradient(90deg, #fff3e0 0%, #ffffff 100%);
   }
-  
+
   .empleado-nombre {
     color: #f57c00;
     font-weight: 600;
@@ -1099,30 +1169,31 @@ onMounted(() => {
     flex-wrap: wrap;
     gap: 1rem;
   }
-  
+
   .semana-titulo {
     font-size: 1.25rem;
   }
-  
+
   .filtros-section {
     padding: 0.75rem 1rem;
   }
-  
+
   .tabla-container {
     padding: 0.75rem 1rem;
   }
-  
+
   .cuadrantes-table {
     font-size: 0.8rem;
-    
-    th, td {
+
+    th,
+    td {
       padding: 0.5rem 0.25rem;
     }
-    
+
     .col-nombre {
       min-width: 100px;
     }
-    
+
     .col-dia {
       min-width: 80px;
       width: 80px;
@@ -1135,16 +1206,16 @@ onMounted(() => {
   .cuadrantes-table-wrapper {
     overflow-x: auto;
   }
-  
+
   .cuadrantes-table {
     min-width: 800px;
   }
-  
+
   .filtros-row {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .filtros-actions {
     justify-content: center;
   }

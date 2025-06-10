@@ -131,20 +131,16 @@
                   </div>
 
                   <div class="col-tienda">
-                    <select 
-                      :value="turno.idTienda" 
-                      @change="actualizarTiendaTurno(turno, parseInt(($event.target as HTMLSelectElement).value))"
-                      class="form-select tienda-select-native"
-                    >
-                      <option value="">Seleccionar tienda</option>
-                      <option 
-                        v-for="tienda in arrayTiendasFormateado" 
-                        :key="tienda.value" 
-                        :value="tienda.value"
-                      >
-                        {{ tienda.text }}
-                      </option>
-                    </select>
+                    <BsSelect
+                      :options="arrayTiendasFormateado"
+                      :selected="turno.idTienda"
+                      :filter="true"
+                      :select-all="false"
+                      :search-placeholder="'Buscar tienda'"
+                      :preselect="false"
+                      @update:selected="actualizarTiendaTurno(turno, $event)"
+                      class="tienda-select"
+                    />
                   </div>
 
                   <div class="col-horas">
@@ -188,6 +184,7 @@ import { axiosInstance } from "@/components/axios/axios";
 // Componentes
 import BsModal from "@/components/365/BsModal.vue";
 import BsButton from "@/components/365/BsButton.vue";
+import BsSelect from "@/components/365/BsSelect.vue";
 import LoaderComponent from "@/components/LoaderCuadrantes.vue";
 
 // Stores e interfaces
@@ -316,10 +313,10 @@ function añadirDobleTurno() {
   });
 }
 
-function actualizarTiendaTurno(turno: any, nuevaIdTienda: number) {
+function actualizarTiendaTurno(turno: any, nuevaIdTienda: number | string) {
   const index = buscarIndexFromTurno(turno._id);
   if (index !== -1) {
-    arrayCuadrantes.value[index].idTienda = nuevaIdTienda;
+    arrayCuadrantes.value[index].idTienda = typeof nuevaIdTienda === 'string' ? parseInt(nuevaIdTienda) : nuevaIdTienda;
     arrayCuadrantes.value = [...arrayCuadrantes.value];
   }
 }
@@ -350,7 +347,6 @@ async function abrirModal(fechaBetween: Date, tiendas: any[], idTienda: number) 
     arrayTiendas.value = tiendas;
     // Las tiendas ya vienen con la estructura correcta {text, value, idTienda}
     arrayTiendasFormateado.value = tiendas;
-    console.log("Tiendas recibidas:", tiendas);
     
     idTiendaDefault.value = idTienda;
     inicioSemana.value = DateTime.fromJSDate(fechaBetween).startOf("week");
@@ -844,26 +840,30 @@ onMounted(async () => {
     padding: 0.375rem 0.5rem;
     border: 1px solid #ced4da;
     border-radius: 4px;
+    min-height: auto;
     
     &:focus {
       border-color: #667eea;
       box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
     }
   }
-}
-
-.tienda-select-native {
-  width: 100%;
-  font-size: 0.85rem;
-  padding: 0.375rem 0.5rem;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
-  background-color: white;
   
-  &:focus {
-    border-color: #667eea;
-    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
-    outline: none;
+  :deep(.dropdown-toggle) {
+    font-size: 0.85rem;
+    padding: 0.375rem 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    
+    &:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+    }
+  }
+  
+  :deep(.dropdown-menu) {
+    font-size: 0.85rem;
+    max-height: 200px;
+    overflow-y: auto;
   }
 }
 

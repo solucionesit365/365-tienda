@@ -1,232 +1,251 @@
 <template>
-  <i class="fas fa-arrow-circle-left fs-2 mt-3 pe-auto" @click="$router.go(-1)" />
-  <div class="d-inline-flex mt-2">
-    <span class="fs-6 ms-1 me-1">Semana </span>
-    <span class="me-1" style="font-weight: bold">{{ punteroFecha.weekNumber }} </span>
-    de
-    {{ punteroFecha.year }}
-    <BsButton class="btn-responsive" size="lg" color="secondary" @click="restarSemana()"
-      >-</BsButton
-    >
-    <BsButton class="btn-responsive" size="lg" color="secondary" @click="sumarSemana()">+</BsButton>
-    <BsButton color="primary" @click="getTurnos()">Ver</BsButton>
-  </div>
-  <div class="row justify-content-center mt-2">
-    <div class="col">
-      <div class="card border-top border-5">
-        <div class="card-body">
-          <div class="navegacion" v-if="!hasPermission('ModoTienda')">
-            <div class="col">
-              <BsButton
-                v-if="hasPermission('CrearCuadrante')"
-                class="w-100"
-                color="success"
-                @click="abrirModalCrearCuadrante()"
-                >+ Turno</BsButton
-              >
-            </div>
-            <div class="col ms-2">
-              <BsButton
-                v-if="hasPermission('CrearCuadrante')"
-                class="w-100"
-                color="warning"
-                @click="
-                  modalCopiarSemanasRef.abrirModal(currentUser.idTienda, punteroFecha.weekNumber)
-                "
-                >Copiar</BsButton
-              >
-            </div>
-          </div>
-          <div class="navegacion" v-if="hasPermission('ModoTienda')">
-            <div class="col">
-              <BsButton class="w-25" color="success" @click="authCoordi('Crear cuadrantes')"
-                ><i class="fas fa-lock"></i> Crear cuadrante</BsButton
-              >
-            </div>
-          </div>
-
-          <div class="mt-3" v-if="hasPermission('ConsultarCuadrante')">
-            <div class="mb-3 row">
-              <div class="col-auto">
-                <div class="form-text">Tiendas</div>
-                <div class="input-group">
-                  <BsSelect
-                    v-model:options="arrayTiendas"
-                    v-model:selected="tiendaSeleccionada"
-                    :filter="true"
-                    :select-all="true"
-                    :search-placeholder="'Buscar'"
-                    :options-selected-label="'tienda/s seleccionada/s'"
-                    :preselect="false"
-                  />
-                </div>
-              </div>
-
-              <div class="col-auto">
-                <BsButton class="w-100, mt-4" color="success" @click="buscarCuadrante()"
-                  >buscar</BsButton
-                >
-              </div>
-              <div
-                v-if="getRole('Super_Admin', 'RRHH_ADMIN', 'Analisis_Datos', 'Procesos')"
-                class="col-auto"
-              >
-                <BsButton class="w-100, mt-4" color="primary" @click="getInformeTiendas()"
-                  >todas</BsButton
-                >
-              </div>
-
-              <div
-                v-if="getRole('Super_Admin', 'RRHH_ADMIN', 'Analisis_Datos', 'Procesos')"
-                class="col-auto mt-3"
-              >
-                <BsButton
-                  v-if="getRole('Super_Admin', 'RRHH_ADMIN', 'Analisis_Datos', 'Procesos')"
-                  :class="{ disabled: resCuadrantes2.length == 0 }"
-                  class="w-100"
-                  color="primary"
-                  @click="nombreExcelModal = true"
-                >
-                  <i class="fa-sharp fa-solid fa-file-excel fs-3"></i>
-                </BsButton>
-              </div>
-
-              <div class="col-auto mt-4">
-                <BsButton
-                  v-if="hasPermission('VerResumCuadrantes')"
-                  class="w-100"
-                  color="info"
-                  @click="router.push('/resumenCuadrantes')"
-                >
-                  Resumen
-                </BsButton>
-              </div>
-            </div>
-          </div>
-
-          <div v-if="!loadingCuadrantes" class="table-responsive mt-2">
-            <div class="col-12 col-xl-12 col-sm-12 mb-2">
-              <BsInput
-                id="buscador"
-                :input-group="true"
-                :form-outline="false"
-                aria-label="buscar por nombre"
-                placeholder="Buscar por nombre"
-                @keyup="searchByName()"
-              >
-                <span class="input-group-text"><i class="fas fa-search" /></span>
-              </BsInput>
-            </div>
-            <table id="tabla" class="table">
-              <thead class="fw-bold">
-                <tr>
-                  <th scope="col">Nombre</th>
-                  <th scope="col" v-for="(_, index) in 7" v-bind:key="index" class="wider-col">
-                    {{ punteroFecha.plus({ days: index }).toFormat("EEEE dd/MM") }}
-                  </th>
-                  <th scope="col">Horas cuadrante</th>
-                  <th scope="col">Horas contrato</th>
-                  <!-- <th scope="col">Bolsa horas inicial</th> -->
-                  <th scope="col">Horas +/-</th>
-                  <!-- <th scope="col">Bolsa final</th> -->
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(turno, index) in arrayTurnos"
-                  v-bind:key="index"
-                  :class="{ soyYo: currentUser.idSql === turno.idTrabajador }"
-                >
-                  <td data-th="Nombre">{{ cleanName(turno.nombre) }}</td>
-
-                  <!-- Aquí hemos añadido el atributo :data-th -->
-                  <td
-                    v-for="(turnos2, index2) in turno.turnos"
-                    v-bind:key="index2"
-                    :data-th="punteroFecha.plus({ days: index2 }).toFormat('EEEE dd')"
-                  >
-                    <div v-for="(turnoDia, index3) in turnos2" :key="index3">
-                      <!-- Ver si hay una ausencia -->
-                      <template v-if="turnoDia.ausencia">
-                        <span v-if="turnoDia?.ausencia.tipo">{{ turnoDia.ausencia.tipo }}</span>
-                        <span v-if="!turnoDia.ausencia.completa"
-                          >Ausencia {{ turnoDia.ausencia.horas }}h</span
-                        >
-                      </template>
-
-                      <!-- Si no hay ausencia, entonces mostrar la hora del turno -->
-                      <template v-else-if="turnoDia.totalHoras > 0">
-                        {{ DateTime.fromISO(turnoDia.inicio).toFormat("HH:mm") }}/{{
-                          DateTime.fromISO(turnoDia.final).toFormat("HH:mm")
-                        }}
-                        <span style="font-weight: bold">{{
-                          getNombreTienda(turnoDia.idTienda)
-                        }}</span>
-                      </template>
-
-                      <!-- Si no hay ni ausencia ni horas de turno, mostrar '-' -->
-                      <span v-else>-</span>
-                    </div>
-                  </td>
-
-                  <td data-th="Horas cuadrante">
-                    {{ getTotalHorasCuadranteLinea(turno).toFixed(2) }}
-                  </td>
-                  <td v-if="turno.turnos[0][0].horasContrato" data-th="Horas contrato">
-                    {{ turno.turnos[0][0].horasContrato.toFixed(2) }}
-                  </td>
-                  <td data-th="Horas contrato" v-else>-</td>
-                  <!-- <td
-                    v-if="turno.turnos[0][0].bolsaHorasInicial"
-                    data-th="Bolsa Inicial"
-                  >
-                    {{ turno.turnos[0][0].bolsaHorasInicial }}
-                  </td>
-                  <td data-th="Bolsa Inicial" v-else>-</td> -->
-                  <td data-th="Horas +/-">
-                    {{
-                      (
-                        getTotalHorasCuadranteLinea(turno) - turno.turnos[0][0].horasContrato
-                      ).toFixed(2)
-                    }}
-                  </td>
-                  <!-- <td data-th="Bolsa final">
-                    {{
-                      getTotalHorasCuadranteLinea(turno) -
-                      turno.turnos[0][0].horasContrato +
-                      (turno.turnos[0][0].bolsaHorasInicial
-                        ? turno.turnos[0][0].bolsaHorasInicial
-                        : 0)
-                    }}
-                  </td> -->
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div v-else class="row text-center mt-3">
-            <div><BsSpinner :style="{ width: '5rem', height: '5rem' }" /></div>
-          </div>
-          <div
-            v-if="!loadingCuadrantes && arrayTurnos?.length === 0"
-            class="row text-center text-center"
-          >
-            <figure class="figure">
-              <img
-                src="@/assets/img/nodata.png"
-                class="rounded mx-auto d-block mt-3 img-fluid"
-                alt="..."
-                style="width: 60%"
-              />
-              <figcaption class="figure-caption text-center">
-                No hay datos que mostrar, haz una nueva busqueda.
-              </figcaption>
-            </figure>
+  <div class="cuadrantes-container">
+    <!-- Header optimizado para tablet -->
+    <header class="cuadrantes-header">
+      <div class="header-left">
+        <button class="btn-back" @click="$router.go(-1)">
+          <i class="fas fa-arrow-left"></i>
+        </button>
+        <div class="semana-controls">
+          <h2 class="semana-titulo">Semana {{ punteroFecha.weekNumber }} - {{ punteroFecha.year }}</h2>
+          <div class="week-navigation">
+            <BsButton 
+              class="nav-btn" 
+              variant="outline" 
+              size="sm" 
+              @click="restarSemana()"
+            >
+              <i class="fas fa-chevron-left"></i>
+            </BsButton>
+            <BsButton 
+              class="nav-btn" 
+              variant="outline" 
+              size="sm" 
+              @click="sumarSemana()"
+            >
+              <i class="fas fa-chevron-right"></i>
+            </BsButton>
+            <BsButton color="primary" size="sm" @click="getTurnos()">Actualizar</BsButton>
           </div>
         </div>
       </div>
-    </div>
+      
+      <!-- Controles de acción optimizados -->
+      <div class="header-actions">
+        <template v-if="!hasPermission('ModoTienda')">
+          <BsButton
+            v-if="hasPermission('CrearCuadrante')"
+            color="success"
+            size="sm"
+            @click="abrirModalCrearCuadrante()"
+          >
+            <i class="fas fa-plus me-1"></i> Turno
+          </BsButton>
+          <BsButton
+            v-if="hasPermission('CrearCuadrante')"
+            color="warning"
+            size="sm"
+            @click="modalCopiarSemanasRef.abrirModal(currentUser.idTienda, punteroFecha.weekNumber)"
+          >
+            <i class="fas fa-copy me-1"></i> Copiar
+          </BsButton>
+        </template>
+        <template v-else>
+          <BsButton color="success" size="sm" @click="authCoordi('Crear cuadrantes')">
+            <i class="fas fa-lock me-1"></i> Crear cuadrante
+          </BsButton>
+        </template>
+      </div>
+    </header>
+
+    <!-- Filtros y controles optimizados para tablet -->
+    <section v-if="hasPermission('ConsultarCuadrante')" class="filtros-section">
+      <div class="filtros-card">
+        <div class="filtros-row">
+          <div class="filtro-item">
+            <label class="filtro-label">Tiendas</label>
+            <BsSelect
+              v-model:options="arrayTiendas"
+              v-model:selected="tiendaSeleccionada"
+              :filter="true"
+              :select-all="true"
+              :search-placeholder="'Buscar tienda'"
+              :options-selected-label="'tienda/s seleccionada/s'"
+              :preselect="false"
+              class="filtro-select"
+            />
+          </div>
+          
+          <div class="filtros-actions">
+            <BsButton color="success" @click="buscarCuadrante()">
+              <i class="fas fa-search me-1"></i> Buscar
+            </BsButton>
+            
+            <BsButton 
+              v-if="getRole('Super_Admin', 'RRHH_ADMIN', 'Analisis_Datos', 'Procesos')"
+              color="primary" 
+              @click="getInformeTiendas()"
+            >
+              <i class="fas fa-store me-1"></i> Todas
+            </BsButton>
+            
+            <BsButton
+              v-if="getRole('Super_Admin', 'RRHH_ADMIN', 'Analisis_Datos', 'Procesos')"
+              :disabled="resCuadrantes2.length == 0"
+              color="success"
+              variant="outline"
+              @click="nombreExcelModal = true"
+            >
+              <i class="fas fa-file-excel"></i>
+            </BsButton>
+            
+            <BsButton
+              v-if="hasPermission('VerResumCuadrantes')"
+              color="info"
+              @click="router.push('/resumenCuadrantes')"
+            >
+              <i class="fas fa-chart-bar me-1"></i> Resumen
+            </BsButton>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contenido principal -->
+    <main class="cuadrantes-main">
+      <div v-if="!loadingCuadrantes" class="tabla-container">
+        <!-- Buscador optimizado -->
+        <div class="search-container">
+          <BsInput
+            id="buscador"
+            :input-group="true"
+            :form-outline="false"
+            aria-label="buscar por nombre"
+            placeholder="Buscar empleado por nombre..."
+            @keyup="searchByName()"
+            class="search-input"
+          >
+            <span class="input-group-text">
+              <i class="fas fa-search"></i>
+            </span>
+          </BsInput>
+        </div>
+
+        <!-- Tabla optimizada para tablet landscape -->
+        <div class="cuadrantes-table-wrapper">
+          <table class="cuadrantes-table">
+            <thead>
+              <tr>
+                <th class="col-nombre sticky-col">Empleado</th>
+                <th 
+                  v-for="(_, index) in 7" 
+                  :key="index" 
+                  class="col-dia"
+                >
+                  <div class="dia-header">
+                    <div class="dia-nombre">{{ punteroFecha.plus({ days: index }).toFormat("EEE", { locale: "es" }) }}</div>
+                    <div class="dia-fecha">{{ punteroFecha.plus({ days: index }).toFormat("dd/MM") }}</div>
+                  </div>
+                </th>
+                <th class="col-horas">H. Cuadrante</th>
+                <th class="col-horas">H. Contrato</th>
+                <th class="col-horas diferencia">Diferencia</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(turno, index) in arrayTurnos"
+                :key="index"
+                :class="{ 'fila-usuario': currentUser.idSql === turno.idTrabajador }"
+              >
+                <td class="col-nombre sticky-col">
+                  <div class="empleado-info">
+                    <span class="empleado-nombre">{{ cleanName(turno.nombre) }}</span>
+                  </div>
+                </td>
+
+                <td
+                  v-for="(turnos2, index2) in turno.turnos"
+                  :key="index2"
+                  class="col-dia"
+                  :data-th="punteroFecha.plus({ days: index2 }).toFormat('EEE dd', { locale: 'es' })"
+                >
+                  <div class="turno-cell">
+                    <div v-for="(turnoDia, index3) in turnos2" :key="index3" class="turno-item">
+                      <template v-if="turnoDia.ausencia">
+                        <div class="ausencia-badge">
+                          <span v-if="turnoDia?.ausencia.tipo" class="ausencia-tipo">{{ turnoDia.ausencia.tipo }}</span>
+                          <span v-if="!turnoDia.ausencia.completa" class="ausencia-horas">
+                            {{ turnoDia.ausencia.horas }}h
+                          </span>
+                        </div>
+                      </template>
+
+                      <template v-else-if="turnoDia.totalHoras > 0">
+                        <div class="turno-horario">
+                          <div class="horario">
+                            {{ DateTime.fromISO(turnoDia.inicio).toFormat("HH:mm") }} - 
+                            {{ DateTime.fromISO(turnoDia.final).toFormat("HH:mm") }}
+                          </div>
+                          <div class="tienda-badge">
+                            {{ getNombreTienda(turnoDia.idTienda) }}
+                          </div>
+                        </div>
+                      </template>
+
+                      <span v-else class="sin-turno">-</span>
+                    </div>
+                  </div>
+                </td>
+
+                <td class="col-horas" data-th="H. Cuadrante">
+                  <strong>{{ getTotalHorasCuadranteLinea(turno).toFixed(2) }}h</strong>
+                </td>
+                
+                <td class="col-horas" data-th="H. Contrato">
+                  <span v-if="turno.turnos[0][0].horasContrato">
+                    {{ turno.turnos[0][0].horasContrato.toFixed(2) }}h
+                  </span>
+                  <span v-else>-</span>
+                </td>
+                
+                <td class="col-horas diferencia" data-th="Diferencia">
+                  <span 
+                    :class="{
+                      'diferencia-positiva': (getTotalHorasCuadranteLinea(turno) - turno.turnos[0][0].horasContrato) > 0,
+                      'diferencia-negativa': (getTotalHorasCuadranteLinea(turno) - turno.turnos[0][0].horasContrato) < 0
+                    }"
+                  >
+                    {{ (getTotalHorasCuadranteLinea(turno) - turno.turnos[0][0].horasContrato).toFixed(2) }}h
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Loading state -->
+      <div v-else class="loading-container">
+        <BsSpinner :style="{ width: '3rem', height: '3rem' }" />
+        <p class="loading-text">Cargando cuadrantes...</p>
+      </div>
+      
+      <!-- Empty state -->
+      <div v-if="!loadingCuadrantes && arrayTurnos?.length === 0" class="empty-state">
+        <div class="empty-icon">
+          <i class="fas fa-calendar-times"></i>
+        </div>
+        <h3>No hay datos disponibles</h3>
+        <p>No se encontraron cuadrantes para los filtros seleccionados.</p>
+        <BsButton color="primary" @click="getTurnos()">
+          <i class="fas fa-refresh me-1"></i> Intentar de nuevo
+        </BsButton>
+      </div>
+    </main>
   </div>
 
+  <!-- Modales -->
   <BsModal
     id="nombreExcelModal"
     tabindex="-1"
@@ -235,14 +254,14 @@
     :centered="true"
   >
     <BsModalHeader @close="nombreExcelModal = false">
-      <BsModalTitle id="nombreExcelModalTitle"> ¿Cómo quieres llamar al archivo? </BsModalTitle>
+      <BsModalTitle id="nombreExcelModalTitle">¿Cómo quieres llamar al archivo?</BsModalTitle>
     </BsModalHeader>
     <BsModalBody>
       <BsInput label="Nombre de archivo" v-model="nombreExcel" />
     </BsModalBody>
     <BsModalFooter>
-      <BsButton color="secondary" @click="nombreExcelModal = false"> Close </BsButton>
-      <BsButton @click="importExcelxD()" color="success"> Descargar </BsButton>
+      <BsButton color="secondary" @click="nombreExcelModal = false">Cancelar</BsButton>
+      <BsButton @click="importExcelxD()" color="success">Descargar</BsButton>
     </BsModalFooter>
   </BsModal>
 
@@ -256,7 +275,7 @@
     labelledby="codigoEmpleadoModalLabel"
   >
     <BsModalHeader @close="codigoEmpleadoModal = false">
-      <BsModalTitle id="codigoEmpleadoModalLabel"> Introducir Código de Empleado </BsModalTitle>
+      <BsModalTitle id="codigoEmpleadoModalLabel">Introducir Código de Empleado</BsModalTitle>
     </BsModalHeader>
     <BsModalBody>
       <div class="row justify-content-center">
@@ -292,7 +311,6 @@ import { computed, onMounted, ref, provide, type Ref } from "vue";
 import { DateTime } from "luxon";
 import ModalCopiarSemanas from "./ModalCopiarSemanas.vue";
 import { hasPermission } from "@/components/rolesPermisos";
-// Importar los nuevos componentes
 import BsButton from "@/components/365/BsButton.vue";
 import BsInput from "@/components/365/BsInput.vue";
 import BsSelect from "@/components/365/BsSelect.vue";
@@ -314,7 +332,6 @@ import router from "@/router";
 import { useUserStore } from "@/stores/user";
 import { searchByName } from "./kernel/Generic";
 
-// El resto del código permanece igual...
 const userStore = useUserStore();
 const punteroFecha = ref(DateTime.now().startOf("week").setLocale("es"));
 const arrayTiendas: Ref<any[]> = ref([]);
@@ -339,7 +356,6 @@ const accionPendiente = ref("");
 const uidCoordinadora: Ref<any> = ref(null);
 const codigoEmpleadoModal = ref(false);
 
-// Todas las funciones permanecen exactamente igual
 function restarSemana() {
   punteroFecha.value = punteroFecha.value.minus({ days: 7 });
 }
@@ -389,7 +405,6 @@ async function buscarCuadrante() {
   }
 
   if (tiendaSeleccionada.value == "todas" && semanaBuscar.value == "todas") {
-    // caso 1: todas las tiendas todas las semanas
     try {
       loadingCuadrantes.value = true;
       const resTodos = await axiosInstance.get("cuadrantes/getTodos");
@@ -406,7 +421,6 @@ async function buscarCuadrante() {
       Swal.fire("Oops...", "Ha habido un problema...", "error");
     }
   } else if (tiendaSeleccionada.value == "todas" && semanaBuscar.value != "todas") {
-    // caso 2: todas las tiendas 1 semana
     try {
       loadingCuadrantes.value = true;
       const resCuadrantes = await axiosInstance.get("cuadrantes/getTiendasUnaSemana", {
@@ -427,7 +441,6 @@ async function buscarCuadrante() {
       Swal.fire("Oops...", "Ha habido un problema...", "error");
     }
   } else if (tiendaSeleccionada.value != "todas") {
-    // Caso 3: 1 tienda todas las semanas
     try {
       loadingCuadrantes.value = true;
       const resCuadrantes = await axiosInstance.get("cuadrantes/getTiendaTodasSemanas", {
@@ -519,7 +532,6 @@ async function getTurnos() {
   } catch (err) {
     if (!user.value.llevaEquipo) {
       console.log(err);
-
       Swal.fire("Oops...", "Ha habido un problema", "error");
     }
   } finally {
@@ -551,7 +563,6 @@ function getTotalHorasCuadranteLinea(data: any) {
     return horasContrato;
   }
 
-  // Si no todos los turnos tienen la ausencia, sumar las horas normalmente
   let sum = 0;
   for (let i = 0; i < data.turnos.length; i++) {
     for (let j = 0; j < data.turnos[i].length; j++) {
@@ -612,8 +623,7 @@ async function getInformeTiendas() {
     });
     if (resCuadrantes.data.ok) {
       resCuadrantes2.value = resCuadrantes.data.data.reduce((acc: any, item: any) => {
-        const nombreTienda = getNombreTienda(item.idTienda); // Obtiene el nombre de la tienda
-        // Verificar si el nombre de la tienda comienza con 'T--' o 'M--'
+        const nombreTienda = getNombreTienda(item.idTienda);
         if (/^(t--|m--)/i.test(nombreTienda)) {
           if (acc[item.idTienda]) {
             acc[item.idTienda].totalHoras += item.totalHoras;
@@ -674,7 +684,7 @@ async function validarCodigoEmpleado() {
     Swal.fire("Error", "Debe ingresar un código de empleado", "error");
     return;
   }
-  // Mostrar loading
+  
   Swal.fire({
     title: "Validando...",
     text: "Por favor, espere",
@@ -724,87 +734,439 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.turnoActivo {
-  background-color: rgb(78, 78, 78);
-  color: #ddd;
-}
-.tituloSemana {
-  font-size: 1.3rem;
-  font-weight: bold;
-}
-
-.card {
-  padding: 0.5em;
-  border-radius: 1em;
-  border: 1em;
-  border-top-color: #3381bd !important;
-  box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
-}
-//Responsive table
-.table tbody {
-  font-size: 0.8rem !important;
-}
-table {
-  width: 100%;
-  border-spacing: 3px;
-  border-collapse: separate;
+// Contenedor principal optimizado para tablet
+.cuadrantes-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  overflow: hidden;
 }
 
-th:first-child,
-td:first-child {
-  color: rgb(0, 0, 0);
-  font-weight: bold;
-  background: #f5b95e;
-}
-
-th,
-td {
-  padding: 0.3em;
-  text-align: center;
-  background: white;
-}
-
-@media screen and (max-width: 640px) {
-  thead {
-    display: none;
-  }
-  .btn-responsive {
-    font-size: 14px;
-    padding: 10px 16px;
-  }
-
-  td {
-    display: block;
-    position: relative;
-    padding-left: 50%;
-    margin-bottom: 3px;
-    text-align: right;
-
-    &:first-child {
-      font-weight: bold;
-    }
-
-    &:before {
-      content: attr(data-th);
-      position: absolute;
-      top: 0.75em;
-      left: 0.75em;
-      width: 50%;
-      font-weight: inherit;
-      text-align: left;
-    }
-  }
-}
-
-.navegacion {
+// Header optimizado
+.cuadrantes-header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: white;
+  border-bottom: 2px solid #e9ecef;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .btn-back {
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      background: #495057;
+      transform: scale(1.05);
+    }
+  }
+  
+  .semana-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .semana-titulo {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2c3e50;
+  }
+  
+  .week-navigation {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+  
+  .nav-btn {
+    min-width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .header-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
 }
-.soyYo {
-  color: rgb(54, 121, 247);
-  font-weight: bold;
+
+// Sección de filtros
+.filtros-section {
+  padding: 1rem 1.5rem;
+  background: white;
+  border-bottom: 1px solid #e9ecef;
 }
-// .wider-col {
-//   min-width: 13rem;
-// }
+
+.filtros-card {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 1rem;
+}
+
+.filtros-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filtro-item {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filtro-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.filtros-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+// Contenido principal
+.cuadrantes-main {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tabla-container {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 1.5rem;
+}
+
+.search-container {
+  margin-bottom: 1rem;
+}
+
+.search-input {
+  max-width: 400px;
+}
+
+// Tabla optimizada para tablet landscape
+.cuadrantes-table-wrapper {
+  flex: 1;
+  overflow: auto;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.cuadrantes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th, td {
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid #e9ecef;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+
+    th {
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  // Columnas responsive
+  .col-nombre {
+    min-width: 120px;
+    text-align: left;
+    
+    &.sticky-col {
+      position: sticky;
+      left: 0;
+      background: white;
+      z-index: 5;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .col-dia {
+    min-width: 100px;
+    width: 100px;
+  }
+
+  .col-horas {
+    min-width: 80px;
+    width: 80px;
+    
+    &.diferencia {
+      min-width: 90px;
+    }
+  }
+}
+
+// Elementos de la tabla
+.dia-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dia-nombre {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.dia-fecha {
+  font-size: 0.7rem;
+  opacity: 0.9;
+}
+
+.empleado-info {
+  display: flex;
+  align-items: center;
+}
+
+.empleado-nombre {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.turno-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-height: 50px;
+  justify-content: center;
+}
+
+.turno-item {
+  border-radius: 4px;
+  padding: 0.25rem;
+}
+
+.turno-horario {
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 4px;
+  padding: 0.25rem;
+}
+
+.horario {
+  font-weight: 600;
+  color: #1976d2;
+  font-size: 0.75rem;
+}
+
+.tienda-badge {
+  background: #4caf50;
+  color: white;
+  padding: 0.125rem 0.25rem;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  margin-top: 0.125rem;
+}
+
+.ausencia-badge {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  padding: 0.25rem;
+}
+
+.ausencia-tipo,
+.ausencia-horas {
+  display: block;
+  font-size: 0.7rem;
+  color: #856404;
+  font-weight: 500;
+}
+
+.sin-turno {
+  color: #6c757d;
+  font-style: italic;
+}
+
+// Fila del usuario actual
+.fila-usuario {
+  background: linear-gradient(90deg, #fff3e0 0%, #ffffff 100%);
+  
+  .col-nombre.sticky-col {
+    background: linear-gradient(90deg, #fff3e0 0%, #ffffff 100%);
+  }
+  
+  .empleado-nombre {
+    color: #f57c00;
+    font-weight: 600;
+  }
+}
+
+// Diferencias de horas
+.diferencia-positiva {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.diferencia-negativa {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+// Estados de carga y vacío
+.loading-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.loading-text {
+  color: #6c757d;
+  font-size: 1.1rem;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 2rem;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  color: #dee2e6;
+}
+
+.empty-state h3 {
+  color: #495057;
+  margin: 0;
+}
+
+.empty-state p {
+  color: #6c757d;
+  text-align: center;
+  margin: 0;
+}
+
+// Responsive para tablets más pequeñas
+@media (max-width: 1024px) {
+  .cuadrantes-header {
+    padding: 0.75rem 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .semana-titulo {
+    font-size: 1.25rem;
+  }
+  
+  .filtros-section {
+    padding: 0.75rem 1rem;
+  }
+  
+  .tabla-container {
+    padding: 0.75rem 1rem;
+  }
+  
+  .cuadrantes-table {
+    font-size: 0.8rem;
+    
+    th, td {
+      padding: 0.5rem 0.25rem;
+    }
+    
+    .col-nombre {
+      min-width: 100px;
+    }
+    
+    .col-dia {
+      min-width: 80px;
+      width: 80px;
+    }
+  }
+}
+
+// Responsive para móviles
+@media (max-width: 768px) {
+  .cuadrantes-table-wrapper {
+    overflow-x: auto;
+  }
+  
+  .cuadrantes-table {
+    min-width: 800px;
+  }
+  
+  .filtros-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filtros-actions {
+    justify-content: center;
+  }
+}
+
+// Scrollbar personalizado
+.cuadrantes-table-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.cuadrantes-table-wrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.cuadrantes-table-wrapper::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.cuadrantes-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
 </style>

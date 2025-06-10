@@ -25,7 +25,7 @@ export async function insertDocument(payload: unknown, nombreColeccion: string) 
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 export async function updateDocument(payload: any, nombreColeccion: string, idDocument: string) {
   try {
     const docRef = doc(db, nombreColeccion, idDocument);
@@ -87,7 +87,7 @@ export async function getDocumentsQuery(
   valor: unknown,
 ) {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const data: any = [];
     const coleccion = collection(db, nombreColeccion);
     const donde = where(campoABuscar, operador, valor);
@@ -116,7 +116,7 @@ export async function getDocumentsMultiQuery(
   valor12: unknown,
 ) {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const data: any = [];
     const coleccion = collection(db, nombreColeccion);
     const query1 = where(campoABuscar1, operador1, valor1);

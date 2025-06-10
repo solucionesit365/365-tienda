@@ -1,7 +1,7 @@
 <template>
   <template v-if="!loading">
     <NavComponent v-if="userStore.user.logeado" />
-    <div class="container">
+    <div class="container-fluid">
       <BackButton />
       <RouterView />
     </div>

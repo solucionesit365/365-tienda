@@ -42,11 +42,11 @@
             <BsButton
               color="primary"
               class="w-100 mb-2"
-              :disabled="!trabajadorSelected"
-              @click="añadirTurnoRapido"
+              :disabled="!trabajadorSelected || !turnoSeleccionado"
+              @click="añadirDobleTurno"
             >
               <i class="bi bi-plus-circle me-2"></i>
-              Añadir Turno
+              Añadir Doble Turno
             </BsButton>
 
             <BsButton
@@ -58,6 +58,16 @@
               <span v-if="guardando" class="spinner-border spinner-border-sm me-2"></span>
               <i v-else class="bi bi-check-circle me-2"></i>
               Guardar Cambios
+            </BsButton>
+
+            <BsButton
+              v-if="turnoSeleccionado && esTurnoBorrable(turnoSeleccionado)"
+              color="danger"
+              class="w-100 mb-2"
+              @click="eliminarTurnoSeleccionado"
+            >
+              <i class="bi bi-trash me-2"></i>
+              Eliminar Turno
             </BsButton>
 
             <BsButton color="secondary" class="w-100" @click="modalCrearCuadrante = false">
@@ -77,7 +87,6 @@
                 <div class="col-horario">Horario</div>
                 <div class="col-tienda">Tienda</div>
                 <div class="col-horas">Horas</div>
-                <div class="col-acciones">Acciones</div>
               </div>
 
               <div class="tabla-body">
@@ -85,7 +94,11 @@
                   v-for="turno in arrayCuadrantesOrdenados"
                   :key="turno._id"
                   class="tabla-row"
-                  :class="{ 'row-ausencia': turno.ausencia }"
+                  :class="{ 
+                    'row-ausencia': turno.ausencia,
+                    'row-seleccionada': turnoSeleccionado && turnoSeleccionado._id === turno._id
+                  }"
+                  @click="seleccionarTurno(turno)"
                 >
                   <div class="col-dia">
                     <div class="dia-info">
@@ -118,30 +131,20 @@
                   </div>
 
                   <div class="col-tienda">
-                    <span class="tienda-nombre">{{ obtenerNombreTienda(turno.idTienda) }}</span>
+                    <BsSelect
+                      v-model:options="arrayTiendasFormateado"
+                      v-model:selected="turno.idTienda"
+                      :filter="true"
+                      :search-placeholder="'Buscar tienda'"
+                      @update:selected="actualizarTiendaTurno(turno, $event)"
+                      class="tienda-select"
+                    />
                   </div>
 
                   <div class="col-horas">
                     <span class="horas-turno"> {{ calcularHorasTurno(turno) }}h </span>
                   </div>
 
-                  <div class="col-acciones">
-                    <button
-                      class="btn-accion btn-config"
-                      @click="abrirConfigurador(turno)"
-                      title="Configurar"
-                    >
-                      <i class="bi bi-gear"></i>
-                    </button>
-                    <button
-                      v-if="turno.borrable"
-                      class="btn-accion btn-delete"
-                      @click="borrarTurno({ idTurno: turno._id })"
-                      title="Eliminar"
-                    >
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </div>
                 </div>
               </div>
             </div>
@@ -168,13 +171,6 @@
     </div>
   </BsModal>
 
-  <!-- Configurador de turno -->
-  <ConfiguradorTurnoComponent
-    ref="configuradorRef"
-    @add-cuadrante="handleAddCuadrante"
-    @update:tienda="updateTienda"
-    @borrar:turno="borrarTurno"
-  />
 </template>
 
 <script setup lang="ts">
@@ -186,7 +182,6 @@ import { axiosInstance } from "@/components/axios/axios";
 // Componentes
 import BsModal from "@/components/365/BsModal.vue";
 import BsButton from "@/components/365/BsButton.vue";
-import ConfiguradorTurnoComponent from "@/components/ConfiguradorTurno.vue";
 import LoaderComponent from "@/components/LoaderCuadrantes.vue";
 
 // Stores e interfaces
@@ -216,8 +211,8 @@ const guardando = ref(false);
 const trabajadores: Ref<{ text: string; value: number }[]> = ref([]);
 const currentUser = computed(() => userStore.user);
 const arrayCuadrantes: Ref<any[]> = ref([]);
-const configuradorRef: Ref<InstanceType<typeof ConfiguradorTurnoComponent> | null> = ref(null);
 const cargando = ref(false);
+const turnoSeleccionado: Ref<any> = ref(null);
 const getCuadrantes = inject<() => TCuadranteFrontend[]>("getCuadrantes");
 
 // Computed
@@ -269,11 +264,6 @@ function calcularHorasTurno(turno: any) {
   return turno.final.diff(turno.inicio, "hours").hours.toFixed(1);
 }
 
-function obtenerNombreTienda(idTienda: number | null) {
-  if (!idTienda) return "Sin asignar";
-  const tienda = arrayTiendas.value.find((t) => t.id === idTienda);
-  return tienda ? tienda.nombre : "Sin asignar";
-}
 
 // Funciones de actualización
 function actualizarHora(turno: any, tipo: "inicio" | "final", event: Event) {
@@ -286,24 +276,69 @@ function actualizarHora(turno: any, tipo: "inicio" | "final", event: Event) {
   updateTurno(turno);
 }
 
-function añadirTurnoRapido() {
-  if (!inicioSemana.value) return;
+function seleccionarTurno(turno: any) {
+  if (turnoSeleccionado.value && turnoSeleccionado.value._id === turno._id) {
+    turnoSeleccionado.value = null;
+  } else {
+    turnoSeleccionado.value = turno;
+  }
+}
 
-  // Buscar el primer día sin turno
-  const diasSemana = Array.from({ length: 7 }, (_, i) => inicioSemana.value!.plus({ days: i }));
+function esTurnoBorrable(turno: any): boolean {
+  return turno && turno.borrable === true;
+}
 
-  const diasConTurno = arrayCuadrantes.value.map((t) => t.inicio.startOf("day").toMillis());
+function añadirDobleTurno() {
+  if (!turnoSeleccionado.value || !inicioSemana.value) return;
 
-  const primerDiaLibre = diasSemana.find(
-    (dia) => !diasConTurno.includes(dia.startOf("day").toMillis()),
+  const diaSeleccionado = turnoSeleccionado.value.inicio.startOf("day");
+  
+  // Buscar si ya existe un segundo turno ese día
+  const turnosDelDia = arrayCuadrantes.value.filter(
+    (t) => t.inicio.startOf("day").toMillis() === diaSeleccionado.toMillis()
   );
 
-  if (primerDiaLibre) {
-    handleAddCuadrante({
-      dia: primerDiaLibre.set({ hour: 9, minute: 0 }),
-      idTienda: idTiendaDefault.value,
-      ausencia: null,
+  if (turnosDelDia.length >= 2) {
+    Swal.fire({
+      icon: "warning",
+      title: "Máximo alcanzado",
+      text: "Ya existen 2 turnos para este día.",
     });
+    return;
+  }
+
+  // Crear nuevo turno en el mismo día
+  const horaInicio = turnosDelDia.length === 1 ? 16 : 9; // Si ya hay un turno, empezar a las 16:00
+  
+  handleAddCuadrante({
+    dia: diaSeleccionado.set({ hour: horaInicio, minute: 0 }),
+    idTienda: idTiendaDefault.value,
+    ausencia: null,
+  });
+}
+
+function actualizarTiendaTurno(turno: any, nuevaIdTienda: number) {
+  turno.idTienda = nuevaIdTienda;
+  updateTurno(turno);
+}
+
+async function eliminarTurnoSeleccionado() {
+  if (!turnoSeleccionado.value) return;
+
+  const confirmResult = await Swal.fire({
+    title: "¿Eliminar turno?",
+    text: "Esta acción no se puede deshacer.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar",
+  });
+
+  if (confirmResult.isConfirmed) {
+    await borrarTurno({ idTurno: turnoSeleccionado.value._id });
+    turnoSeleccionado.value = null;
   }
 }
 
@@ -330,6 +365,7 @@ async function iniciarDatos(fecha: DateTime) {
     if (trabajadorSelected.value) {
       const auxCuadrantes = await getCuadranteEmpleado(fecha, trabajadorSelected.value);
       arrayCuadrantes.value = auxCuadrantes;
+      turnoSeleccionado.value = null;
     }
   } catch (err) {
     cargando.value = false;
@@ -479,14 +515,7 @@ async function handleAddCuadrante({ dia, idTienda, ausencia }: any) {
   }
 }
 
-function abrirConfigurador(turno: any) {
-  configuradorRef.value?.abrirModal(turno, arrayTiendasFormateado.value);
-}
 
-function updateTienda({ idTurno, idTienda }: any) {
-  const index = buscarIndexFromTurno(idTurno);
-  arrayCuadrantes.value[index].idTienda = idTienda;
-}
 
 function buscarIndexFromTurno(idTurno: any) {
   return arrayCuadrantes.value.findIndex((element) => element._id === idTurno);
@@ -514,7 +543,10 @@ async function borrarTurno({ idTurno }: any) {
 }
 
 watch(trabajadorSelected, () => {
-  if (inicioSemana.value) iniciarDatos(inicioSemana.value);
+  if (inicioSemana.value) {
+    iniciarDatos(inicioSemana.value);
+    turnoSeleccionado.value = null;
+  }
 });
 
 defineExpose({
@@ -713,6 +745,21 @@ onMounted(async () => {
   background: #fff3cd;
 }
 
+.tabla-row.row-seleccionada {
+  background: #e3f2fd;
+  border-left: 4px solid #2196f3;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
+}
+
+.tabla-row {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tabla-row:hover {
+  background: #f8f9fa;
+}
+
 .tabla-row > div {
   padding: 0.75rem 1rem;
   display: flex;
@@ -721,26 +768,20 @@ onMounted(async () => {
 
 /* Columnas */
 .col-dia {
-  width: 15%;
+  width: 20%;
 }
 
 .col-horario {
-  width: 30%;
+  width: 35%;
 }
 
 .col-tienda {
-  width: 25%;
+  width: 30%;
 }
 
 .col-horas {
   width: 15%;
   justify-content: center;
-}
-
-.col-acciones {
-  width: 15%;
-  justify-content: center;
-  gap: 0.5rem;
 }
 
 /* Elementos de la tabla */
@@ -795,9 +836,20 @@ onMounted(async () => {
   margin-left: 0.5rem;
 }
 
-.tienda-nombre {
-  font-size: 0.9rem;
-  color: #495057;
+.tienda-select {
+  width: 100%;
+  
+  :deep(.form-control) {
+    font-size: 0.85rem;
+    padding: 0.375rem 0.5rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    
+    &:focus {
+      border-color: #667eea;
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+    }
+  }
 }
 
 .horas-turno {
@@ -805,30 +857,9 @@ onMounted(async () => {
   color: #495057;
 }
 
-/* Botones de acción */
-.btn-accion {
-  background: transparent;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  padding: 0.25rem 0.5rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: #495057;
-}
-
-.btn-accion:hover {
-  background: #f8f9fa;
-  border-color: #adb5bd;
-}
-
-.btn-config:hover {
-  color: #0d6efd;
-  border-color: #0d6efd;
-}
-
-.btn-delete:hover {
-  color: #dc3545;
-  border-color: #dc3545;
+/* Selecciones mejoradas */
+.tabla-row.row-seleccionada:hover {
+  background: #e1f5fe;
 }
 
 /* Estado vacío */
@@ -893,13 +924,21 @@ onMounted(async () => {
   .sidebar-info {
     width: 240px;
   }
+  
+  .col-dia {
+    width: 18%;
+  }
 
   .col-tienda {
-    width: 20%;
+    width: 32%;
   }
 
   .col-horario {
     width: 35%;
+  }
+  
+  .col-horas {
+    width: 15%;
   }
 }
 </style>

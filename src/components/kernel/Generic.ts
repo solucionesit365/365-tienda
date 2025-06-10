@@ -1,25 +1,36 @@
-import router from "@/router";
-
 export function searchByName() {
-  let td, i, txtValue;
-  const input: any = document.getElementById("buscador");
-  const filter: any = input.value.toUpperCase();
-  const table: any = document.getElementById("tabla");
-  const tr = table.getElementsByTagName("tr");
+  const input = document.getElementById("buscador") as HTMLInputElement;
+  if (!input) return;
 
-  for (i = 0; i < tr.length; i++) {
-    td = tr[i].getElementsByTagName("td")[0];
-    if (td) {
-      txtValue = td.textContent || td.innerText;
-      if (txtValue.toUpperCase().indexOf(filter) > -1) {
-        tr[i].style.display = "";
+  const filter = input.value.toUpperCase().trim();
+  const table = document.querySelector(".cuadrantes-table") as HTMLTableElement;
+  if (!table) return;
+
+  const tbody = table.querySelector("tbody");
+  if (!tbody) return;
+
+  const rows = tbody.getElementsByTagName("tr");
+
+  // Si no hay filtro, mostrar todas las filas
+  if (!filter) {
+    for (let i = 0; i < rows.length; i++) {
+      rows[i].style.display = "";
+    }
+    return;
+  }
+
+  for (let i = 0; i < rows.length; i++) {
+    const nombreCell = rows[i].querySelector(".col-nombre .empleado-nombre") as HTMLElement;
+
+    if (nombreCell) {
+      const txtValue = (nombreCell.textContent || nombreCell.innerText).toUpperCase();
+
+      // Búsqueda más flexible: busca si el filtro está contenido en el nombre
+      if (txtValue.includes(filter)) {
+        rows[i].style.display = "";
       } else {
-        tr[i].style.display = "none";
+        rows[i].style.display = "none";
       }
     }
   }
-}
-
-export function goTo(url: string) {
-  router.push(url);
 }

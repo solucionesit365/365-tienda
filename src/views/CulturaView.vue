@@ -18,7 +18,7 @@
             </figure>
           </div>
         </template>
-        <div v-else-if="loading" class="spinner-bordercol-12 text-center mt-2">
+        <div v-else-if="loading" class="spinner-border" role="status">
           <span class="visually-hidden">Loading...</span>
         </div>
         <template v-else>
@@ -27,31 +27,29 @@
           <div class="row">
             <template v-for="(video, index) in videos" :key="index">
               <div class="col-12 col-md-6 col-lg-4">
-                <div class="mb-3 card" style="width: 18rem" @click="abrirModal(video)">
-                  <div class="card-body">
-                    <h5 class="card-title">>{{ video.titulo }}</h5>
-                    <p class="card-text">
-                      >{{ video.descripcion }}
-                      <i class="fas fa-video"></i>
+                <div class="mb-4 card video-card shadow-sm" @click="abrirModal(video)">
+                  <div class="card-body d-flex flex-column align-items-center">
+                    <div class="video-icon mb-3">
+                      <i class="fas fa-play-circle"></i>
+                    </div>
+                    <h5 class="card-title text-center mb-2">{{ video.titulo }}</h5>
+                    <p class="card-text text-center text-muted mb-3" style="min-height: 48px;">
+                      {{ video.descripcion }}
                     </p>
-                    <div class="modal-footer">
+                    <div class="d-flex justify-content-center gap-2 w-100">
                       <button
                         type="button"
-                        class="btn-close"
-                        aria-label="Close"
+                        class="btn btn-outline-primary btn-sm"
                         v-if="hasPermission('EditarCultura')"
                         @click.stop="abrirModalEdita(video)"
-                        color="info"
                       >
                         <i class="fas fa-edit"></i>
                       </button>
                       <button
                         type="button"
-                        class="btn-close"
-                        aria-label="Close"
+                        class="btn btn-outline-danger btn-sm"
                         v-if="hasPermission('BorrarCultura')"
                         @click.stop="eliminarVideo(video)"
-                        color="danger"
                       >
                         <i class="fas fa-trash"></i>
                       </button>
@@ -68,16 +66,16 @@
                   <iframe
                     v-show="videoReproducido"
                     height="1200"
-                    :src="videoSeleccionado.urlVideo"
+                    :src="videoSeleccionado?.urlVideo"
                     frameborder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowfullscreen
                   >
                   </iframe>
                   <div class="modal-footer">
-                    <span><i class="fas fa-eye"></i> : {{ videoSeleccionado.views }}</span>
-                    <button type="button" class="btn">
-                      Base class color="secondary" @click="cerrarModal">Cerrar
+                    <span><i class="fas fa-eye"></i> : {{ videoSeleccionado?.views }}</span>
+                    <button type="button" class="btn" color="secondary" @click="cerrarModal">
+                      >Cerrar
                     </button>
                   </div>
                 </div>
@@ -138,6 +136,41 @@
             </template>
           </div>
         </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para mostrar el video (mejorado) -->
+  <div v-if="esModalAbierto" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+    <div class="modal-dialog modal-fullscreen modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{{ videoSeleccionado?.titulo }}</h5>
+          <button type="button" class="btn-close" @click="cerrarModal"></button>
+        </div>
+        <div class="modal-body text-center">
+          <div v-if="!videoReproducido">
+            <button type="button" class="btn btn-primary" @click="reproducirVideo">
+              Reproducir Video
+            </button>
+          </div>
+          <div v-else>
+            <iframe
+              width="100%"
+              height="400"
+              :src="videoSeleccionado?.urlVideo"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+            ></iframe>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <span><i class="fas fa-eye"></i> : {{ videoSeleccionado?.views }}</span>
+          <button type="button" class="btn btn-secondary" @click="cerrarModal">
+            Cerrar
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -240,8 +273,6 @@ async function mostrarVideo() {
     if (resVideo.data.ok) {
       videos.value = resVideo.data.data;
       hayVideo.value = videos.value?.length > 0;
-      console.log("Videos.value=", videos.value);
-      console.log("Videos.value=", hayVideo.value);
     } else throw Error("No se han podido cargar los videos");
   } catch (err) {
     console.log(err);
@@ -251,6 +282,10 @@ async function mostrarVideo() {
     loading.value = false;
   }
 }
+function cerrarModal() {
+  esModalAbierto.value = false;
+  videoReproducido.value = false;
+}
 
 onMounted(() => {
   mostrarVideo();
@@ -258,4 +293,77 @@ onMounted(() => {
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.spinner-border[role="status"] {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 2rem auto;
+  width: 3rem;
+  height: 3rem;
+}
+
+.modal.d-block {
+  display: block;
+  background: rgba(0, 0, 0, 0.5);
+  position: fixed;
+  z-index: 1050;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+}
+
+.video-card {
+  border: none;
+  border-radius: 1rem;
+  background: #fff;
+  transition: box-shadow 0.2s, transform 0.2s;
+  cursor: pointer;
+  min-height: 200px;
+  position: relative;
+}
+.video-card:hover {
+  box-shadow: 0 8px 32px rgba(94, 190, 163, 0.15), 0 1.5px 8px rgba(0,0,0,0.07);
+  transform: translateY(-4px) scale(1.02);
+}
+.video-icon {
+  font-size: 2.5rem;
+  color: #e66c5a;
+  background: #fbeee7;
+  border-radius: 50%;
+  width: 3.5rem;
+  height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 2px 8px rgba(230, 108, 90, 0.08);
+}
+.card-title {
+  font-weight: bold;
+  color: #333;
+  font-size: 1.15rem;
+}
+.card-text {
+  font-size: 0.98rem;
+}
+.btn-outline-primary.btn-sm {
+  border-radius: 0.5rem;
+}
+.btn-outline-danger.btn-sm {
+  border-radius: 0.5rem;
+}
+@media (max-width: 768px) {
+  .video-card {
+    min-height: 220px;
+    padding: 0.5rem;
+  }
+  .video-icon {
+    font-size: 2rem;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+}
+</style>

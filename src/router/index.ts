@@ -62,6 +62,14 @@ const router = createRouter({
       },
       component: () => import("../views/CulturaView.vue"),
     },
+    {
+      path: "/encargosview",
+      name: "Encargos",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/EncargosView.vue"),
+    },
   ],
 });
 

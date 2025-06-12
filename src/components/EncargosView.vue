@@ -338,7 +338,6 @@ onMounted(() => {
   getTiendas();
 });
 
-// Devuelve la fecha de hoy en formato 'YYYY-MM-DD'
 function getToday(): string {
   const today = new Date();
   const yyyy = today.getFullYear();
@@ -373,11 +372,26 @@ function getToday(): string {
   font-weight: bold;
 }
 
+.accordion-button:not(.collapsed) {
+  background-color: #fff !important;
+  color: #212529;
+  box-shadow: none;
+}
+
 .list-group-item {
   font-size: 1rem;
 }
 .btn-encargo {
   background-color: #e66c5a !important;
   color: #fff !important;
+}
+
+.form-control:focus,
+.form-select:focus,
+.btn:focus,
+.accordion-button:focus {
+  box-shadow: 0 0 0 0.2rem #d7d9e7 !important;
+  border-color: #d7d9e7 !important;
+  outline: none !important;
 }
 </style>

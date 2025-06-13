@@ -25,65 +25,77 @@
       <button
         type="button"
         class="btn btn-success d-flex align-items-center gap-2 mb-3 ms-2"
-        style="font-weight: bold;"
+        style="font-weight: bold"
         @click="handleExcelDownload()"
       >
         <i class="fa-sharp fa-solid fa-file-excel fs-4"></i>
       </button>
     </div>
 
-  <div class="col-12 col-xl-12 col-sm-12 p-2">
-    <div class="input-group mb-3">
-   <input type="text" class="form-control"  aria-describedby="basic-addon1"
-        id="buscador"
-        input-group
-        :form-outline="false"
-        @keyup="searchByName()"
-      >
+    <div class="col-12 col-xl-12 col-sm-12 p-2">
+      <div class="input-group mb-3">
+        <input
+          type="text"
+          class="form-control"
+          aria-describedby="basic-addon1"
+          id="buscador"
+          input-group
+          :form-outline="false"
+          @keyup="searchByName()"
+        />
         <span class="input-group-text"><i class="fas fa-search" /></span>
+      </div>
     </div>
-  </div>
-  <table class="table table-hover table-striped align-middle shadow-sm rounded bg-white mt-2" id="tabla">
-  <thead class="bg-info text-white">
-    <tr>
-      <th scope="col">Cliente</th>
-      <th scope="col">Teléfono</th>
-      <th scope="col">Fecha a recoger</th>
-      <th scope="col">Rango recogida</th>
-      <th scope="col">Hora de entrega</th>
-    </tr>
-  </thead>
-  <tbody>
-    <template v-for="(item, index) in encargos" :key="index">
-      <tr @click="mostrarEncargoModal(item)" style="cursor:pointer;">
-        <td class="fw-semibold">{{ item.nombre }}</td>
-        <td>
-          <span class="badge bg-light text-dark border">
-            <i class="fas fa-phone-alt me-1"></i>{{ item.telefono }}
-          </span>
-        </td>
-        <td>
-          <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">
-            {{ DateTime.fromISO(item.fechaEntrega).toFormat("dd/MM/yyyy") }}
-          </span>
-        </td>
-        <td>
-          <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary">
-            {{ item.rangoRecogida }}
-          </span>
-        </td>
-        <td>
-          <span v-if="!item.horaEntrega" class="badge bg-danger bg-opacity-10 text-danger border border-danger">
-            <strong>PENDIENTE</strong>
-          </span>
-          <span v-else class="badge bg-success bg-opacity-10 text-success border border-success">
-            {{ item.horaEntrega }}
-          </span>
-        </td>
-      </tr>
-    </template>
-  </tbody>
-</table>
+    <table
+      class="table table-hover table-striped align-middle shadow-sm rounded bg-white mt-2"
+      id="tabla"
+    >
+      <thead class="bg-info text-white">
+        <tr>
+          <th scope="col">Cliente</th>
+          <th scope="col">Teléfono</th>
+          <th scope="col">Fecha a recoger</th>
+          <th scope="col">Rango recogida</th>
+          <th scope="col">Hora de entrega</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template v-for="(item, index) in encargos" :key="index">
+          <tr @click="mostrarEncargoModal(item)" style="cursor: pointer">
+            <td class="fw-semibold">{{ item.nombre }}</td>
+            <td>
+              <span class="badge bg-light text-dark border">
+                <i class="fas fa-phone-alt me-1"></i>{{ item.telefono }}
+              </span>
+            </td>
+            <td>
+              <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">
+                {{ DateTime.fromISO(item.fechaEntrega).toFormat("dd/MM/yyyy") }}
+              </span>
+            </td>
+            <td>
+              <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary">
+                {{ item.rangoRecogida }}
+              </span>
+            </td>
+            <td>
+              <span
+                v-if="!item.horaEntrega"
+                class="badge bg-danger bg-opacity-10 text-danger border border-danger"
+              >
+                <strong>PENDIENTE</strong>
+              </span>
+              <span
+                v-else
+                class="badge bg-success bg-opacity-10 text-success border border-success"
+              >
+                {{ item.horaEntrega }}
+              </span>
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
   </div>
 
   <!-- Mostrar encargos -->
@@ -149,26 +161,27 @@
   <div
     class="modal"
     tabindex="-1"
-    id="nombreExcelModal"
+    ref="nombreExcelModal"
     labelledby="nombreExcelModalTitle"
     centered
-  ></div>
-  <div class="modal-header">
-    <h5 class="modal-title" id="nombreExcelModalTitle"></h5>
-  </div>
-  <div class="modal" tabindex="-1">
-    <div class="input-group mb-3">
-      <span class="input-group-text" id="basic-addon1">@</span>
-      <input
-        type="text"
-        class="form-control"
-        aria-describedby="basic-addon1"
-        label="Nombre de archivo"
-        v-model="nombreExcel"
-      />
+  >
+    <div class="modal-header">
+      <h5 class="modal-title" id="nombreExcelModalTitle"></h5>
+    </div>
+    <div class="modal" tabindex="-1">
+      <div class="input-group mb-3">
+        <span class="input-group-text" id="basic-addon1">@</span>
+        <input
+          type="text"
+          class="form-control"
+          aria-describedby="basic-addon1"
+          label="Nombre de archivo"
+          v-model="nombreExcel"
+        />
+      </div>
     </div>
     <div>
-      <button type="button" class="btn" color="secondary" @click="nombreExcelModal = false">
+      <button type="button" class="btn" color="secondary" @click="nombreExcelModal = true">
         Close
       </button>
       <button type="button" class="btn" @click="importExcelxD()" color="success">Descargar</button>

@@ -99,7 +99,8 @@
   </div>
 
   <!-- Mostrar encargos -->
-  <div
+     <ModalEncargos ref="refModalEncargos" />
+  <!-- <div
     class="modal"
     tabindex="-1"
     v-if="encargoMostrar"
@@ -156,47 +157,20 @@
         marcar como recogido
       </button>
     </div>
-  </div>
+  </div> -->
   <!-- Excel -->
-  <div
-    class="modal"
-    tabindex="-1"
-    ref="nombreExcelModal"
-    labelledby="nombreExcelModalTitle"
-    centered
-  >
-    <div class="modal-header">
-      <h5 class="modal-title" id="nombreExcelModalTitle"></h5>
-    </div>
-    <div class="modal" tabindex="-1">
-      <div class="input-group mb-3">
-        <span class="input-group-text" id="basic-addon1">@</span>
-        <input
-          type="text"
-          class="form-control"
-          aria-describedby="basic-addon1"
-          label="Nombre de archivo"
-          v-model="nombreExcel"
-        />
-      </div>
-    </div>
-    <div>
-      <button type="button" class="btn" color="secondary" @click="nombreExcelModal = true">
-        Close
-      </button>
-      <button type="button" class="btn" @click="importExcelxD()" color="success">Descargar</button>
-    </div>
-  </div>
+  <ModalAbrirExcel ref="refModalAbrirExcel" />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, type Ref } from "vue";
+import { ref, computed, onMounted, type Ref, provide } from "vue";
 import Swal from "sweetalert2";
 import { axiosInstance } from "@/components/axios/axios";
 import * as XLSX from "xlsx";
 import { hasPermission } from "@/components/rolesPermisos";
 import { useUserStore } from "@/stores/user";
 import { DateTime } from "luxon";
+import ModalAbrirExcel from "./ModalAbrirExcel.vue";
 
 const userStore = useUserStore();
 const hayResultados = ref(true);
@@ -210,6 +184,8 @@ const nombreExcel: Ref<any> = ref(null);
 const nombreExcelModal = ref(false);
 const encargosAll: Ref<any> = ref();
 const tiendas: Ref<any> = ref();
+const refModalAbrirExcel = ref();
+const refModalEncargos = ref();
 async function getEncargos() {
   try {
     await axiosInstance
@@ -259,45 +235,78 @@ function mostrarEncargoModal(encargo: any) {
 function formatDate(isoStr: string) {
   if (!isoStr) return null;
   // Parsear la fecha ISO en un objeto Date
-  const date = new Date(isoStr);
+  const date = DateTime.fromISO(isoStr).toJSDate();
   // Ajustar al comienzo del día en UTC para evitar problemas de zona horaria
   const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   return utcDate;
 }
 
-function importExcelxD() {
-  if (nombreExcel.value) {
-    if (encargosAll.value && encargosAll.value.length > 0) {
-      const datosTransformados = encargosAll.value.flatMap((item: any) => {
-        // Busca el nombre de la tienda utilizando el idTienda
-        const tienda = tiendas.value.find((tienda: any) => tienda.id === item.idTienda);
-        const nombreTienda = tienda ? tienda.nombre : "-";
+function descargarExcel() {
+  try {
+    if (!refModalAbrirExcel.value) throw new Error("Modal de Excel no está definido");
 
-        return item.productos.map((producto: any) => ({
-          tienda: nombreTienda,
-          productos: producto.nombreProducto ? producto.nombreProducto : "-",
-          cantidad: producto.cantidad,
-          fechaEntrega: item.fechaEntrega ? formatDate(item.fechaEntrega) : null,
-        }));
-      });
+    if (
+      !refModalAbrirExcel.value.nombreArchivo ||
+      refModalAbrirExcel.value.nombreArchivo.trim() == ""
+    )
+      throw new Error("El nombre del archivo no puede estar vacío");
+    refModalAbrirExcel.value.abrirModal();
+    nombreExcelModal.value = true;
+    nombreExcel.value = refModalAbrirExcel.value.nombreArchivo || "";
 
-      const worksheet = XLSX.utils.json_to_sheet(datosTransformados, {
-        cellDates: true,
-        dateNF: "dd/mm/yyyy", // formato de fecha
-      });
-
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
-      XLSX.writeFile(workbook, `${nombreExcel.value}.xlsx`);
-      nombreExcelModal.value = false;
-      nombreExcel.value = "";
-    } else {
-      Swal.fire("Oops...", "No hay encargos para exportar.", "error");
-    }
-  } else {
-    Swal.fire("Oops...", "Pon un nombre al archivo, por favor.", "error");
+    const datosTransformados = encargosAll.value.flatMap((item: any) => {
+      const tienda = tiendas.value.find((tienda: any) => tienda.id === item.idTienda);
+      const nombreTienda = tienda ? tienda.nombre : "-";
+      return item.productos.map((producto: any) => ({
+        tienda: nombreTienda,
+        productos: producto.nombreProducto ? producto.nombreProducto : "-",
+        cantidad: producto.cantidad,
+        fechaEntrega: item.fechaEntrega ? formatDate(item.fechaEntrega) : null,
+      }));
+    });
+    const worksheet = XLSX.utils.json_to_sheet(datosTransformados, {
+      cellDates: true,
+      dateNF: "dd/mm/yyyy", // formato de fecha
+    });
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+    XLSX.writeFile(workbook, `${nombreExcel.value}.xlsx`);
+    nombreExcelModal.value = false;
+    nombreExcel.value = "";
+  } catch (error) {
+    console.log(error);
+    Swal.fire("Error", "No se ha podido descargar el Excel", "error");
   }
 }
+
+//   //if (nombreExcel.value) {
+//   if (encargosAll.value && encargosAll.value.length > 0) {
+//     const datosTransformados = encargosAll.value.flatMap((item: any) => {
+//       // Busca el nombre de la tienda utilizando el idTienda
+//       const tienda = tiendas.value.find((tienda: any) => tienda.id === item.idTienda);
+//       const nombreTienda = tienda ? tienda.nombre : "-";
+//       return item.productos.map((producto: any) => ({
+//         tienda: nombreTienda,
+//         productos: producto.nombreProducto ? producto.nombreProducto : "-",
+//         cantidad: producto.cantidad,
+//         fechaEntrega: item.fechaEntrega ? formatDate(item.fechaEntrega) : null,
+//       }));
+//     });
+//     const worksheet = XLSX.utils.json_to_sheet(datosTransformados, {
+//       cellDates: true,
+//       dateNF: "dd/mm/yyyy", // formato de fecha
+//     });
+//     const workbook = XLSX.utils.book_new();
+//     XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+//     XLSX.writeFile(workbook, `${nombreExcel.value}.xlsx`);
+//     nombreExcelModal.value = false;
+//     nombreExcel.value = "";
+//   } else {
+//     Swal.fire("Oops...", "No hay encargos para exportar.", "error");
+//   }
+//   //   } else {
+//   //     Swal.fire("Oops...", "Pon un nombre al archivo, por favor.", "error");
+//   //   }
 
 async function getAllEncargos() {
   try {
@@ -321,7 +330,7 @@ async function handleExcelDownload() {
 
   // Verificar si hay datos para exportar
   if (encargosAll.value && encargosAll.value.length > 0) {
-    nombreExcelModal.value = true;
+    refModalAbrirExcel.value.abrirModal();
   } else {
     Swal.fire("Oops...", "No hay encargos disponibles para exportar.", "error");
   }
@@ -361,6 +370,8 @@ function searchByName() {
   }
 }
 
+provide("descargarExcel", descargarExcel);
+
 onMounted(() => {
   getEncargos();
   getTiendas();
@@ -381,5 +392,11 @@ onMounted(() => {
 }
 .list-group-item {
   font-size: 1rem;
+}
+
+.form-control:focus {
+  box-shadow: 0 0 0 0.2rem #d7d9e7 !important;
+  border-color: #d7d9e7 !important;
+  outline: none !important;
 }
 </style>

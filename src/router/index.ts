@@ -32,7 +32,7 @@ const router = createRouter({
     },
     {
       path: "/abrir-incidencia",
-      name: "Abrir Incidencias",
+      name: "Abrir incidencias",
       meta: {
         requiresAuth: false,
       },
@@ -40,11 +40,35 @@ const router = createRouter({
     },
     {
       path: "/abrirIncidenciaInvitado",
-      name: "abrirIncidenciaInvitado",
+      name: "Abrir incidencia invitado",
       meta: {
         requiresAuth: false,
       },
       component: () => import("../components/Incidencias/IncidenciasInvitadosComponents.vue"),
+    },
+    {
+      path: "/colorSemanal",
+      name: "Color semanal",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../views/ColorSemanal.vue"),
+    },
+    {
+      path: "/anuncios",
+      name: "Anuncios",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../views/TablonAnuncios.vue"),
+    },
+    {
+      path: "/videoCultura",
+      name: "Cultura 365",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../views/CulturaView.vue"),
     },
   ],
 });

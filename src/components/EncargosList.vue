@@ -19,9 +19,6 @@
   </div>
   <div v-if="hayResultados && !loading">
     <div v-if="hasPermission('ExcelEncargos')" class="col-6 col-sm-6 col-xl-3">
-      <!-- <button type="button" class="btn, w-50" color="primary" @click="handleExcelDownload()">
-        <i class="fa-sharp fa-solid fa-file-excel fs-3"></i>
-      </button> -->
       <button
         type="button"
         class="btn btn-success d-flex align-items-center gap-2 mb-3 ms-2"
@@ -99,66 +96,8 @@
   </div>
 
   <!-- Mostrar encargos -->
-     <ModalEncargos ref="refModalEncargos" />
-  <!-- <div
-    class="modal"
-    tabindex="-1"
-    v-if="encargoMostrar"
-    id="mostrarEncargo"
-    labelledby="mostrarEncargoTitle"
-    centered
-  >
-    <div class="modal-header">
-      <h5 class="modal-title" id="mostrarEncargoTitle">
-        {{ encargoMostrar.nombre }}
-      </h5>
-    </div>
-    <div class="modal-body">
-      <ul class="list-group" light v-for="(item, index) in encargoMostrar.productos" :key="index">
-        <li
-          class="d-flex justify-content-between align-items-center, list-group-item"
-          color="secondary"
-          noBorder
-          spacing
-        >
-          <h1>
-            <span class="badge text-bg-secondary">{{ item.cantidad }}</span>
-          </h1>
-          {{ item.nombreProducto }}
-        </li>
-      </ul>
-      <div v-if="!encargoMostrar.recogido">
-        <hr />
-        <p>Marca la hora que se ha recogido el encargo:</p>
-        <div class="mb-3">
-          <label for="horaEntrega" class="form-label">Hora entrega</label>
-          <input
-            id="horaEntrega"
-            v-model="updateHoraEntrega"
-            type="time"
-            class="form-control"
-            :max="getMaxTime()"
-            required
-          />
-        </div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn" color="secondary" @click="mostrarEncargo = false">
-        Cerrar
-      </button>
-      <button
-        type="button"
-        class="btn"
-        v-if="!encargoMostrar.recogido"
-        @click="updateEncargo()"
-        color="success"
-      >
-        marcar como recogido
-      </button>
-    </div>
-  </div> -->
-  <!-- Excel -->
+  <ModalEncargos ref="refModalEncargos" />
+  <!-- Modal para abrir Excel -->
   <ModalAbrirExcel ref="refModalAbrirExcel" />
 </template>
 
@@ -171,15 +110,14 @@ import { hasPermission } from "@/components/rolesPermisos";
 import { useUserStore } from "@/stores/user";
 import { DateTime } from "luxon";
 import ModalAbrirExcel from "./ModalAbrirExcel.vue";
+import ModalEncargos from "./ModalEncargos.vue";
 
 const userStore = useUserStore();
 const hayResultados = ref(true);
 const currentUser = computed(() => userStore.user);
 const loading = ref(true);
 const encargos: Ref<any> = ref();
-const mostrarEncargo = ref(false);
-const encargoMostrar: Ref<any> = ref(null);
-const updateHoraEntrega = ref("");
+const encargosOriginal: Ref<any> = ref([]);
 const nombreExcel: Ref<any> = ref(null);
 const nombreExcelModal = ref(false);
 const encargosAll: Ref<any> = ref();
@@ -195,6 +133,7 @@ async function getEncargos() {
       .then((response: any) => {
         if (response.data.length > 0) {
           encargos.value = response.data;
+          encargosOriginal.value = response.data;
           loading.value = false;
         } else {
           loading.value = false;
@@ -206,30 +145,9 @@ async function getEncargos() {
   }
 }
 
-async function updateEncargo() {
-  try {
-    encargoMostrar.value.recogido = true;
-    encargoMostrar.value.horaEntrega = updateHoraEntrega.value;
-
-    await axiosInstance
-      .post("encargos/updateEncargo", encargoMostrar.value)
-      .then((response: any) => {
-        if (response) {
-          Swal.fire("Perfecto", "Encargo entregado", "success");
-          console.log(response);
-          mostrarEncargo.value = false;
-        } else {
-          Swal.fire("Error", "No se ha podido entregar el encargo", "error");
-        }
-      });
-  } catch (error) {
-    console.log(error);
-  }
-}
-
 function mostrarEncargoModal(encargo: any) {
-  encargoMostrar.value = encargo;
-  mostrarEncargo.value = true;
+  refModalEncargos.value.encargoMostrar = encargo;
+  refModalEncargos.value.abrirModal();
 }
 
 function formatDate(isoStr: string) {
@@ -279,35 +197,6 @@ function descargarExcel() {
   }
 }
 
-//   //if (nombreExcel.value) {
-//   if (encargosAll.value && encargosAll.value.length > 0) {
-//     const datosTransformados = encargosAll.value.flatMap((item: any) => {
-//       // Busca el nombre de la tienda utilizando el idTienda
-//       const tienda = tiendas.value.find((tienda: any) => tienda.id === item.idTienda);
-//       const nombreTienda = tienda ? tienda.nombre : "-";
-//       return item.productos.map((producto: any) => ({
-//         tienda: nombreTienda,
-//         productos: producto.nombreProducto ? producto.nombreProducto : "-",
-//         cantidad: producto.cantidad,
-//         fechaEntrega: item.fechaEntrega ? formatDate(item.fechaEntrega) : null,
-//       }));
-//     });
-//     const worksheet = XLSX.utils.json_to_sheet(datosTransformados, {
-//       cellDates: true,
-//       dateNF: "dd/mm/yyyy", // formato de fecha
-//     });
-//     const workbook = XLSX.utils.book_new();
-//     XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
-//     XLSX.writeFile(workbook, `${nombreExcel.value}.xlsx`);
-//     nombreExcelModal.value = false;
-//     nombreExcel.value = "";
-//   } else {
-//     Swal.fire("Oops...", "No hay encargos para exportar.", "error");
-//   }
-//   //   } else {
-//   //     Swal.fire("Oops...", "Pon un nombre al archivo, por favor.", "error");
-//   //   }
-
 async function getAllEncargos() {
   try {
     await axiosInstance.get("encargos/getAllEncargos").then((response: any) => {
@@ -346,24 +235,12 @@ async function getTiendas() {
   }
 }
 
-function getMaxTime() {
-  // Devuelve la hora máxima permitida para la entrega, por ejemplo la hora current
-  const now = new Date();
-  const hours = now.getHours().toString().padStart(2, "0");
-  const minutes = now.getMinutes().toString().padStart(2, "0");
-  return `${hours}:${minutes}`;
-}
-
 function searchByName() {
   const input =
     (document.getElementById("buscador") as HTMLInputElement)?.value?.toLowerCase() || "";
-  if (!input) {
-    encargos.value = encargosAll.value ? [...encargosAll.value] : [];
-    hayResultados.value = encargos.value.length > 0;
-    return;
-  }
-  if (encargosAll.value) {
-    encargos.value = encargosAll.value.filter((item: any) =>
+
+  if (encargosOriginal.value) {
+    encargos.value = encargosOriginal.value.filter((item: any) =>
       item.nombre?.toLowerCase().includes(input),
     );
     hayResultados.value = encargos.value.length > 0;
@@ -371,6 +248,7 @@ function searchByName() {
 }
 
 provide("descargarExcel", descargarExcel);
+provide("mostrarEncargoModal", mostrarEncargoModal);
 
 onMounted(() => {
   getEncargos();

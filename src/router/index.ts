@@ -78,6 +78,14 @@ const router = createRouter({
       },
       component: () => import("../components/EncargosView.vue"),
     },
+    {
+      path: "/calendarioFestivos",
+      name: "Calendario festivos",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/CalendarioFestivo.vue"),
+    },
   ],
 });
 

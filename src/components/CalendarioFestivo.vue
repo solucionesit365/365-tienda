@@ -37,26 +37,31 @@
       </div>
     </div>
     <div v-if="loading" class="row text-center mt-2">
-      <div><div class="spinner-border" role="status" style="width: 5rem; height: 5rem">
-  <span class="visually-hidden">Loading...</span>
-</div></div>
+      <div>
+        <div class="spinner-border" role="status" style="width: 5rem; height: 5rem">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
     </div>
     <template v-else>
       <div class="row mt-2">
         <div class="col-md-4 mb-3" v-for="(month, index) in months" :key="month">
-          <div class="calendar-container">
-            <div class="calendar-grid-semanas">
+          <div class="calendar-container d-flex">
+            <!-- Números de semana -->
+            <div
+              class="calendar-week-numbers d-flex flex-column align-items-center justify-content-end me-2"
+            >
+              <div class="calendar-week-header"></div>
               <div
-                class="week-number"
                 v-for="semanas in calculateWeekNumbers(year)[index + 1]"
                 :key="`semana-${index}-${semanas}`"
+                class="week-number"
               >
                 {{ semanas }}
               </div>
             </div>
-
-            <!-- Grid para el calendario-->
-            <div class="calendar-grid">
+            <!-- Calendario -->
+            <div class="calendar-grid flex-grow-1">
               <div class="month-header">
                 {{ month }}
               </div>
@@ -99,180 +104,242 @@
   </div>
 
   <!-- Modal crear evento -->
-  <div class="modal" tabindex="-1"
-    id="exampleModalCenter"
-    labelledby="exampleModalCenterTitle"
-    centered
+  <div
+    class="modal fade"
+    tabindex="-1"
+    id="modalCrearEvento"
+    aria-labelledby="exampleModalCenterTitle"
+    aria-modal="true"
+    role="dialog"
+    :class="{ show: modalCrearEvento }"
+    :style="modalCrearEvento ? 'display: block; background: rgba(0,0,0,0.5);' : ''"
+    v-if="modalCrearEvento"
   >
-    <div class="modal-header">
-      <h5 class="modal-title" id="exampleModalCenterTitle">Configurar Evento </h5>
-    </div>
-    <div class="modal-body">
-      <div class="mb-3">
-        <span for="titulo" class="form-label">Titulo:</span>
-        <div class="input-group mb-3">
-  <span class="input-group-text" id="basic-addon1">@</span>
-  <input type="text" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
-</div>
-      </div>
-      <div class="mb-3">
-        <span for="descripcion" class="form-label">Descripcion:</span>
-        <div class="input-group mb-3">
-  <span class="input-group-text" id="basic-addon1">@</span>
-  <input type="text" class="form-control" placeholder="Username" aria-label="Username" aria-describedby="basic-addon1">
-</div>
-      </div>
-
-      <div class="mb-3">
-  <label for="fechaInicio" class="form-label">Fecha de inicio:</label>
-  <input
-    id="fechaInicio"
-    type="date"
-    class="form-control"
-    v-model="fechaInicio"
-    required
-  />
-</div>
-<div class="mb-3">
-  <label for="fechaFinal" class="form-label">Fecha de finalización:</label>
-  <input
-    id="fechaFinal"
-    type="date"
-    class="form-control"
-    v-model="fechaFinal"
-    required
-  />
-</div>
-
-      <div class="mb-3">
-        <div class="form-text">
-          <span>Color del evento:</span>
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow rounded-4">
+        <div class="modal-header bg-primary bg-opacity-10 border-0 rounded-top-4">
+          <h5 class="modal-title" id="modalEditarEventoTitle">Editar Evento</h5>
+          <button type="button" class="btn-close" @click="modalCrearEvento = false"></button>
         </div>
-
-        <input type="color" id="colorEvento" class="form-control" v-model="colorEvento" />
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="tituloEdit" class="form-label">Título:</label>
+            <input
+              id="tituloEdit"
+              type="text"
+              class="form-control"
+              placeholder="Título"
+              v-model="titulo"
+              required
+            />
+          </div>
+          <div class="mb-3">
+            <label for="descripcionEdit" class="form-label">Descripción:</label>
+            <input
+              id="descripcionEdit"
+              type="text"
+              class="form-control"
+              placeholder="Descripción"
+              v-model="descripcion"
+              required
+            />
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="fechaInicioEdit" class="form-label">Fecha de inicio:</label>
+              <input
+                id="fechaInicioEdit"
+                type="date"
+                class="form-control"
+                v-model="fechaInicio"
+                required
+              />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="fechaFinalEdit" class="form-label">Fecha de finalización:</label>
+              <input
+                id="fechaFinalEdit"
+                type="date"
+                class="form-control"
+                v-model="fechaFinal"
+                required
+              />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="colorEventoEdit" class="form-label">Color del evento:</label>
+            <input
+              type="color"
+              id="colorEventoEdit"
+              class="form-control form-control-color"
+              v-model="colorEvento"
+              style="width: 3rem; height: 2.5rem; padding: 0.2rem"
+            />
+          </div>
+          <div class="mb-3">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="checkTodasTiendasEdit"
+                v-model="todas"
+              />
+              <label class="form-check-label" for="checkTodasTiendasEdit">
+                Todas las tiendas
+              </label>
+            </div>
+          </div>
+          <div class="mb-3" v-if="!todas">
+            <label for="tiendaSeleccionadaEdit" class="form-label">Enviar a la tienda:</label>
+            <select
+              id="tiendaSeleccionadaEdit"
+              class="form-select"
+              v-model="tiendaSeleccionada"
+              multiple
+              required
+            >
+              <option v-for="tienda in tiendas" :key="tienda.value" :value="tienda.value">
+                {{ tienda.text }}
+              </option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="categoriaEdit" class="form-label">Categoría</label>
+            <select id="categoriaEdit" v-model="categoriaRes" class="form-select" required>
+              <option value="Fiesta">Fiesta</option>
+              <option value="Reunión">Reunión</option>
+              <option value="General">General</option>
+              <option value="Cierre pluses">Cierre pluses</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer bg-light border-0 rounded-bottom-4">
+          <button type="button" class="btn" color="primary" @click="guardarFinal()">
+            Confirmar
+          </button>
+        </div>
       </div>
-      <div class="input-group mb-3">
-        <div class="form-check">
-  <input class="form-check-input" type="checkbox" value="" id="checkDefault">
-  <label class="form-check-label" for="checkDefault">
-    Todas las tiendas
-  </label>
-      </div>
-      <label v-if="!todas" for="basic-url" class="form-label">Enviar a la tienda: </label>
-      <div v-if="!todas" class="input-group mb-3">
-        <select class="form-select"
-          multiple
-          filter
-          :select-all="false"
-          :search-placeholder="'Buscar'"
-          options-selected-label="tienda/s seleccionada/s"
-        />
-      </div>
-
-      <div class="form-text">
-        <span>Categoria</span>
-      </div>
-      <select v-model="categoriaRes" class="form-select" aria-label="Default select example">
-        <option value="Fiesta">Fiesta</option>
-        <option value="Reunión">Reunión</option>
-        <option value="General">General</option>
-        <option value="Pluses">Pluses</option>
-      </select>
     </div>
-    <div class="modal-footer">
-      <button type="button" class="btn" color="secondary" @click="exampleModalCenter = false"> Cerrar </button>
-      <button type="button" class="btn" color="primary" @click="guardarFinal()"> Confirmar </button>
-    </div>
-  </div>
   </div>
 
   <!-- Modal editar evento -->
-  <div class="modal" tabindex="-1"
+  <div
+    class="modal fade"
+    tabindex="-1"
     id="modalEditarEvento"
-    labelledby="modalEditarEventoTitle"
-    centered
+    aria-labelledby="modalEditarEventoTitle"
+    aria-modal="true"
+    role="dialog"
+    :class="{ show: modalEditarEvento }"
+    :style="modalEditarEvento ? 'display: block; background: rgba(0,0,0,0.5);' : ''"
+    v-if="modalEditarEvento"
   >
-    <div class="modal-body">
-      <div class="row">
-        <div class="card-title">
-          <div class="fs-4 mb-3">
-  <span class="input-group-text" id="basic-addon1">@</span>
-  <input type="text" class="form-control" placeholder="Titulo" aria-label="Titulo" aria-describedby="basic-addon1" style="outline: none">
-</div>
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow rounded-4">
+        <div class="modal-header bg-primary bg-opacity-10 border-0 rounded-top-4">
+          <h5 class="modal-title" id="modalEditarEventoTitle">Editar Evento</h5>
+          <button type="button" class="btn-close" @click="modalEditarEvento = false"></button>
         </div>
-        <div class="mb-3">
-          <span for="descripcion" class="form-label">Descripcion:</span>
-          <div class="input-group mb-3">
-  <span class="input-group-text" id="basic-addon1"></span>
-  <input type="text" class="form-control" placeholder="Descripcion" aria-describedby="basic-addon1">
-</div>
-        </div>
-        <!-- Selector de fecha de inicio -->
-        <div class="mb-3">
-          <span for="fechaInicio" class="form-label">Fecha de inicio:</span>
-          <MDBDatepicker
-            v-model="fechaInicio"
-            label="Selecciona una fecha"
-            input-toggle
-            format="DD/MM/YYYY"
-          />
-        </div>
-
-        <!-- Selector de fecha de finalización -->
-        <div class="mb-3">
-  <label for="fechaFinal" class="form-label">Selecciona una fecha:</label>
-  <input
-    id="fechaInicio"
-    type="date"
-    class="form-control"
-    v-model="fechaInicio"
-    required
-  />
-        </div>
-
-        <!-- Selector de color del evento -->
-        <div class="mb-3">
-          <div class="form-text">
-            <span>Color del evento:</span>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="tituloEdit" class="form-label">Título:</label>
+            <input
+              id="tituloEdit"
+              type="text"
+              class="form-control"
+              placeholder="Título"
+              v-model="titulo"
+              required
+            />
           </div>
-
-          <input type="color" id="colorEvento" class="form-control" v-model="colorEvento" />
+          <div class="mb-3">
+            <label for="descripcionEdit" class="form-label">Descripción:</label>
+            <input
+              id="descripcionEdit"
+              type="text"
+              class="form-control"
+              placeholder="Descripción"
+              v-model="descripcion"
+              required
+            />
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="fechaInicioEdit" class="form-label">Fecha de inicio:</label>
+              <input
+                id="fechaInicioEdit"
+                type="date"
+                class="form-control"
+                v-model="fechaInicio"
+                required
+              />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="fechaFinalEdit" class="form-label">Fecha de finalización:</label>
+              <input
+                id="fechaFinalEdit"
+                type="date"
+                class="form-control"
+                v-model="fechaFinal"
+                required
+              />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="colorEventoEdit" class="form-label">Color del evento:</label>
+            <input
+              type="color"
+              id="colorEventoEdit"
+              class="form-control form-control-color"
+              v-model="colorEvento"
+              style="width: 3rem; height: 2.5rem; padding: 0.2rem"
+            />
+          </div>
+          <div class="mb-3">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="checkTodasTiendasEdit"
+                v-model="todas"
+              />
+              <label class="form-check-label" for="checkTodasTiendasEdit">
+                Todas las tiendas
+              </label>
+            </div>
+          </div>
+          <div class="mb-3" v-if="!todas">
+            <label for="tiendaSeleccionadaEdit" class="form-label">Enviar a la tienda:</label>
+            <select
+              id="tiendaSeleccionadaEdit"
+              class="form-select"
+              v-model="tiendaSeleccionada"
+              multiple
+              required
+            >
+              <option v-for="tienda in tiendas" :key="tienda.value" :value="tienda.value">
+                {{ tienda.text }}
+              </option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="categoriaEdit" class="form-label">Categoría</label>
+            <select id="categoriaEdit" v-model="categoriaRes" class="form-select" required>
+              <option value="Fiesta">Fiesta</option>
+              <option value="Reunión">Reunión</option>
+              <option value="General">General</option>
+              <option value="Cierre pluses">Cierre pluses</option>
+            </select>
+          </div>
         </div>
-        <div class="input-group mb-3">
-          <div class="form-check">
-  <input class="form-check-input" type="checkbox" value="" id="checkDefault">
-  <label class="form-check-label" for="checkDefault">
-    Todas las tiendas
-  </label>
+        <div class="modal-footer bg-light border-0 rounded-bottom-4">
+          <button type="button" class="btn btn-danger" @click="borrarFestivo()">Borrar</button>
+          <button type="button" class="btn btn-primary" @click="confirmarEdicion()">
+            Modificar
+          </button>
         </div>
-        <label v-if="!todas" for="basic-url" class="form-label">Enviar a la tienda: </label>
-        <div v-if="!todas" class="input-group mb-3">
-          <select class="form-select"
-            multiple
-            filter
-            :select-all="false"
-            :search-placeholder="'Buscar'"
-            options-selected-label="tienda/s seleccionada/s"
-          />
-        </div>
-
-        <div class="form-text">
-          <span>Categoria</span>
-        </div>
-        <select v-model="categoriaRes" class="form-select" aria-label="Default select example">
-          <option value="Fiesta">Fiesta</option>
-          <option value="Reunión">Reunión</option>
-          <option value="General">General</option>
-          <option value="Cierre pluses">Cierre pluses</option>
-        </select>
       </div>
     </div>
-    <div class="modal-footer">
-      <button type="button" class="btn" color="secondary" @click="modalEditarEvento = false"> Descartar </button>
-      <button type="button" class="btn" color="danger" @click="borrarFestivo()"> Borrar </button>
-      <button type="button" class="btn" color="primary" @click="confirmarEdicion()"> Modificar </button>
-    </div>
-  </div>
   </div>
 </template>
 
@@ -286,7 +353,7 @@ import { useUserStore } from "@/stores/user";
 
 const userStore = useUserStore();
 const fileInput = ref<HTMLInputElement | null>(null);
-const exampleModalCenter = ref(false);
+const modalCrearEvento = ref(false);
 const modalEditarEvento = ref(false);
 const categoriaRes = ref("");
 const todas = ref(true);
@@ -355,15 +422,13 @@ function handleDayTouch(day: any) {
   if (hasPermission("GestionCalendarioFestivo")) {
     checkEventAndEdit(day);
 
-    return; // Sale de la función para evitar mostrar el Swal
+    return;
   }
 
   const eventInfo: string = getEventInfo(day.date);
 
-  // Divide la información de eventos en eventos individuales
   const events = eventInfo.split(/Evento:/g).slice(1);
 
-  // Filtra eventos vacíos o no válidos
   const validEvents = events.filter((event: any) => event.trim().length > 0);
 
   if (validEvents.length > 0) {
@@ -374,7 +439,7 @@ function handleDayTouch(day: any) {
     });
 
     const formattedEventInfo = formattedEvents
-      .join("<hr>") // Usa una línea horizontal como separador entre eventos
+      .join("<hr>")
       .replace(/Descripción:/g, "<br><strong>Descripción:</strong>")
       .replace(/Fecha:/g, "<br><strong>Fecha:</strong>")
       .replace(/Categoría:/g, "<br><strong>Categoría:</strong>");
@@ -388,7 +453,6 @@ function handleDayTouch(day: any) {
       showConfirmButton: false,
     });
   } else {
-    // No hay eventos válidos para mostrar
     Swal.fire({
       text: "No hay eventos programados para este día.",
       icon: "info",
@@ -416,7 +480,6 @@ function getEventClass(date: any) {
         DateTime.fromFormat(b.fechaInicio, "dd/MM/yyyy").toMillis()
       );
     });
-    // let backgroundColor = eventsForDay[0].color;
     const backgroundColor = eventsForDay[eventsForDay.length - 1].color;
     const borderCerrar: string[] = [];
     const foreground: string[] = [];
@@ -442,11 +505,10 @@ function getEventClass(date: any) {
       " ",
     )}`;
   } else {
-    return {}; // Devuelve un objeto vacío si no hay eventos
+    return {};
   }
 }
 
-//Informacion de eventos/festivos
 function getEventInfo(date: any) {
   const dateString = date.toISODate();
   const eventsForDay = events.value.filter((event) => {
@@ -495,15 +557,12 @@ function calculateWeekNumbers(year: number): WeekNumbers {
 }
 
 function getEmptyDaysBeforeStartOfMonth(monthIndex: any) {
-  // Obtener el día de la semana del primer día del mes (1 = lunes, 7 = domingo)
   const firstDayOfMonth = DateTime.local(year.value, monthIndex + 1, 1);
   const dayOfWeek = firstDayOfMonth.weekday;
-  // Alinea los días vacíos para que el lunes sea el inicio de la semana
   const emptyDays = dayOfWeek === 7 ? 6 : dayOfWeek - 1;
   return Array.from({ length: emptyDays }, () => "");
 }
 
-//Nuevo festivo
 async function nuevoFestivo() {
   titulo.value = "";
   descripcion.value = "";
@@ -512,10 +571,9 @@ async function nuevoFestivo() {
   categoriaRes.value = "";
   colorEvento.value = "#FFFFFF";
   tiendaSeleccionada.value = "";
-  exampleModalCenter.value = true;
+  modalCrearEvento.value = true;
 }
 
-//Abrir modal
 function abrirModalEdita(evento: any) {
   titulo.value = evento.titulo;
   descripcion.value = evento.descripcion;
@@ -530,7 +588,6 @@ function abrirModalEdita(evento: any) {
   modalEditarEvento.value = true;
 }
 
-//Verificar el editado
 function confirmarEdicion() {
   const eventoEditado = {
     ...eventoActual,
@@ -547,7 +604,6 @@ function confirmarEdicion() {
   editarEvento(eventoEditado);
 }
 
-//Editar evento
 function editarEvento(evento: any) {
   axiosInstance
     .post("calendario-festivos/updateFestivo", evento)
@@ -565,7 +621,6 @@ function editarEvento(evento: any) {
     });
 }
 
-//Borrar festivo/Evento
 function borrarFestivo() {
   if (!eventoActual || !eventoActual._id) {
     Swal.fire("Oops...", "No se ha seleccionado un evento válido para borrar.", "error");
@@ -604,12 +659,10 @@ function borrarFestivo() {
   });
 }
 
-//Confirmar si hay eventos para editar
 function checkEventAndEdit(day: any) {
   const eventForDay = events.value.find((event) => {
     const eventStartDate = DateTime.fromFormat(event.fechaInicio, "dd/MM/yyyy");
     const eventEndDate = DateTime.fromFormat(event.fechaFinal, "dd/MM/yyyy");
-    // Comprobar si la fecha del día está dentro del rango (incluyendo ambas fechas)
     return day.date >= eventStartDate && day.date <= eventEndDate;
   });
 
@@ -655,11 +708,9 @@ function guardarFinal() {
       .post("calendario-festivos/nuevoFestivo", objEnviar)
       .then((response) => {
         if (response.data.ok) {
-          // Cierra el modal
-          exampleModalCenter.value = false;
+          modalCrearEvento.value = false;
           console.log("Evento añadido con éxito");
 
-          // Actualizar la lista de eventos
           getFestivos(añoSelect.value);
         } else {
           console.log("Error al añadir evento", response);
@@ -671,7 +722,6 @@ function guardarFinal() {
   }
 }
 
-//Obtener festivos / pluses de año
 function getFestivos(año: any) {
   loading.value = true;
   axiosInstance
@@ -686,7 +736,6 @@ function getFestivos(año: any) {
         const añoSeleccionadoNumero = Number(año);
         const añoAnterior = añoSeleccionadoNumero - 1;
 
-        // Filtra los eventos por el año seleccionado y el año anterior
         const eventosFiltrados = response.data.data.filter((evento: any) => {
           const fechaEvento = DateTime.fromFormat(evento.fechaInicio, "dd/MM/yyyy");
           return fechaEvento.year === añoSeleccionadoNumero || fechaEvento.year === añoAnterior;
@@ -770,13 +819,11 @@ function parseICS(content: any) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // Inicio de un nuevo evento
     if (line === "BEGIN:VEVENT") {
       currentEvent = {};
       continue;
     }
 
-    // Fin del evento actual
     if (line === "END:VEVENT") {
       if (currentEvent) {
         events.push(currentEvent);
@@ -785,9 +832,7 @@ function parseICS(content: any) {
       continue;
     }
 
-    // Si estamos dentro de un evento, procesamos la línea
     if (currentEvent) {
-      // Manejar líneas continuadas (las que empiezan con espacio o tabulador)
       let fullLine = line;
       while (
         i + 1 < lines.length &&
@@ -824,7 +869,6 @@ function parseICS(content: any) {
 
 // Función auxiliar para parsear fechas ICS
 function parseICSDate(dateStr: any) {
-  // Limpiamos el string de fecha
   dateStr = dateStr.replace(/\s+/g, "");
 
   // Formato básico: YYYYMMDD
@@ -860,9 +904,9 @@ async function procesarFestivosICS(fileContent: any, año: any) {
           descripcion: evento.description || "",
           fechaInicio: fechaInicio.toFormat("dd/MM/yyyy"),
           fechaFinal: fechaFin.toFormat("dd/MM/yyyy"),
-          color: "#FFFFFF", // Color por defecto para festivos
+          color: "#FFFFFF",
           categoria: "Fiesta",
-          tienda: [-1], // Todas las tiendas por defecto
+          tienda: [-1],
         };
 
         festivosAñoSeleccionado.push(nuevoFestivo);
@@ -876,7 +920,6 @@ async function procesarFestivosICS(fileContent: any, año: any) {
   }
 }
 
-// Función para guardar los festivos en la base de datos
 async function guardarFestivosICS(festivos: any, axiosInstance: any) {
   try {
     const resultados = [];
@@ -896,21 +939,17 @@ async function guardarFestivosICS(festivos: any, axiosInstance: any) {
   }
 }
 
-// Función principal que maneja la importación del archivo
 async function importarFestivosICS(file: any, año: any, axiosInstance: any) {
   try {
     loading.value = true;
-    // Leer el archivo
     const fileContent = await file.text();
 
-    // Procesar festivos del año especificado
     const festivos = await procesarFestivosICS(fileContent, año);
 
     if (festivos.length === 0) {
       throw new Error(`No se encontraron festivos para el año ${año}`);
     }
 
-    // Guardar los festivos procesados
     const resultados = await guardarFestivosICS(festivos, axiosInstance);
 
     return {
@@ -975,10 +1014,28 @@ onMounted(() => {
   getFestivos(añoSelect.value);
   getTiendas();
 });
-
 </script>
 
 <style lang="scss" scoped>
+.modal-header {
+  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(90deg, #e66c5a 0%, #333 100%);
+  color: #fff;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-weight: bold;
+  font-size: 1.3rem;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
 .cardDocs {
   background-color: #ffffff;
 }
@@ -991,118 +1048,224 @@ onMounted(() => {
   box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
 }
 
-.month-header {
-  padding: 0.2rem;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  color: #000000;
-  grid-column: 1 / -1; /* Ocupa todas las columnas */
-  background-color: rgb(180, 180, 180);
+:root {
+  --calendar-row-height: 44px;
 }
 
-.calendar-day-header,
-.empty {
-  padding: 0.1rem;
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.calendar-day-header {
-  background-color: rgb(223, 223, 223);
+.calendar-container {
+  background: #fff;
+  border-radius: 1.2em;
+  box-shadow: 0 4px 18px rgba(94, 190, 163, 0.1);
+  padding: 1.2em 0.7em 0.7em 0.7em;
+  margin-bottom: 1.5em;
+  border: 1px solid #e66c5a22;
 }
 
 .calendar-grid {
-  grid-column: 2 / 3; /* Coloca los días del mes en la segunda columna */
-  grid-row: 2 / -1; /* Extiende desde la segunda fila hasta el final */
   display: grid;
-  grid-template-columns: repeat(7, 1fr); /* 7 días de la semana */
-  grid-template-rows: repeat(6, var(--calendar-row-height)); /* 6 filas para las semanas */
-  gap: 0.1rem;
-  border: 1px solid #000000;
-  min-height: 250px;
+  grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: var(--calendar-row-height, 44px);
+  gap: 0.2rem;
 }
 
-.calendar-day {
+.month-header {
+  grid-column: 1 / -1;
+  background: linear-gradient(90deg, #e66c5a 0%, #333 100%);
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.1rem;
+  border-radius: 0.7em 0.7em 0 0;
+  letter-spacing: 1px;
+  margin-bottom: 0.2em;
+  box-shadow: 0 2px 6px rgba(230, 108, 90, 0.07);
+  text-align: center;
+  padding: 0.5em 0;
+}
+
+.calendar-day-header {
+  background: #fbeee7;
+  color: #e66c5a;
+  font-weight: bold;
+  border-radius: 0.4em;
+  font-size: 1rem;
+  text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 32px;
+}
+
+.calendar-day.empty {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  cursor: default;
+}
+
+.calendar-day {
+  background: #f8f9fa;
+  border-radius: 0.5em;
+  font-size: 1.05rem;
   min-height: var(--calendar-row-height);
+  box-shadow: 0 1px 3px rgba(230, 108, 90, 0.03);
+  position: relative;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    box-shadow 0.15s;
+  border: 1px solid #f3e3de;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.calendar-day:hover {
+  background: #fbeee7;
+  box-shadow: 0 2px 8px rgba(230, 108, 90, 0.1);
+  z-index: 2;
+}
+
+.calendar-day.today {
+  border: 2px solid #e66c5a;
+  background: #fff7f3;
 }
 
 .calendar-grid-semanas {
-  grid-column: 1 / 2; /* Coloca los números de las semanas en la primera columna */
-  grid-row: 2 / -1; /* Extiende desde la segunda fila hasta el final */
+  grid-column: 1 / 2;
+  grid-row: 2 / -1;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   padding: 0.1rem 0;
 }
-.calendar-container {
-  display: grid;
-  grid-template-columns: 30px 1fr;
-  grid-template-rows: auto repeat(6, var(--calendar-row-height));
-  gap: 0.2rem;
-}
-
 .week-number {
   display: flex;
   align-items: center;
   justify-content: center;
   height: var(--calendar-row-height);
-
+  color: #bdbdbd;
+  font-size: 0.95rem;
+  font-weight: 500;
   margin-top: 0.199rem;
   margin-bottom: 0.528rem;
 }
 
-:root {
-  --calendar-row-height: 40px; // Esta es la altura de las filas del calendario
-}
-
-.calendar-month-container {
-  display: flex;
-  flex-direction: column;
-
-  @media (min-width: 768px) {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-start;
-  }
-}
-
-/* Contenedor del calendario */
-.calendar-container {
-  flex: 1; /* Que el calendario ocupe la mayor parte del espacio */
-  min-width: 250px;
-}
-
-/* Contenedor de eventos al lado del mes */
 .event-category {
   margin-left: 30px;
   padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid #e66c5a44;
   border-radius: 8px;
-  background: #f9f9f9;
+  background: #fff7f3;
   font-size: 1rem;
-  max-width: 160px;
-  align-self: flex-start; /* Mantenerlo arriba */
+  max-width: 180px;
+  align-self: flex-start;
+  box-shadow: 0 2px 8px rgba(230, 108, 90, 0.07);
+}
+.event-category p {
+  margin-bottom: 0.5em;
+  color: #000000;
+}
+.modal-body {
+  padding: 1.5rem;
+  background: #fafbfc;
+  border-bottom-left-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+  overflow-y: auto;
+  flex: 1 1 auto;
 }
 
-/* Diseño responsivo para pantallas pequeñas */
-@media (max-width: 768px) {
-  .col-md-4 {
-    flex-direction: column;
-    max-width: 100%;
-  }
+.modal-footer {
+  border-top: 1px solid #e0e0e0;
+  background: #f7f7f7;
+  border-bottom-left-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: flex-end;
+}
 
-  .event-category {
-    margin-left: 30px;
-    margin-top: 10px;
-    width: 100%;
+@media (max-width: 900px) {
+  .modal-dialog {
+    max-width: 98vw;
+    min-width: 0;
+    padding: 0;
+  }
+  .modal-content {
+    border-radius: 0.8rem !important;
+    padding: 0 !important;
+  }
+  .modal-header {
+    border-top-left-radius: 0.8rem !important;
+    border-top-right-radius: 0.8rem !important;
+    padding: 1.1rem !important;
+    min-height: 56px;
+    box-sizing: border-box;
+  }
+  .modal-title {
+    font-size: 1.15rem;
+    word-break: break-word;
+  }
+  .btn-close {
+    width: 2.1rem;
+    height: 2.1rem;
+    font-size: 1.2rem;
+    margin-left: 0.7rem;
+  }
+  .modal-body,
+  .modal-footer {
+    border-radius: 0 0 0.8rem 0.8rem !important;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .modal-dialog {
+    max-width: 99vw;
+    min-width: 0;
+    padding: 0;
+  }
+  .modal-content {
+    border-radius: 0.7rem !important;
+    padding: 0 !important;
+  }
+  .modal-header {
+    border-top-left-radius: 0.7rem !important;
+    border-top-right-radius: 0.7rem !important;
+    padding: 1rem !important;
+    min-height: 56px;
+    box-sizing: border-box;
+  }
+  .modal-title {
+    font-size: 1.1rem;
+    word-break: break-word;
+  }
+  .btn-close {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1.1rem;
+    margin-left: 0.5rem;
+  }
+  .modal-body,
+  .modal-footer {
+    border-radius: 0 0 0.7rem 0.7rem !important;
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .modal-title {
+    font-size: 1rem;
+  }
+  .modal-header {
+    padding: 0.7rem !important;
+  }
+  .modal-body,
+  .modal-footer {
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
   }
 }
 </style>

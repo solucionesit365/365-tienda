@@ -1,20 +1,31 @@
 <template>
- <div class="row justify-content-center mt-3">
+  <div class="row justify-content-center mt-3">
     <div class="co-12 col-sm-12 col-xl-12">
       <div class="card border-top border-5">
         <div class="card-header">
           <div class="card-body">
             <div class="row">
               <div class="col-6">
-                <MDBInput
-                  class="mb-3"
-                  label="Titulo"
-                  v-model="tituloAuditoria"
-                  style="outline: none"
-                />
+                <div class="input-group mb-3">
+                  <span class="input-group-text" id="basic-addon1">@</span>
+                  <input
+                    type="text"
+                    class="form-control"
+                    aria-label="Titulo"
+                    aria-describedby="basic-addon1"
+                  />
+                </div>
               </div>
               <div class="col-6">
-                <MDBInput label="Descripción" v-model="descripcion" />
+                <div class="input-group mb-3">
+                  <span class="input-group-text" id="basic-addon1">@</span>
+                  <input
+                    type="text"
+                    class="form-control"
+                    aria-label="Descripción"
+                    aria-describedby="basic-addon1"
+                  />
+                </div>
               </div>
 
               <div class="col-sm-6 col-6 col-xl-4">
@@ -47,7 +58,6 @@
               </div>
               <div class="col-sm-6 col-6 col-xl-4">
                 <div class="form-text">Tienda</div>
-                <MDBSelect
                   v-model:options="listaTiendas"
                   v-model:selected="tienda"
                   filter
@@ -77,161 +87,321 @@
                 <h4 class="mt-3">
                   Preguntas
                   <button color="success" floating @click="agregarPregunta()">
-                    <MDBIcon icon="plus" />
+                    <i icon="plus" />
                   </button>
                 </h4>
                 <div class="row">
                   <div class="col-sm-12 col-12 col-xl-5">
-                    <MDBInput label="Pregunta" v-model="pregunta" />
+                    <div class="input-group mb-3">
+                      <span class="input-group-text" id="basic-addon1">@</span>
+                      <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Username"
+                        aria-label="Username"
+                        aria-describedby="basic-addon1"
+                      />
+                    </div>
+                    label="Pregunta" v-model="pregunta" />
                   </div>
                   <div class="col-sm-12 col-12 col-xl-3">
                     <MDBSelect v-model:options="options2" v-model:selected="tipo" />
                   </div>
                   <div class="col-sm-6 col-7 col-xl-2">
-                    <MDBCheckbox label="Permitir foto" v-model="archivo" />
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" value="" />
+                    </div>
+                  </div>
+                </div>
+                <!-- Continuacion preguntas -->
+                <div class="accordion" id="accordionExample" borderless>
+                  <div class="accordion-item border border-info"
+                    headerTitle="PREGUNTAS"
+                    collapseId="collapseOne"
+                  >
+                    <ul
+                      class="list-group"
+                      light
+                      v-for="(pregunta, index) in preguntas"
+                      v-bind:key="index"
+                    >
+                      <li class="list-group-item">
+                        <div class="row">
+                          <div class="col-12 col-sm-12 col-xl-4">
+                            <MDBBadge class="badge-primary" pill>{{ index + 1 }}</MDBBadge>
+                            {{ pregunta.pregunta }}
+                          </div>
+                          <div class="col-12 col-sm-12 col-xl-3">
+                            <!-- Si es rojo y verde -->
+                            <MDBBtnGroup v-if="pregunta.tipo == 'ROJOVERDE'">
+                              <MDBRadio
+                                disabled
+                                :btnCheck="true"
+                                :wrap="false"
+                                labelClass="btn btn-success"
+                                label="VERDE"
+                                name="options"
+                              />
+                              <MDBRadio
+                                disabled
+                                :btnCheck="true"
+                                :wrap="false"
+                                labelClass="btn btn-danger"
+                                label="ROJO"
+                                name="options"
+                              />
+                            </MDBBtnGroup>
+                            <!-- Si es SI/NO -->
+                            <MDBBtnGroup v-if="pregunta.tipo == 'SINO'">
+                              <MDBRadio
+                                disabled
+                                :btnCheck="true"
+                                :wrap="false"
+                                labelClass="btn btn-secondary"
+                                label="SI"
+                                name="options"
+                              />
+                              <MDBRadio
+                                disabled
+                                :btnCheck="true"
+                                :wrap="false"
+                                labelClass="btn btn-secondary"
+                                label="NO"
+                                name="options"
+                              />
+                            </MDBBtnGroup>
+                            <!-- Si es respuesta escrita -->
+                            <div class="input-group mb-3">
+                              <span class="input-group-text" id="basic-addon1">@</span>
+                              <input
+                                type="text"
+                                class="form-control"
+                                placeholder="Username"
+                                aria-label="Username"
+                                aria-describedby="basic-addon1"
+                              />
+                            </div>
+                            v-if="pregunta.tipo == 'RespESCRITA'" label="Respuesta escrita" disabled
+                            aria-label="Respuesta escrita" />
+                            <!-- Si es valor del 1 al 10 -->
+                            <div v-if="pregunta.tipo === 'rango'">
+                              <MDBBadge class="badge-warning" pill> Rango (1 - 10) </MDBBadge>
+                            </div>
+                          </div>
+                          <div class="col-6 col-sm-6 col-xl-3">
+                            <MDBCheckbox
+                              disabled
+                              v-if="pregunta.archivo"
+                              label="Permite foto"
+                              v-model="pregunta.archivo"
+                            />
+                          </div>
+                          <div class="col-12 col-sm-12 col-xl-2">
+                            <button @click="adiosVaquero(index)" color="danger" floating>
+                              <i class="fas fa-trash-alt"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </li>
+                    </ul>
                   </div>
                 </div>
               </div>
-              <!-- Continuacion preguntas -->
-              <MDBAccordion v-model="activeItem" borderless>
-                <MDBAccordionItem
-                  class="border border-success"
-                  headerTitle="PREGUNTAS"
+              <hr />
+              <!-- Configuracion -->
+              <div class="mt-3">
+                <h4>Configuración</h4>
+                <MDBCheckbox v-model="dependientaA" label="Preguntas Dependienta A" inline />
+                <MDBCheckbox v-model="dependientaB_C" label="Preguntas Dependienta B/C" inline />
+                <MDBCheckbox v-model="responsable" label="Preguntas Responsable" inline />
+              </div>
+              <!-- Preguntas Dependienta A -->
+              <div v-if="dependientaA" class="mb-2">
+                <h4 class="mt-3">
+                  Preguntas Dependienta A
+                  <button color="success" floating @click="agregarPreguntaDpendientaA()">
+                    <MDBIcon icon="plus" />
+                  </button>
+                </h4>
+                <div class="row">
+                  <div class="col-sm-12 col-12 col-xl-5">
+                    <div class="input-group mb-3">
+                      <span class="input-group-text" id="basic-addon1">@</span>
+                      <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Username"
+                        aria-label="Username"
+                        aria-describedby="basic-addon1"
+                      />
+                    </div>
+                    label="Pregunta" v-model="preguntaDA" />
+                  </div>
+                  <div class="col-sm-12 col-12 col-xl-3">
+                    <!-- <MDBSelect :options="options2" v-model="" /> -->
+                    <select v-model="tipoDependientaA" class="form-select">
+                      <option v-for="option in options2" :value="option.value" :key="option.value">
+                        {{ option.text }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-sm-6 col-7 col-xl-2">
+                    <MDBCheckbox label="Permitir foto" v-model="archivoDependiantaA" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Continuacion Preguntas Dependienta A -->
+              <div class="accordion" id="accordionExample" v-if="dependientaA" borderless>
+                <div class="accordion-item border border-info"
+                  headerTitle="PREGUNTAS Dependienta A"
                   collapseId="collapseOne"
                 >
-                  <MDBListGroup light v-for="(pregunta, index) in preguntas" v-bind:key="index">
-                    <MDBListGroupItem>
-                      <div class="row">
-                        <div class="col-12 col-sm-12 col-xl-4">
-                          <MDBBadge class="badge-primary" pill>{{ index + 1 }}</MDBBadge>
-                          {{ pregunta.pregunta }}
-                        </div>
-                        <div class="col-12 col-sm-12 col-xl-3">
-                          <!-- Si es rojo y verde -->
-                          <MDBBtnGroup v-if="pregunta.tipo == 'ROJOVERDE'">
-                            <MDBRadio
-                              disabled
-                              :btnCheck="true"
-                              :wrap="false"
-                              labelClass="btn btn-success"
-                              label="VERDE"
-                              name="options"
+                  <div>
+                    <ul
+                      class="list-group"
+                      light
+                      v-for="(preguntaDA, index) in preguntasDependientaA"
+                      v-bind:key="index"
+                    >
+                      <li class="list-group-item">
+                        <div class="row">
+                          <div class="col-12 col-sm-12 col-xl-4">
+                            <MDBBadge class="badge-primary" pill>{{ index + 1 }}</MDBBadge>
+                            {{ preguntaDA.pregunta }}
+                          </div>
+                          <div class="col-12 col-sm-12 col-xl-3">
+                            <!-- Si es rojo y verde -->
+                            <MDBBtnGroup v-if="preguntaDA.tipo == 'ROJOVERDE'">
+                              <MDBRadio
+                                disabled
+                                :btnCheck="true"
+                                :wrap="false"
+                                labelClass="btn btn-success"
+                                label="VERDE"
+                                name="options"
+                              />
+                              <MDBRadio
+                                disabled
+                                :btnCheck="true"
+                                :wrap="false"
+                                labelClass="btn btn-danger"
+                                label="ROJO"
+                                name="options"
+                              />
+                            </MDBBtnGroup>
+                            <!-- Si es SI/NO -->
+                            <MDBBtnGroup v-if="preguntaDA.tipo == 'SINO'">
+                              <MDBRadio
+                                disabled
+                                :btnCheck="true"
+                                :wrap="false"
+                                labelClass="btn btn-secondary"
+                                label="SI"
+                                name="options"
+                              />
+                              <MDBRadio
+                                disabled
+                                :btnCheck="true"
+                                :wrap="false"
+                                labelClass="btn btn-secondary"
+                                label="NO"
+                                name="options"
+                              />
+                            </MDBBtnGroup>
+                            <!-- Si es respuesta escrita -->
+                            <div class="input-group mb-3">
+                              <span class="input-group-text" id="basic-addon1">@</span>
+                              <input
+                                v-if="preguntaDA.tipo == 'RespESCRITA'"
+                                type="text"
+                                class="form-control"
+                                aria-label="Respuesta escrita"
+                                aria-describedby="basic-addon1"
+                                disabled
+                              />
+                            </div>
+
                             />
-                            <MDBRadio
+                            <!-- Si es valor del 1 al 10 -->
+                            <div v-if="preguntaDA.tipo === 'rango'">
+                              <MDBBadge class="badge-warning" pill> Rango (1 - 10) </MDBBadge>
+                            </div>
+                          </div>
+                          <div class="col-6 col-sm-6 col-xl-3">
+                            <MDBCheckbox
                               disabled
-                              :btnCheck="true"
-                              :wrap="false"
-                              labelClass="btn btn-danger"
-                              label="ROJO"
-                              name="options"
+                              v-if="preguntaDA.archivo"
+                              label="Permite foto"
+                              v-model="preguntaDA.archivo"
                             />
-                          </MDBBtnGroup>
-                          <!-- Si es SI/NO -->
-                          <MDBBtnGroup v-if="pregunta.tipo == 'SINO'">
-                            <MDBRadio
-                              disabled
-                              :btnCheck="true"
-                              :wrap="false"
-                              labelClass="btn btn-secondary"
-                              label="SI"
-                              name="options"
-                            />
-                            <MDBRadio
-                              disabled
-                              :btnCheck="true"
-                              :wrap="false"
-                              labelClass="btn btn-secondary"
-                              label="NO"
-                              name="options"
-                            />
-                          </MDBBtnGroup>
-                          <!-- Si es respuesta escrita -->
-                          <MDBInput
-                            v-if="pregunta.tipo == 'RespESCRITA'"
-                            label="Respuesta escrita"
-                            disabled
-                            aria-label="Respuesta escrita"
-                          />
-                          <!-- Si es valor del 1 al 10 -->
-                          <div v-if="pregunta.tipo === 'rango'">
-                            <MDBBadge class="badge-warning" pill> Rango (1 - 10) </MDBBadge>
+                          </div>
+                          <div class="col-12 col-sm-12 col-xl-2">
+                            <button @click="adiosVaquero2(index)" color="danger" floating>
+                              <i class="fas fa-trash-alt"></i>
+                            </button>
                           </div>
                         </div>
-                        <div class="col-6 col-sm-6 col-xl-3">
-                          <MDBCheckbox
-                            disabled
-                            v-if="pregunta.archivo"
-                            label="Permite foto"
-                            v-model="pregunta.archivo"
-                          />
-                        </div>
-                        <div class="col-12 col-sm-12 col-xl-2">
-                          <button @click="adiosVaquero(index)" color="danger" floating>
-                            <i class="fas fa-trash-alt"></i>
-                          </button>
-                        </div>
-                      </div>
-                    </MDBListGroupItem>
-                  </MDBListGroup>
-                </MDBAccordionItem>
-              </MDBAccordion>
-            </div>
-            <hr />
-            <!-- Configuracion -->
-            <div class="mt-3">
-              <h4>Configuración</h4>
-              <MDBCheckbox v-model="dependientaA" label="Preguntas Dependienta A" inline />
-              <MDBCheckbox v-model="dependientaB_C" label="Preguntas Dependienta B/C" inline />
-              <MDBCheckbox v-model="responsable" label="Preguntas Responsable" inline />
-            </div>
-            <!-- Preguntas Dependienta A -->
-            <div v-if="dependientaA" class="mb-2">
-              <h4 class="mt-3">
-                Preguntas Dependienta A
-                <button color="success" floating @click="agregarPreguntaDpendientaA()">
-                  <MDBIcon icon="plus" />
-                </button>
-              </h4>
-              <div class="row">
-                <div class="col-sm-12 col-12 col-xl-5">
-                  <MDBInput label="Pregunta" v-model="preguntaDA" />
-                </div>
-                <div class="col-sm-12 col-12 col-xl-3">
-                  <!-- <MDBSelect :options="options2" v-model="" /> -->
-                  <select v-model="tipoDependientaA" class="form-select">
-                    <option v-for="option in options2" :value="option.value" :key="option.value">
-                      {{ option.text }}
-                    </option>
-                  </select>
-                </div>
-                <div class="col-sm-6 col-7 col-xl-2">
-                  <MDBCheckbox label="Permitir foto" v-model="archivoDependiantaA" />
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
-            </div>
+              <!-- Preguntas Dependienta B/C -->
+              <div v-if="dependientaB_C" class="mb-2">
+                <h4 class="mt-3">
+                  Preguntas Dependienta B/C
+                  <button color="success" floating @click="agregarPreguntaDependientaB_C()">
+                    <MDBIcon icon="plus" />
+                  </button>
+                </h4>
+                <div class="row">
+                  <div class="col-sm-12 col-12 col-xl-5">
+                    <div class="input-group mb-3">
+                      <span class="input-group-text" id="basic-addon1">@</span>
+                      <input
+                        type="text"
+                        class="form-control"
+                        aria-label="Pregunta"
+                        aria-describedby="basic-addon1"
+                      />
+                    </div>
+                  </div>
+                  <div class="col-sm-12 col-12 col-xl-3">
+                    <!-- <MDBSelect :options="options2" v-model="" /> -->
+                    <select v-model="tipoDependientaB_C" class="form-select">
+                      <option v-for="option in options2" :value="option.value" :key="option.value">
+                        {{ option.text }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-sm-6 col-7 col-xl-2">
+                    <MDBCheckbox label="Permitir foto" v-model="archivoDependiantaB_C" />
+                  </div>
+                </div>
+              </div>
 
-            <!-- Continuacion Preguntas Dependienta A -->
-            <MDBAccordion v-if="dependientaA" v-model="activeItemDependientaA" borderless>
-              <MDBAccordionItem
-                class="border border-info"
-                headerTitle="PREGUNTAS Dependienta A"
-                collapseId="collapseOne"
-              >
-                <div>
-                  <MDBListGroup
+              <!-- Continuacion Preguntas Dependienta B/C -->
+              <div class="accordion" id="accordionExample" v-if="dependientaB_C" borderless>
+                <div class="accordion-item border border-info"
+                  headerTitle="PREGUNTAS Dependienta B/C"
+                  collapseId="collapseOne"
+                >
+                  <ul
+                    class="list-group"
                     light
-                    v-for="(preguntaDA, index) in preguntasDependientaA"
+                    v-for="(preguntaDBC, index) in preguntasDependientaB_C"
                     v-bind:key="index"
                   >
-                    <MDBListGroupItem>
+                    <li class="list-group-item">
                       <div class="row">
                         <div class="col-12 col-sm-12 col-xl-4">
                           <MDBBadge class="badge-primary" pill>{{ index + 1 }}</MDBBadge>
-                          {{ preguntaDA.pregunta }}
+                          {{ preguntaDBC.pregunta }}
                         </div>
                         <div class="col-12 col-sm-12 col-xl-3">
                           <!-- Si es rojo y verde -->
-                          <MDBBtnGroup v-if="preguntaDA.tipo == 'ROJOVERDE'">
+                          <MDBBtnGroup v-if="preguntaDBC.tipo == 'ROJOVERDE'">
                             <MDBRadio
                               disabled
                               :btnCheck="true"
@@ -250,7 +420,7 @@
                             />
                           </MDBBtnGroup>
                           <!-- Si es SI/NO -->
-                          <MDBBtnGroup v-if="preguntaDA.tipo == 'SINO'">
+                          <MDBBtnGroup v-if="preguntaDBC.tipo == 'SINO'">
                             <MDBRadio
                               disabled
                               :btnCheck="true"
@@ -269,267 +439,174 @@
                             />
                           </MDBBtnGroup>
                           <!-- Si es respuesta escrita -->
-                          <MDBInput
-                            v-if="preguntaDA.tipo == 'RespESCRITA'"
-                            label="Respuesta escrita"
-                            disabled
-                            aria-label="Respuesta escrita"
-                          />
+                          <div class="input-group mb-3">
+                            <span class="input-group-text" id="basic-addon1">@</span>
+                            <input
+                              v-if="preguntaDBC.tipo == 'RespESCRITA'"
+                              type="text"
+                              class="form-control"
+                              placeholder="Username"
+                              aria-label="Respuesta escrita"
+                              aria-describedby="basic-addon1"
+                              disabled
+                            />
+                            <!-- Si es valor del 1 al 10 -->
+                            <div v-if="preguntaDBC.tipo === 'rango'">
+                              <MDBBadge class="badge-warning" pill> Rango (1 - 10) </MDBBadge>
+                            </div>
+                          </div>
+                          <div class="col-6 col-sm-6 col-xl-3">
+                            <MDBCheckbox
+                              disabled
+                              v-if="preguntaDBC.archivo"
+                              label="Permite foto"
+                              v-model="preguntaDBC.archivo"
+                            />
+                          </div>
+                          <div class="col-12 col-sm-12 col-xl-2">
+                            <button @click="adiosVaquero3(index)" color="danger" floating>
+                              <i class="fas fa-trash-alt"></i>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <!-- Responsable -->
+
+              <div v-if="responsable" class="mb-2">
+                <h4 class="mt-3">
+                  Preguntas Responsable
+                  <button color="success" floating @click="agregarPreguntaResponsable()">
+                    <MDBIcon icon="plus" />
+                  </button>
+                </h4>
+                <div class="row">
+                  <div class="col-sm-12 col-12 col-xl-5">
+                    <div class="input-group mb-3">
+                      <span class="input-group-text" id="basic-addon1">@</span>
+                      <input
+                        type="text"
+                        class="form-control"
+                        aria-label="Pregunta"
+                        aria-describedby="basic-addon1"
+                      />
+                    </div>
+                  </div>
+                  <div class="col-sm-12 col-12 col-xl-3">
+                    <select v-model="tipoResponsable" class="form-select">
+                      <option v-for="option in options2" :value="option.value" :key="option.value">
+                        {{ option.text }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-sm-6 col-7 col-xl-2">
+                    <MDBCheckbox label="Permitir foto" v-model="archivoResponsable" />
+                  </div>
+                </div>
+              </div>
+
+              <!--  Continuacion Responsable -->
+              <div class="accordion" id="accordionExample" v-if="responsable" borderless>
+                <div class="accordion-item border border-info"
+                  headerTitle="PREGUNTAS Dependienta B/C"
+                  collapseId="collapseOne"
+                >
+                  <ul
+                    class="list-group"
+                    light
+                    v-for="(preguntaRes, index) in preguntasResponsable"
+                    v-bind:key="index"
+                  >
+                    <li class="list-group-item">
+                      <div class="row">
+                        <div class="col-12 col-sm-12 col-xl-4">
+                          <MDBBadge class="badge-primary" pill>{{ index + 1 }}</MDBBadge>
+                          {{ preguntaRes.pregunta }}
+                        </div>
+                        <div class="col-12 col-sm-12 col-xl-3">
+                          <!-- Si es rojo y verde -->
+                          <MDBBtnGroup v-if="preguntaRes.tipo == 'ROJOVERDE'">
+                            <MDBRadio
+                              disabled
+                              :btnCheck="true"
+                              :wrap="false"
+                              labelClass="btn btn-success"
+                              label="VERDE"
+                              name="options"
+                            />
+                            <MDBRadio
+                              disabled
+                              :btnCheck="true"
+                              :wrap="false"
+                              labelClass="btn btn-danger"
+                              label="ROJO"
+                              name="options"
+                            />
+                          </MDBBtnGroup>
+                          <!-- Si es SI/NO -->
+                          <MDBBtnGroup v-if="preguntaRes.tipo == 'SINO'">
+                            <MDBRadio
+                              disabled
+                              :btnCheck="true"
+                              :wrap="false"
+                              labelClass="btn btn-secondary"
+                              label="SI"
+                              name="options"
+                            />
+                            <MDBRadio
+                              disabled
+                              :btnCheck="true"
+                              :wrap="false"
+                              labelClass="btn btn-secondary"
+                              label="NO"
+                              name="options"
+                            />
+                          </MDBBtnGroup>
+                          <!-- Si es respuesta escrita -->
+                          <div class="input-group mb-3">
+                            <span class="input-group-text" id="basic-addon1">@</span>
+                            <input
+                              v-if="preguntaRes.tipo == 'RespESCRITA'"
+                              type="text"
+                              class="form-control"
+                              placeholder="Username"
+                              aria-label="respuesta escrita"
+                              aria-describedby="basic-addon1"
+                              disabled
+                            />
+                          </div>
                           <!-- Si es valor del 1 al 10 -->
-                          <div v-if="preguntaDA.tipo === 'rango'">
+                          <div v-if="preguntaRes.tipo === 'rango'">
                             <MDBBadge class="badge-warning" pill> Rango (1 - 10) </MDBBadge>
                           </div>
                         </div>
                         <div class="col-6 col-sm-6 col-xl-3">
                           <MDBCheckbox
                             disabled
-                            v-if="preguntaDA.archivo"
+                            v-if="preguntaRes.archivo"
                             label="Permite foto"
-                            v-model="preguntaDA.archivo"
+                            v-model="preguntaRes.archivo"
                           />
                         </div>
                         <div class="col-12 col-sm-12 col-xl-2">
-                          <button @click="adiosVaquero2(index)" color="danger" floating>
+                          <button @click="adiosVaquero4(index)" color="danger" floating>
                             <i class="fas fa-trash-alt"></i>
                           </button>
                         </div>
                       </div>
-                    </MDBListGroupItem>
-                  </MDBListGroup>
-                </div>
-              </MDBAccordionItem>
-            </MDBAccordion>
-            <!-- Preguntas Dependienta B/C -->
-            <div v-if="dependientaB_C" class="mb-2">
-              <h4 class="mt-3">
-                Preguntas Dependienta B/C
-                <button color="success" floating @click="agregarPreguntaDependientaB_C()">
-                  <MDBIcon icon="plus" />
-                </button>
-              </h4>
-              <div class="row">
-                <div class="col-sm-12 col-12 col-xl-5">
-                  <MDBInput label="Pregunta" v-model="preguntaDBC" />
-                </div>
-                <div class="col-sm-12 col-12 col-xl-3">
-                  <!-- <MDBSelect :options="options2" v-model="" /> -->
-                  <select v-model="tipoDependientaB_C" class="form-select">
-                    <option v-for="option in options2" :value="option.value" :key="option.value">
-                      {{ option.text }}
-                    </option>
-                  </select>
-                </div>
-                <div class="col-sm-6 col-7 col-xl-2">
-                  <MDBCheckbox label="Permitir foto" v-model="archivoDependiantaB_C" />
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
-
-            <!-- Continuacion Preguntas Dependienta B/C -->
-            <MDBAccordion v-if="dependientaB_C" v-model="activeItemDependientaB_C" borderless>
-              <MDBAccordionItem
-                class="border border-info"
-                headerTitle="PREGUNTAS Dependienta B/C"
-                collapseId="collapseOne"
-              >
-                <MDBListGroup
-                  light
-                  v-for="(preguntaDBC, index) in preguntasDependientaB_C"
-                  v-bind:key="index"
-                >
-                  <MDBListGroupItem>
-                    <div class="row">
-                      <div class="col-12 col-sm-12 col-xl-4">
-                        <MDBBadge class="badge-primary" pill>{{ index + 1 }}</MDBBadge>
-                        {{ preguntaDBC.pregunta }}
-                      </div>
-                      <div class="col-12 col-sm-12 col-xl-3">
-                        <!-- Si es rojo y verde -->
-                        <MDBBtnGroup v-if="preguntaDBC.tipo == 'ROJOVERDE'">
-                          <MDBRadio
-                            disabled
-                            :btnCheck="true"
-                            :wrap="false"
-                            labelClass="btn btn-success"
-                            label="VERDE"
-                            name="options"
-                          />
-                          <MDBRadio
-                            disabled
-                            :btnCheck="true"
-                            :wrap="false"
-                            labelClass="btn btn-danger"
-                            label="ROJO"
-                            name="options"
-                          />
-                        </MDBBtnGroup>
-                        <!-- Si es SI/NO -->
-                        <MDBBtnGroup v-if="preguntaDBC.tipo == 'SINO'">
-                          <MDBRadio
-                            disabled
-                            :btnCheck="true"
-                            :wrap="false"
-                            labelClass="btn btn-secondary"
-                            label="SI"
-                            name="options"
-                          />
-                          <MDBRadio
-                            disabled
-                            :btnCheck="true"
-                            :wrap="false"
-                            labelClass="btn btn-secondary"
-                            label="NO"
-                            name="options"
-                          />
-                        </MDBBtnGroup>
-                        <!-- Si es respuesta escrita -->
-                        <MDBInput
-                          v-if="preguntaDBC.tipo == 'RespESCRITA'"
-                          label="Respuesta escrita"
-                          disabled
-                          aria-label="Respuesta escrita"
-                        />
-                        <!-- Si es valor del 1 al 10 -->
-                        <div v-if="preguntaDBC.tipo === 'rango'">
-                          <MDBBadge class="badge-warning" pill> Rango (1 - 10) </MDBBadge>
-                        </div>
-                      </div>
-                      <div class="col-6 col-sm-6 col-xl-3">
-                        <MDBCheckbox
-                          disabled
-                          v-if="preguntaDBC.archivo"
-                          label="Permite foto"
-                          v-model="preguntaDBC.archivo"
-                        />
-                      </div>
-                      <div class="col-12 col-sm-12 col-xl-2">
-                        <button @click="adiosVaquero3(index)" color="danger" floating>
-                          <i class="fas fa-trash-alt"></i>
-                        </button>
-                      </div>
-                    </div>
-                  </MDBListGroupItem>
-                </MDBListGroup>
-              </MDBAccordionItem>
-            </MDBAccordion>
-
-            <!-- Responsable -->
-
-            <div v-if="responsable" class="mb-2">
-              <h4 class="mt-3">
-                Preguntas Responsable
-                <button color="success" floating @click="agregarPreguntaResponsable()">
-                  <MDBIcon icon="plus" />
-                </button>
-              </h4>
-              <div class="row">
-                <div class="col-sm-12 col-12 col-xl-5">
-                  <MDBInput label="Pregunta" v-model="preguntaRes" />
-                </div>
-                <div class="col-sm-12 col-12 col-xl-3">
-                  <select v-model="tipoResponsable" class="form-select">
-                    <option v-for="option in options2" :value="option.value" :key="option.value">
-                      {{ option.text }}
-                    </option>
-                  </select>
-                </div>
-                <div class="col-sm-6 col-7 col-xl-2">
-                  <MDBCheckbox label="Permitir foto" v-model="archivoResponsable" />
-                </div>
-              </div>
-            </div>
-
-            <!--  Continuacion Responsable -->
-            <MDBAccordion v-if="responsable" v-model="activeItemResponsable" borderless>
-              <MDBAccordionItem
-                class="border border-info"
-                headerTitle="PREGUNTAS Dependienta B/C"
-                collapseId="collapseOne"
-              >
-                <MDBListGroup
-                  light
-                  v-for="(preguntaRes, index) in preguntasResponsable"
-                  v-bind:key="index"
-                >
-                  <MDBListGroupItem>
-                    <div class="row">
-                      <div class="col-12 col-sm-12 col-xl-4">
-                        <MDBBadge class="badge-primary" pill>{{ index + 1 }}</MDBBadge>
-                        {{ preguntaRes.pregunta }}
-                      </div>
-                      <div class="col-12 col-sm-12 col-xl-3">
-                        <!-- Si es rojo y verde -->
-                        <MDBBtnGroup v-if="preguntaRes.tipo == 'ROJOVERDE'">
-                          <MDBRadio
-                            disabled
-                            :btnCheck="true"
-                            :wrap="false"
-                            labelClass="btn btn-success"
-                            label="VERDE"
-                            name="options"
-                          />
-                          <MDBRadio
-                            disabled
-                            :btnCheck="true"
-                            :wrap="false"
-                            labelClass="btn btn-danger"
-                            label="ROJO"
-                            name="options"
-                          />
-                        </MDBBtnGroup>
-                        <!-- Si es SI/NO -->
-                        <MDBBtnGroup v-if="preguntaRes.tipo == 'SINO'">
-                          <MDBRadio
-                            disabled
-                            :btnCheck="true"
-                            :wrap="false"
-                            labelClass="btn btn-secondary"
-                            label="SI"
-                            name="options"
-                          />
-                          <MDBRadio
-                            disabled
-                            :btnCheck="true"
-                            :wrap="false"
-                            labelClass="btn btn-secondary"
-                            label="NO"
-                            name="options"
-                          />
-                        </MDBBtnGroup>
-                        <!-- Si es respuesta escrita -->
-                        <MDBInput
-                          v-if="preguntaRes.tipo == 'RespESCRITA'"
-                          label="Respuesta escrita"
-                          disabled
-                          aria-label="Respuesta escrita"
-                        />
-                        <!-- Si es valor del 1 al 10 -->
-                        <div v-if="preguntaRes.tipo === 'rango'">
-                          <MDBBadge class="badge-warning" pill> Rango (1 - 10) </MDBBadge>
-                        </div>
-                      </div>
-                      <div class="col-6 col-sm-6 col-xl-3">
-                        <MDBCheckbox
-                          disabled
-                          v-if="preguntaRes.archivo"
-                          label="Permite foto"
-                          v-model="preguntaRes.archivo"
-                        />
-                      </div>
-                      <div class="col-12 col-sm-12 col-xl-2">
-                        <button @click="adiosVaquero4(index)" color="danger" floating>
-                          <i class="fas fa-trash-alt"></i>
-                        </button>
-                      </div>
-                    </div>
-                  </li>
-                </ul>
-              </MDBAccordionItem>
-            </MDBAccordion>
           </div>
-        </div>
-        <div class="card-footer text-center">
-          <button color="success" @click="nuevaAuditoria()"> Enviar auditoria </button>
+          <div class="card-footer text-center">
+            <button color="success" @click="nuevaAuditoria()">Enviar auditoria</button>
+          </div>
         </div>
       </div>
     </div>

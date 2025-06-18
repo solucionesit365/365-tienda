@@ -86,6 +86,30 @@ const router = createRouter({
       },
       component: () => import("../components/CalendarioFestivo.vue"),
     },
+        {
+      path: "/auditorias-tienda",
+      name: "Auditorias tienda",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/AuditoriasIndex.vue"),
+    },
+        {
+      path: "/crearAuditoria",
+      name: "Crear auditoria",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/CrearAuditoria.vue"),
+    },
+        {
+      path: "/auditorias",
+      name: "Auditorias",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/AuditoriasIndex.vue"),
+    },
   ],
 });
 

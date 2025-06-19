@@ -6,16 +6,30 @@
           <div class="card-body">
             <div v-if="kpisTiendas.length != 0">
               <div class="row">
-                <div class="col-2" v-for="(kpi, index) in kpisTiendas" v-bind:key="index">
-                  <div class="card mb-3" style="width: 18rem" shadow="0" bg="white">
-                    <div class="card-body" text="success">
-                      <h5 class="card-title">{{ kpi.nombreTienda.toUpperCase() }}</h5>
+                <div
+                  class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4"
+                  v-for="(kpi, index) in kpisTiendas"
+                  :key="index"
+                >
+                  <div class="card shadow-sm rounded-4 h-100 border-0">
+                    <div class="card-body pb-2">
+                      <h5 class="card-title fw-bold text-center py-2 mb-3">
+                        {{ kpi.nombreTienda.toUpperCase() }}
+                      </h5>
                     </div>
-                    <div class="card-footer" bg="transparent">
-                      <button @click="mostrarPDF(kpi)" color="primary" floating class="float-end">
+                    <div class="card-footer bg-white border-0 d-flex justify-content-end gap-2">
+                      <button
+                        @click="mostrarPDF(kpi)"
+                        class="btn btn-primary btn-sm"
+                        title="Ver PDF"
+                      >
                         <i class="fa-solid fa-file-pdf"></i>
                       </button>
-                      <button @click="eliminarFile(kpi)" color="danger" floating class="float-end">
+                      <button
+                        @click="eliminarFile(kpi)"
+                        class="btn btn-danger btn-sm"
+                        title="Eliminar"
+                      >
                         <i class="fas fa-trash"></i>
                       </button>
                     </div>
@@ -47,58 +61,56 @@
     </div>
   </div>
 
+  <!-- ✅ MODIFICADO: Modal visible con v-if y clases forzadas -->
   <div
-    class="modal"
+    v-if="modalDatos"
+    class="modal fade show d-block"
     tabindex="-1"
     id="modalDatos"
+    style="background-color: rgba(0, 0, 0, 0.5);"
     labelledby="modalDatosTitle"
-    staticBackdropS
     centered
     scrollable
     fullscreen
   >
-    <div class="modal-header">
-      <h5 class="modal-title" id="modalDatosTitle">
-        KPI Tienda
-        {{ kpiTiendaMostrar.nombreTienda.toUpperCase() }}
-      </h5>
-    </div>
-    <div class="modal-body">
-      <iframe
-        v-if="kpiTiendaMostrar.url"
-        :src="kpiTiendaMostrar.url"
-        width="100%"
-        height="100%"
-        frameborder="0"
-        allowfullscreen
-      ></iframe>
-      <div v-else class="row justify-content-center">
-        <div class="col-xl-6 col-xs-12 col-12 col-lg-6 text-center">
-          <figure class="figure">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalDatosTitle">
+            KPI Tienda
+            {{ kpiTiendaMostrar.nombreTienda.toUpperCase() }}
+          </h5>
+          <button class="btn-close" @click="modalDatos = false"></button>
+        </div>
+        <div class="modal-body">
+          <iframe
+            v-if="kpiTiendaMostrar.url"
+            :src="kpiTiendaMostrar.url"
+            width="100%"
+            height="600px"
+            frameborder="0"
+            allowfullscreen
+          ></iframe>
+          <div v-else class="text-center">
             <img
               src="@/assets/img/nodata.png"
               class="rounded mx-auto d-block mt-3 img-fluid"
               alt="..."
               style="width: 70%"
             />
-            <figcaption class="figure-caption text-center">
-              <h4>
-                No hay ningún KPI de la semana
-                {{ punteroFecha!.weekNumber }}
-              </h4>
-            </figcaption>
-          </figure>
+            <h4>No hay ningún KPI de la semana {{ punteroFecha!.weekNumber }}</h4>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @click="modalDatos = false">Cancelar</button>
         </div>
       </div>
-    </div>
-    <div class="modal-footer">
-      <button color="secondary" @click="modalDatos = false">Cancelar</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { inject, ref } from "vue";
+import { inject, ref, type Ref } from "vue";
 import { axiosInstance } from "@/components/axios/axios";
 import { watchEffect } from "vue";
 import { borrarArchivo, obtenerUrlImagen } from "@/components/firebase/storage";
@@ -108,9 +120,9 @@ interface PunteroFecha {
   weekNumber: number;
   year: number;
 }
+const punteroFecha = inject<Ref<PunteroFecha>>("punteroFecha");
+const tiendas = inject<Ref<{ id: number; nombre: string }[]>>("tiendas");
 
-const punteroFecha = inject<PunteroFecha>("punteroFecha");
-const tiendas = inject("tiendas") as { id: number; nombre: string }[] | undefined;
 interface KpiTienda {
   tienda: number;
   nombreTienda: string;
@@ -123,8 +135,7 @@ const modalDatos = ref(false);
 const kpiTiendaMostrar = ref<KpiTienda>({ tienda: 0, nombreTienda: "", ref: "", url: "" });
 
 watchEffect(() => {
-  if (tiendas && tiendas.length > 0) {
-    kpisTiendas.value = [];
+  if (tiendas && tiendas.value.length > 0) {
     getAllKPIs();
   }
 });
@@ -135,16 +146,15 @@ function getAllKPIs() {
     axiosInstance
       .get("kpi-tiendas/getAllKPIs", {
         params: {
-          semana: punteroFecha?.weekNumber,
-          año: punteroFecha?.year,
+          semana: punteroFecha?.value.weekNumber,
+          año: punteroFecha?.value.year,
         },
       })
-
       .then((resp) => {
         if (resp.data.ok) {
           resp.data.data.map((kpi: any) => {
-            for (let index = 0; index < tiendas!.length; index++) {
-              const element = tiendas![index];
+            for (let index = 0; index < tiendas!.value.length; index++) {
+              const element = tiendas!.value[index];
               if (element.id == kpi.tienda) {
                 kpi.nombreTienda = element.nombre;
                 kpisTiendas.value.push(kpi);
@@ -155,12 +165,10 @@ function getAllKPIs() {
       });
   } catch (error) {
     console.log(error);
-  } finally {
-    kpisTiendas.value = [];
   }
 }
 
-//eliminar KPI en mongo y Storage
+// Eliminar KPI
 function eliminarFile(kpiTienda: any) {
   Swal.fire({
     title: "Estas segur@?",
@@ -192,6 +200,7 @@ function eliminarFile(kpiTienda: any) {
   });
 }
 
+// Mostrar PDF en modal
 async function mostrarPDF(kpi: any) {
   if (kpi.ref) {
     const url = await obtenerUrlImagen(kpi.ref);
@@ -209,5 +218,21 @@ async function mostrarPDF(kpi: any) {
 
 .roundIcon {
   background-color: #c6f5d5;
+}
+.card {
+  background: #fff;
+  border-radius: 1.2rem;
+  box-shadow: 0 2px 12px rgba(230, 108, 90, 0.07);
+  border: none;
+}
+.card-footer {
+  background: #fff !important;
+  border-top: none !important;
+}
+.card-title {
+  font-size: 1.15rem;
+  color: black;
+  border-bottom: 3px solid #e66c5a;
+  letter-spacing: 1px;
 }
 </style>

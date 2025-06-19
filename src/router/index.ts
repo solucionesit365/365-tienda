@@ -86,6 +86,14 @@ const router = createRouter({
       },
       component: () => import("../components/CalendarioFestivo.vue"),
     },
+        {
+      path: "/NotasInformativas",
+      name: "Notas informativas",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/NotasInformativas.vue"),
+    },
   ],
 });
 

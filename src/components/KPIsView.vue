@@ -5,16 +5,12 @@
         <div class="card-content">
           <div class="card-body">
             <div class="card mt-2 border-top shadow-2">
-              <div class="row mt-1 mb-1">
+              <div class="row mt-4 mb-3 px-3">
                 <div class="col-md-4">
                   <button
-                    :class="{
-                      colorActive: graficosView == true,
-                      colorInactive: graficosView == false,
-                    }"
-                    size="lg"
-                    class="btn-responsive w-100"
-                    color="secondary"
+                    type="button"
+                    class="btn w-100"
+                    :class="graficosView ? 'colorActive' : 'colorInactive'"
                     @click="moveMenu('graficos')"
                   >
                     Gráficos
@@ -22,13 +18,9 @@
                 </div>
                 <div class="col-md-4">
                   <button
-                    :class="{
-                      colorActive: datosView == true,
-                      colorInactive: datosView == false,
-                    }"
-                    size="lg"
-                    class="btn-responsive w-100"
-                    color="secondary"
+                    type="button"
+                    class="btn w-100"
+                    :class="datosView ? 'colorActive' : 'colorInactive'"
                     @click="moveMenu('datos')"
                   >
                     Datos
@@ -36,13 +28,9 @@
                 </div>
                 <div class="col-md-4">
                   <button
-                    :class="{
-                      colorActive: indicadoresView == true,
-                      colorInactive: indicadoresView == false,
-                    }"
-                    size="lg"
-                    class="btn-responsive w-100"
-                    color="secondary"
+                    type="button"
+                    class="btn w-100"
+                    :class="indicadoresView ? 'colorActive' : 'colorInactive'"
                     @click="moveMenu('indicadores')"
                   >
                     Indicadores

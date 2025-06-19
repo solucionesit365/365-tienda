@@ -1,42 +1,50 @@
 <template>
   <div class="row mt-1">
-    <div class="d-inline-flex mt-2 mb-4">
-      <span class="fs-6 ms-1 me-1">Semana </span>
-      <span class="me-1" style="font-weight: bold">{{ punteroFecha!.weekNumber }} </span>
-      de
-      {{ punteroFecha!.year }}
-      <button class="btn-responsive" size="lg" color="secondary" @click="restarSemana()">-</button>
-      <button class="btn-responsive" size="lg" color="secondary" @click="sumarSemana()">+</button>
-    </div>
-    <div class="col-6 col-sm-6">
+    <div class="d-flex align-items-center gap-2 mt-2 mb-4">
+      <span class="fs-6 ms-1 me-1">Semana</span>
+      <span class="me-1 fw-bold">{{ punteroFecha!.weekNumber }}</span>
+      de {{ punteroFecha!.year }}
       <button
-        :class="{
-          colorActive: cargarpdf == true,
-          colorInactive: cargarpdf == false,
-        }"
-        size="lg"
-        class="btn-responsive w-100"
-        color="warning"
-        @click="cargarpdf = true"
+        type="button"
+        class="btn btn-primary fw-bold px-3 py-1"
+        @click="restarSemana"
+        aria-label="Semana anterior"
       >
-        PDF <i class="fa-solid fa-file-pdf"></i> Cargados
+        -
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary fw-bold px-3 py-1"
+        @click="sumarSemana"
+        aria-label="Semana siguiente"
+      >
+        +
       </button>
     </div>
-    <div class="col-6 col-sm-6">
-      <button
-        :class="{
-          colorActive: cargarpdf == false,
-          colorInactive: cargarpdf == true,
-        }"
-        size="lg"
-        class="btn-responsive w-100"
-        color="warning"
-        @click="cargarpdf = false"
-      >
-        CARGAR PDF <i class="fa-solid fa-file-pdf"></i>
-      </button>
+    <div class="row mt-2 mb-4 px-3">
+      <div class="col-12 col-sm-6 mb-2 mb-sm-0">
+        <button
+          type="button"
+          class="btn btn-primary w-100"
+          :class="{ active: cargarpdf }"
+          @click="cargarpdf = true"
+        >
+          PDF <i class="fa-solid fa-file-pdf"></i> Cargados
+        </button>
+      </div>
+      <div class="col-12 col-sm-6">
+        <button
+          type="button"
+          class="btn btn-primary w-100"
+          :class="{ active: !cargarpdf }"
+          @click="cargarpdf = false"
+        >
+          CARGAR PDF <i class="fa-solid fa-file-pdf"></i>
+        </button>
+      </div>
     </div>
   </div>
+
   <template v-if="cargarpdf">
     <PDFCargados ref="pdfCargadosRef" />
   </template>
@@ -44,28 +52,23 @@
   <template v-else>
     <div class="mt-4">
       <div class="form-floating">
-        <textarea class="form-control" rows="4"></textarea>
-        <label for="Comentario"></label>
+        <textarea class="form-control" rows="4" id="Comentario" v-model="comentario"></textarea>
+        <label for="Comentario">Comentario</label>
       </div>
     </div>
     <div class="mt-4">
-      <div class="mt-4">
-        <label for="pdfFiles" class="form-label">Carga uno o más ficheros PDF</label>
-        <input
-          id="pdfFiles"
-          type="file"
-          class="form-control border border-info"
-          multiple
-          accept=".pdf"
-          @change="setFile(($event.target as HTMLInputElement).files)"
-        />
-        <div class="form-text">Puedes seleccionar varios archivos PDF.</div>
-        <div class="d-grid mt-4 gap-2 col-6 mx-auto">
-          <button class="btn btn-primary" @click="modalDatos = true">Comprobar archivos</button>
-        </div>
-      </div>
+      <label for="pdfFiles" class="form-label">Carga uno o más ficheros PDF</label>
+      <input
+        id="pdfFiles"
+        type="file"
+        class="form-control border border-info"
+        multiple
+        accept=".pdf"
+        @change="setFile(($event.target as HTMLInputElement).files)"
+      />
+      <div class="form-text">Puedes seleccionar varios archivos PDF.</div>
       <div class="d-grid mt-4 gap-2 col-6 mx-auto">
-        <button rounded @click="modalDatos = true" color="primary">Comprobar archivos</button>
+        <button class="btn btn-success" @click="modalDatos = true">Comprobar archivos</button>
       </div>
     </div>
   </template>
@@ -121,7 +124,7 @@
       <h5 class="modal-title" id="totalArchivosTitle">Subiendo archivos...</h5>
     </div>
     <div class="modal-body">
-      <div class="card" v-if="subidos < pdfRef[0].length">
+      <div class="card" v-if="subidos < pdfRef[0]?.length">
         <div class="card-body justify-content-center text-center">
           <div class="spinner-border" role="status" grow color="primary">
             <span class="visually-hidden">Loading...</span>

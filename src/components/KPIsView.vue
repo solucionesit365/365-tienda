@@ -126,14 +126,50 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.cardDocs {
+  background-color: #ffffff;
+}
+
 .colorActive {
-  background-color: #ff9800;
-  color: black;
-  padding: 0.6rem;
+  background-color: #e66c5a !important;
+  color: #fff !important;
+  font-weight: bold;
+  border: none;
+  box-shadow: 0 2px 8px rgba(230, 108, 90, 0.08);
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .colorInactive {
-  background-color: #d7d9e7;
-  color: rgb(119, 119, 119);
+  background-color: #d7d9e7 !important;
+  color: #777 !important;
+}
+
+.accordion-button {
+  font-weight: bold;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: #fff !important;
+  color: #212529;
+  box-shadow: none;
+}
+
+.list-group-item {
+  font-size: 1rem;
+}
+.btn-encargo {
+  background-color: #e66c5a !important;
+  color: #fff !important;
+}
+
+.form-control:focus,
+.form-select:focus,
+.btn:focus,
+.accordion-button:focus {
+  box-shadow: 0 0 0 0.2rem #d7d9e7 !important;
+  border-color: #d7d9e7 !important;
+  outline: none !important;
 }
 </style>

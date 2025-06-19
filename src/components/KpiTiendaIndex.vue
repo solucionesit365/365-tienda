@@ -5,9 +5,9 @@
       <span class="me-1" style="font-weight: bold">{{ punteroFecha.weekNumber - 1 }} </span>
       de
       {{ punteroFecha.year }}
-      <button class="btn-responsive" size="lg" color="secondary" @click="restarSemana()">-</button>
-      <button class="btn-responsive" size="lg" color="secondary" @click="sumarSemana()">+</button>
-      <button class="btn-responsive" size="lg" color="primary" @click="buscarKPI()">Buscar</button>
+      <button class="btn" color="secondary" @click="restarSemana()">-</button>
+      <button class="btn" color="secondary" @click="sumarSemana()">+</button>
+      <button class="btn" color="primary" @click="buscarKPI()">Buscar</button>
     </div>
 
     <div class="card-content">
@@ -16,16 +16,15 @@
           <div class="row mt-1 mb-1">
             <div class="col-md-4">
               <button
-                :class="{
-                  colorActive: graficosView == true,
-                  colorInactive: graficosView == false,
-                }"
-                size="lg"
-                class="btn-responsive w-100"
-                color="secondary"
-                @click="moveMenu('graficos')"
-                >Gráficos</button
-              >
+              :class="{
+                colorActive: graficosView == true,
+                colorInactive: graficosView == false,
+              }"
+              type="button"
+              class="btn w-100"
+              @click="moveMenu('graficos')"
+              >Gráficos</button
+            >
             </div>
             <div class="col-md-4">
               <button
@@ -33,8 +32,7 @@
                   colorActive: datosView == true,
                   colorInactive: datosView == false,
                 }"
-                size="lg"
-                class="btn-responsive w-100"
+                class="btn w-100"
                 color="secondary"
                 @click="moveMenu('datos')"
                 >PDF</button
@@ -46,8 +44,7 @@
                   colorActive: indicadoresView == true,
                   colorInactive: indicadoresView == false,
                 }"
-                size="lg"
-                class="btn-responsive w-100"
+                class="btn w-100"
                 color="secondary"
                 @click="moveMenu('indicadores')"
                 >Indicadores</button
@@ -218,7 +215,7 @@ onMounted(() => {
 
 <style>
 .colorActive {
-  background-color: #ff9800;
+  background-color: #e66c5a;
   color: black;
   padding: 0.6rem;
 }

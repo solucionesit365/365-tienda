@@ -86,13 +86,29 @@ const router = createRouter({
       },
       component: () => import("../components/CalendarioFestivo.vue"),
     },
-        {
+    {
       path: "/NotasInformativas",
       name: "Notas informativas",
       meta: {
         requiresAuth: true,
       },
       component: () => import("../components/NotasInformativas.vue"),
+    },
+    {
+      path: "/kpis-tiendas",
+      name: "KPI",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/KPIsView.vue"),
+    },
+    {
+      path: "/kpiTiendaIndex",
+      name: "KPI Tienda",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/KpiTiendaIndex.vue"),
     },
   ],
 });

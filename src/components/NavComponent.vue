@@ -4,6 +4,8 @@
       <a
         class="nav-item nav-link d-flex flex-column align-items-center justify-content-center"
         href="#"
+        @click.prevent="goHome()"
+        :class="{ active: isHomeActive }"
       >
         <div class="icon-wrapper">
           <i class="fas fa-home"></i>
@@ -35,7 +37,21 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter, useRoute } from "vue-router";
 import { logout } from "./firebase/authentication";
+// import { hasPermission } from "./rolesPermisos";
+import { computed } from "vue";
+
+const router = useRouter();
+const route = useRoute();
+
+function goHome() {
+  router.push("/");
+}
+
+const isHomeActive = computed(() => {
+  return route.path === "/";
+});
 
 function signOut() {
   logout();

@@ -1,7 +1,7 @@
 <template>
   <template v-if="!loading">
     <NavComponent v-if="userStore.user.logeado" />
-    <div class="container-fluid">
+    <div class="container-fluid contenido-con-scroll">
       <BackButton />
       <RouterView />
     </div>
@@ -77,4 +77,8 @@ onMounted(() => {
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.contenido-con-scroll {
+  padding-bottom: 100px;
+}
+</style>

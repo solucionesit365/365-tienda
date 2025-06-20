@@ -21,7 +21,7 @@
         }"
         @click="moverMenu('validadas')"
       >
-        validadas
+        VALIDADAS
       </BsButton>
     </div>
     <div v-if="hasPermission('ValidarPagos')" class="text-start col-4 mb-2">
@@ -45,7 +45,7 @@
         }"
         @click="moverMenu('resumen')"
       >
-        resumen
+        RESUMEN
       </BsButton>
     </div>
   </div>
@@ -71,29 +71,33 @@
                 </div>
               </div>
               <div class="card-body">
-                <div>{{ item.nombre }}</div>
-                Cuadrante:
-                <span
-                  v-if="
-                    item.cuadrante &&
-                    item.cuadrante.inicio &&
-                    item.cuadrante.final &&
-                    item.cuadrante.inicio !== item.cuadrante.final
-                  "
-                >
-                  {{
-                    parseFecha(
-                      item.cuadrante.inicio ? item.cuadrante.inicio : item.cuadrante.entrada,
-                    )
-                  }}
-                  -
-                  {{
-                    parseFecha(item.cuadrante.final ? item.cuadrante.final : item.cuadrante.salida)
-                  }}
-                  ({{ item.horasCuadrante }})
-                </span>
-                <span class="text-warning" v-else>SIN CUADRANTE DEFINIDO</span>
-                <br />
+                <div class="mb-2">{{ item.nombre }}</div>
+                <div class="mb-2">
+                  Cuadrante:
+                  <span
+                    v-if="
+                      item.cuadrante &&
+                      item.cuadrante.inicio &&
+                      item.cuadrante.final &&
+                      item.cuadrante.inicio !== item.cuadrante.final
+                    "
+                  >
+                    {{
+                      parseFecha(
+                        item.cuadrante.inicio ? item.cuadrante.inicio : item.cuadrante.entrada,
+                      )
+                    }}
+                    -
+                    {{
+                      parseFecha(
+                        item.cuadrante.final ? item.cuadrante.final : item.cuadrante.salida,
+                      )
+                    }}
+                    ({{ item.horasCuadrante }})
+                  </span>
+                  <span class="text-warning" v-else>SIN CUADRANTE DEFINIDO</span>
+                  <br />
+                </div>
                 Fichaje:
                 <span v-if="item.fichajeEntrada" class="fichajeCorrecto">{{
                   DateTime.fromJSDate(item.fichajeEntrada, {
@@ -143,8 +147,8 @@
                   </div>
                   <div class="col-6">
                     <div class="text-end">
-                      <BsButton @click="validarAjustes(item)" color="success" floating>
-                        <MDBIcon icon="check-circle"></MDBIcon>
+                      <BsButton @click="validarAjustes(item)" color="success">
+                        <i class="fas fa-check-circle"></i>
                       </BsButton>
                     </div>
                   </div>
@@ -154,19 +158,27 @@
           </div>
         </template>
         <template v-else>
-          <MDBCard v-if="hasPermission('ValidarHoras')">
-            <MDBCardBody class="text-center">
-              <MDBCardTitle>
+          <div class="card text-center" v-if="hasPermission('ValidarHoras')">
+            <div class="card-body">
+              <h5 class="card-title">
                 <i class="fab fa-angellist fs-1"></i>
-              </MDBCardTitle>
-              <MDBCardText v-if="!loading"> Estás al día, buen trabajo! </MDBCardText>
-              <div v-else><MDBSpinner style="width: 5rem; height: 5rem" /></div>
-            </MDBCardBody>
-          </MDBCard>
+              </h5>
+              <p class="card-text" v-if="!loading">Estás al día, buen trabajo!</p>
+              <div v-else class="d-flex justify-content-center">
+                <div class="spinner-border" role="status" style="width: 5rem; height: 5rem">
+                  <span class="visually-hidden">Cargando...</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </template>
       </div>
       <div v-else class="row text-center mt-3">
-        <div><MDBSpinner style="width: 5rem; height: 5rem" /></div>
+        <div class="d-flex justify-content-center">
+          <div class="spinner-border" role="status" style="width: 5rem; height: 5rem">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+        </div>
       </div>
     </template>
 
@@ -188,92 +200,122 @@
 
   <!-- Modal editar horas -->
 
-  <MDBModal
+  <div
+    v-if="tarjetaEditar"
+    class="modal fade"
     id="modalEditarHoras"
     tabindex="-1"
-    labelledby="modalEditarHorasTitle"
-    v-model="modalEditarHoras"
-    centered
-    staticBackdrop
+    aria-labelledby="modalEditarHorasTitle"
+    aria-hidden="true"
+    :class="{ show: modalEditarHoras }"
+    :style="{ display: modalEditarHoras ? 'block' : 'none' }"
   >
-    <MDBModalHeader>
-      <MDBModalTitle id="modalEditarHorasTitle"> Ajuste de horas </MDBModalTitle>
-    </MDBModalHeader>
-    <MDBModalBody>
-      <div class="row">
-        <!-- HORAS EXTRAS -->
-        <div class="col-5">Ajuste horas:</div>
-        <div class="col-7">
-          <div class="input-group">
-            <button
-              @click="tarjetaEditar.horasExtra = tarjetaEditar.horasExtra - 0.25"
-              :disabled="aprendizClicked"
-              class="input-group-text bg-warning text-light"
-            >
-              <i class="fas fa-minus"></i>
-            </button>
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <!-- HEADER -->
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalEditarHorasTitle">Ajuste de horas</h5>
+          <button
+            type="button"
+            class="btn-close"
+            aria-label="Close"
+            @click="modalEditarHoras = false"
+          ></button>
+        </div>
 
-            <MDBInput
-              inputGroup
-              :formOutline="false"
-              v-model="tarjetaEditar.horasExtra"
-              aria-label="Amount (to the nearest dollar)"
-              step="0.25"
-              type="number"
-              disabled
-            >
-            </MDBInput>
-            <button
-              :disabled="aprendizClicked"
-              @click="tarjetaEditar.horasExtra = tarjetaEditar.horasExtra + 0.25"
-              class="input-group-text bg-success text-light"
-            >
-              <i class="fas fa-plus"></i>
-            </button>
+        <!-- BODY -->
+        <div class="modal-body">
+          <div class="row">
+            <!-- HORAS EXTRAS -->
+            <div class="col-5">Ajuste horas:</div>
+            <div class="col-7">
+              <div class="input-group">
+                <button
+                  type="button"
+                  @click="tarjetaEditar.horasExtra = tarjetaEditar.horasExtra - 0.25"
+                  :disabled="aprendizClicked"
+                  class="input-group-text bg-warning text-light"
+                >
+                  <i class="fas fa-minus"></i>
+                </button>
+
+                <input
+                  type="number"
+                  class="form-control"
+                  v-model="tarjetaEditar.horasExtra"
+                  :step="0.25"
+                  aria-label="Amount (to the nearest dollar)"
+                  disabled
+                />
+
+                <button
+                  type="button"
+                  @click="tarjetaEditar.horasExtra = tarjetaEditar.horasExtra + 0.25"
+                  :disabled="aprendizClicked"
+                  class="input-group-text bg-success text-light"
+                >
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- HORAS COORDINACIÓN -->
+            <div class="col-5 mt-4">Coordinación:</div>
+            <div class="col-7 mt-4">
+              <div class="input-group">
+                <button
+                  type="button"
+                  @click="tarjetaEditar.horasCoordinacion = tarjetaEditar.horasCoordinacion - 0.25"
+                  :disabled="aprendizClicked"
+                  class="input-group-text bg-warning text-light"
+                >
+                  <i class="fas fa-minus"></i>
+                </button>
+
+                <input
+                  type="number"
+                  class="form-control"
+                  v-model="tarjetaEditar.horasCoordinacion"
+                  :step="0.25"
+                  aria-label="Amount (to the nearest dollar)"
+                  disabled
+                />
+
+                <button
+                  type="button"
+                  @click="tarjetaEditar.horasCoordinacion = tarjetaEditar.horasCoordinacion + 0.25"
+                  :disabled="aprendizClicked"
+                  class="input-group-text bg-success text-light"
+                >
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
-        <!-- HORAS COORDINACIÓN -->
-        <div class="col-5 mt-4">Coordinación:</div>
-        <div class="col-7 mt-4">
-          <div class="input-group">
-            <button
-              :disabled="aprendizClicked"
-              @click="tarjetaEditar.horasCoordinacion = tarjetaEditar.horasCoordinacion - 0.25"
-              class="input-group-text bg-warning text-light disabled"
-            >
-              <i class="fas fa-minus"></i>
-            </button>
-            <MDBInput
-              inputGroup
-              :formOutline="false"
-              v-model="tarjetaEditar.horasCoordinacion"
-              aria-label="Amount (to the nearest dollar)"
-              step="0.25"
-              type="number"
-              disabled
-            ></MDBInput>
-
-            <button
-              :disabled="aprendizClicked"
-              @click="tarjetaEditar.horasCoordinacion = tarjetaEditar.horasCoordinacion + 0.25"
-              class="input-group-text bg-success text-light"
-            >
-              <i class="fas fa-plus"></i>
-            </button>
+        <!-- FOOTER -->
+        <div class="modal-footer">
+          <div v-if="mostrarBotonAprendiz()" class="form-check me-auto">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="aprendizCheck"
+              v-model="aprendizClicked"
+            />
+            <label class="form-check-label" for="aprendizCheck">Aprendiz</label>
           </div>
+
+          <button type="button" class="btn btn-secondary" @click="cancelarAjuste()">
+            Descartar
+          </button>
+          <button type="button" class="btn btn-primary" @click="modalEditarHoras = false">
+            Ajustar
+          </button>
         </div>
       </div>
-    </MDBModalBody>
-    <MDBModalFooter>
-      <!-- <BsButton color="primary" @click="horasAprendiz()"> Aprendiz </BsButton> -->
-
-      <MDBCheckbox label="Aprendiz" v-model="aprendizClicked" v-if="mostrarBotonAprendiz()" />
-
-      <BsButton color="secondary" @click="cancelarAjuste()"> Descartar </BsButton>
-      <BsButton color="primary" @click="modalEditarHoras = false"> Ajustar </BsButton>
-    </MDBModalFooter>
-  </MDBModal>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -282,7 +324,7 @@ import { axiosInstance } from "@/components/axios/axios";
 import BsButton from "@/components/365/BsButton.vue";
 import Swal from "sweetalert2";
 import { DateTime } from "luxon";
-import HorasValidadasComponent from "./horasValidadas.vue";
+import HorasValidadasComponent from "./HorasValidadas.vue";
 import ValidarPagosComponent from "./ValidarPagos.vue";
 import ResumenHoras from "./ResumenHoras.vue";
 import router from "@/router";
@@ -407,9 +449,9 @@ function moverMenu(opcion: string) {
 }
 
 function calcularAntiguedad(fechaInicio: any) {
-  const inicio = moment(fechaInicio);
-  const hoy = moment();
-  return hoy.diff(inicio, "days");
+  const inicio = DateTime.fromISO(fechaInicio);
+  const hoy = DateTime.now();
+  return hoy.diff(inicio, "days").days;
 }
 
 function mostrarBotonAprendiz() {
@@ -1008,7 +1050,6 @@ onMounted(async () => {
 
   if (hasPermission("ValidarHoras")) {
     await getHorasValidar();
-    await getHorasValidar();
   }
   if (hasPermission("ValidarPagos")) {
     loading.value = false;
@@ -1019,38 +1060,114 @@ onMounted(async () => {
 
 <style lang="scss" scoped>
 .colorActive {
-  background-color: #ff9800;
-  color: black;
-  padding: 0.6rem;
+  background-color: #e66c5a !important;
+  color: #fff !important;
+  font-weight: bold;
+  border: none;
+  box-shadow: 0 2px 8px rgba(230, 108, 90, 0.08);
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .colorInactive {
-  background-color: #d7d9e7;
-  color: rgb(119, 119, 119);
+  background-color: #d7d9e7 !important;
+  color: #777 !important;
+  border: none;
 }
 
 button {
   touch-action: manipulation;
+  transition: all 0.2s ease;
 }
-.textDanger {
-  color: #fff;
+
+/* Estilo general de la tarjeta */
+.card.border-danger {
+  border: 2px solid #e57373;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #fff;
+  transition:
+    transform 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+}
+.card.border-danger:hover {
+  box-shadow: 0 0 10px rgba(244, 67, 54, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Header bonito */
+.card-header {
+  background-color: #ffffff;
+  font-size: 1rem;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+/* Cuerpo del contenido */
+.card-body {
+  font-size: 1rem;
+  padding: 1rem 1.5rem;
+}
+
+/* Etiquetas de fichaje */
+.fichajeCorrecto {
+  background-color: #d0f0c0;
+  color: black;
   font-weight: bold;
-  background-color: red !important;
-}
-.textNormal {
-  color: #fff;
-  background-color: #54b4d3 !important;
+  border-radius: 5px;
+  padding: 0.2rem 0.5rem;
 }
 
 .salidaAutomatica {
-  background-color: #d66767;
-  color: black;
+  background-color: #ffecb3;
+  color: #ef6c00;
   font-weight: bold;
+  border-radius: 5px;
+  padding: 0.2rem 0.5rem;
 }
 
-.fichajeCorrecto {
-  background-color: #7dda61;
-  color: black;
+/* Footer */
+.card-footer {
+  background-color: #ffffff;
+  border-top: 1px solid #e0e0e0;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+}
+
+/* Botón de cantidad de horas */
+.textDanger,
+.textNormal {
+  padding: 0.5rem 1.2rem;
+  font-size: 0.95rem;
   font-weight: bold;
+  border-radius: 6px;
+}
+
+.textDanger {
+  background-color: #ff0400;
+  color: #fff;
+}
+
+.textNormal {
+  background-color: #66bb6a;
+  color: #fff;
+}
+
+/* Botón verde con icono (check) */
+.btn-success {
+  border-radius: 50% !important;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 0.9rem;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+.btn:focus {
+  box-shadow: 0 0 0 0.2rem #d7d9e7 !important;
+  border-color: #d7d9e7 !important;
+  outline: none !important;
 }
 </style>

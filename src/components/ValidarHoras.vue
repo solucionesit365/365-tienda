@@ -319,7 +319,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, type Ref } from "vue";
+import { ref, onMounted, type Ref } from "vue";
 import { axiosInstance } from "@/components/axios/axios";
 import BsButton from "@/components/365/BsButton.vue";
 import Swal from "sweetalert2";
@@ -1030,19 +1030,6 @@ function adjustHoursBasedOnQuadrant(fichajeTime: any, quadrantTime: any) {
   }
 }
 
-// Función para limpiar el uid de la Coordinadora
-function limpiarCoordinadora() {
-  localStorage.removeItem("uidCoordinadora");
-  localStorage.removeItem("idSqlCoordinadora");
-}
-watch(
-  () => router.currentRoute.value.path,
-  (newPath) => {
-    if (newPath !== "/validar-horas") {
-      limpiarCoordinadora();
-    }
-  },
-);
 defineExpose({ moverMenu });
 
 onMounted(async () => {
@@ -1169,5 +1156,214 @@ button {
   box-shadow: 0 0 0 0.2rem #d7d9e7 !important;
   border-color: #d7d9e7 !important;
   outline: none !important;
+}
+.modal {
+  background: rgba(0, 0, 0, 0.35);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  overflow-y: auto;
+  padding: 1.5rem 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.modal-dialog {
+  margin: 0 auto;
+  max-width: 650px;
+  width: 95vw;
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content {
+  border-radius: 1rem;
+  border: none;
+  background: #fff;
+  box-shadow: 0 4px 24px rgba(230, 108, 90, 0.1);
+  animation: modalIn 0.25s;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+@keyframes modalIn {
+  from {
+    transform: translateY(40px) scale(0.98);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(90deg, #e66c5a 0%, #333 100%);
+  color: #fff;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-title {
+  font-weight: bold;
+  font-size: 1.3rem;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  font-size: 2rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff !important;
+  opacity: 1;
+  margin-left: 1rem;
+  position: relative;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+
+.btn-close::before {
+  content: "✕";
+  font-size: 1.5rem;
+  color: #fff;
+  line-height: 1;
+  font-weight: bold;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.btn-close:hover,
+.btn-close:focus {
+  background: rgba(230, 108, 90, 0.15);
+  color: #fff;
+  outline: none;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  background: #fafbfc;
+  border-bottom-left-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+
+.modal-footer {
+  border-top: 1px solid #e0e0e0;
+  background: #f7f7f7;
+  border-bottom-left-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+  padding: 1rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+  .modal-dialog {
+    max-width: 98vw;
+    min-width: 0;
+    padding: 0;
+  }
+  .modal-content {
+    border-radius: 0.8rem !important;
+    padding: 0 !important;
+  }
+  .modal-header {
+    border-top-left-radius: 0.8rem !important;
+    border-top-right-radius: 0.8rem !important;
+    padding: 1.1rem !important;
+    min-height: 56px;
+    box-sizing: border-box;
+  }
+  .modal-title {
+    font-size: 1.15rem;
+    word-break: break-word;
+  }
+  .btn-close {
+    width: 2.1rem;
+    height: 2.1rem;
+    font-size: 1.2rem;
+    margin-left: 0.7rem;
+  }
+  .modal-body,
+  .modal-footer {
+    border-radius: 0 0 0.8rem 0.8rem !important;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .modal-dialog {
+    max-width: 99vw;
+    min-width: 0;
+    padding: 0;
+  }
+  .modal-content {
+    border-radius: 0.7rem !important;
+    padding: 0 !important;
+  }
+  .modal-header {
+    border-top-left-radius: 0.7rem !important;
+    border-top-right-radius: 0.7rem !important;
+    padding: 1rem !important;
+    min-height: 56px;
+    box-sizing: border-box;
+  }
+  .modal-title {
+    font-size: 1.1rem;
+    word-break: break-word;
+  }
+  .btn-close {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1.1rem;
+    margin-left: 0.5rem;
+  }
+  .modal-body,
+  .modal-footer {
+    border-radius: 0 0 0.7rem 0.7rem !important;
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .modal-title {
+    font-size: 1rem;
+  }
+  .modal-header {
+    padding: 0.7rem !important;
+  }
+  .modal-body,
+  .modal-footer {
+    padding-left: 0.3rem;
+    padding-right: 0.3rem;
+  }
 }
 </style>

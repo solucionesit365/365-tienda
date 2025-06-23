@@ -1,37 +1,39 @@
 <template>
- <div v-if="mostrarAudis" class="row mt-3">
+  <div v-if="mostrarAudis" class="row mt-3">
     <div class="col-12 col-sm-12 col-xl-12">
       <div class="card border-top border-5">
         <div class="card-header">
-          <div class="row">
+          <div class="row g-4 mb-3">
             <div class="col">
               <button
-                class="w-100"
-                :class="{
-                  colorActive: verMisAuditorias == true,
-                  colorInactive: verMisAuditorias == false,
-                }"
+                class="btn w-100 fw-bold py-2 shadow-sm"
+                :style="
+                  verMisAuditorias
+                    ? 'background:#e66c5a;color:white;'
+                    : 'background:#d7d9e7;color:#777;'
+                "
                 @click="
                   verMisAuditorias = true;
                   cargarAuditorias();
                 "
               >
-                Auditorias
+                AUDITORIAS
               </button>
             </div>
             <div class="col" v-if="hasPermission('VerResumenAuditoria')">
               <button
-                class="w-100"
-                :class="{
-                  colorActive: verMisAuditorias == false,
-                  colorInactive: verMisAuditorias == true,
-                }"
+                class="btn w-100 fw-bold py-2 shadow-sm"
+                :style="
+                  !verMisAuditorias
+                    ? 'background:#e66c5a;color:white;'
+                    : 'background:#d7d9e7;color:#777;'
+                "
                 @click="
                   verMisAuditorias = false;
                   respuestasAuditorias();
                 "
               >
-                Resumen
+                RESUMEN
               </button>
             </div>
           </div>
@@ -64,7 +66,12 @@
                     </div>
                   </div>
                   <div class="card-footer text-end">
-                    <button @click="responderAuditoria(audi)" color="success"> Responder </button>
+                    <button
+                      @click="responderAuditoria(audi)"
+                      class="btn btn-success rounded-3 px-4"
+                    >
+                      Responder
+                    </button>
                   </div>
                 </div>
               </template>
@@ -87,23 +94,37 @@
         <!-- Mostrar Resumen Auditorias -->
         <template v-else>
           <div v-if="hasPermission('VerResumenAuditoria')" class="mt-1 p-3">
-            <div class="d-flex justify-content-end">
+            <div class="d-flex justify-content-end gap-3 mb-3">
               <button
-                class="btn-danger"
+                class="btn fw-bold rounded-3 px-4 py-2 shadow-sm"
+                :style="
+                  respuestaSeleccionada === 'NO'
+                    ? 'background:#e66c5a;color:white;'
+                    : 'background:#d7d9e7;color:#777;'
+                "
                 @click="
                   respuestaSeleccionada = 'NO';
                   respuestasAuditorias();
                 "
-                ><i class="fas fa-times"></i
-              ></button>
+                title="Ver NO"
+              >
+                <i class="fas fa-times me-1"></i> NO
+              </button>
               <button
-                class="btn-success"
+                class="btn fw-bold rounded-3 px-4 py-2 shadow-sm"
+                :style="
+                  respuestaSeleccionada === 'SI'
+                    ? 'background:#e66c5a;color:white;'
+                    : 'background:#d7d9e7;color:#777;'
+                "
                 @click="
                   respuestaSeleccionada = 'SI';
                   respuestasAuditorias();
                 "
-                ><i class="far fa-circle"></i
-              ></button>
+                title="Ver SI"
+              >
+                <i class="far fa-circle me-1"></i> SI
+              </button>
             </div>
             <table id="tabla" class="table align-middle bg-white mt-2 p-2" responsive>
               <thead class="bg-light align-items-center">
@@ -117,7 +138,7 @@
               <tbody>
                 <template v-for="(item, index) in tiendaUnica" :key="index">
                   <tr>
-                    <td data-th="Tienda">{{ item }}</td>
+                    <td data-th="Tienda" >{{ item }}</td>
                     <td v-for="(fecha, index) in fechasUnicas" :key="index" :data-th="fecha">
                       <span
                         :class="{
@@ -375,13 +396,12 @@ onMounted(async () => {
 .card {
   border-radius: 1em;
   border: 1em;
-  border-top-color: #03a9f4 !important;
   box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
 }
 .card-detalles {
   border-radius: 1em;
   border: 1em;
-  border-top-color: #57a791 !important;
+
   box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
 }
 
@@ -415,7 +435,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   font-size: 30px;
-  color: #16d39a
+  color: #16d39a;
 }
 
 .table tbody {

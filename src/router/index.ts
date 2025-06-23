@@ -92,7 +92,7 @@ const router = createRouter({
       meta: {
         requiresAuth: true,
       },
-      component: () => import("../components/AuditoriasIndex.vue"),
+      component: () => import("../components/AuditoriasTienda.vue"),
     },
         {
       path: "/crearAuditoria",

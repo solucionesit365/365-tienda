@@ -181,7 +181,7 @@
     />
   </div>
   >
-  <div class="modal-body">
+  <div class="modal-body" v-if="auditoriaSeleccionada">
     <div class="row">
       <div class="card-title">
         <!-- modificar titulo -->

@@ -1,5 +1,7 @@
 <template>
-<div class="modal" tabindex="-1"
+  <div
+    class="modal"
+    tabindex="-1"
     id="respuestasAudiModal"
     labelledby="respuestasAudiModalLabel"
     fullscreen="sm-down"
@@ -10,59 +12,96 @@
         <template v-for="(item, index) in respuestas" v-bind:key="index">
           <div class="col-12 col-sm-12 col-xl-2">
             <h6 class="text-center">¿QUIÉN HA RESPONDIDO?</h6>
-            <button @click="mostrarRespuesta(item._id)" style="background-color: rgb(155, 221, 69)"
-              >{{ item.tienda }} - {{ item.ultimaRespuesta }}</button
-            >
+            <button @click="mostrarRespuesta(item._id)" style="background-color: rgb(155, 221, 69)">
+              {{ item.tienda }} - {{ item.ultimaRespuesta }}
+            </button>
           </div>
         </template>
         <div
           class="col-12 col-sm-12 col-xl-7 border border-top-0 border-bottom-0 border-end-0"
-          v-if="respuestaMostrar.length != 0"
+          v-if="respuestaMostrar?.length != 0"
         >
           <h6 class="text-center">RESPUESTAS:</h6>
-          <div v-if="respuestaMostrar.length != 0">
-            Respondido por: {{ respuestaMostrar.persona }}
-            <template v-for="(pregunta, index) in respuestaMostrar.respuestas" v-bind:key="index">
+          <div v-if="respuestaMostrar?.length != 0">
+            Respondido por: {{ respuestaMostrar?.persona }}
+            <template v-for="(pregunta, index) in respuestaMostrar?.respuestas" v-bind:key="index">
               <ul>
                 <li class="fw-bold">
                   {{ pregunta[0] }}
                 </li>
-                <MDBBtnGroup required>
-                  <MDBRadio
-                    v-if="pregunta[1] == 'VERDE'"
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-success active"
-                    label="VERDE"
-                    value="VERDE"
-                  />
-                  <MDBRadio
-                    v-if="pregunta[1] == 'ROJO'"
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-danger active"
-                    label="ROJO"
-                    value="ROJO"
-                    disabled
-                    active
-                  />
-                </MDBBtnGroup>
-                <MDBBtnGroup>
-                  <MDBRadio
-                    v-if="pregunta[1] == 'SI'"
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-secondary active "
-                    label="SI"
-                  />
-                  <MDBRadio
-                    v-if="pregunta[1] == 'NO'"
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-secondary active"
-                    label="NO"
-                  />
-                </MDBBtnGroup>
+                <div class="btn-group" role="group" required>
+                  <div class="form-check form-check-inline">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      :name="`radio-${pregunta[0]}-${index}`"
+                      :id="`radio-verde-${pregunta[0]}-${index}`"
+                      value="VERDE"
+                      :checked="pregunta[1] === 'VERDE'"
+                      disabled
+                    />
+                    <label
+                      class="form-check-label text-success fw-bold"
+                      :for="`radio-verde-${pregunta[0]}-${index}`"
+                    >
+                      VERDE
+                    </label>
+                  </div>
+
+                  <div class="form-check form-check-inline">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      :name="`radio-${pregunta[0]}-${index}`"
+                      :id="`radio-rojo-${pregunta[0]}-${index}`"
+                      value="ROJO"
+                      :checked="pregunta[1] === 'ROJO'"
+                      disabled
+                    />
+                    <label
+                      class="form-check-label text-danger fw-bold"
+                      :for="`radio-rojo-${pregunta[0]}-${index}`"
+                    >
+                      ROJO
+                    </label>
+                  </div>
+                </div>
+                <div class="btn-group" role="group">
+                  <div class="form-check form-check-inline">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      :name="`radio-${pregunta[0]}-${index}`"
+                      :id="`radio-si-${pregunta[0]}-${index}`"
+                      value="SI"
+                      :checked="pregunta[1] === 'SI'"
+                      disabled
+                    />
+                    <label
+                      class="form-check-label text-success fw-bold"
+                      :for="`radio-si-${pregunta[0]}-${index}`"
+                    >
+                      SI
+                    </label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      :name="`radio-${pregunta[0]}-${index}`"
+                      :id="`radio-no-${pregunta[0]}-${index}`"
+                      value="NO"
+                      :checked="pregunta[1] === 'NO'"
+                      disabled
+                    />
+                    <label
+                      class="form-check-label text-danger fw-bold"
+                      :for="`radio-no-${pregunta[0]}-${index}`"
+                    >
+                      NO
+                    </label>
+                  </div>
+                </div>
                 <template
                   v-if="
                     pregunta[1] != 'NO' &&
@@ -74,7 +113,7 @@
                   {{ pregunta[1] }}
                 </template>
                 <!--Respuestas evaluador -->
-                <!-- <MDBBtnGroup
+                <!-- <div class="btn-group" role="group"
                   class="ps-1"
                   required
                   v-if="
@@ -101,92 +140,159 @@
                     :name="pregunta[0]"
                     v-model="respuestasEvaluador[pregunta[0]]"
                   />
-                </MDBBtnGroup> -->
+                </div class="btn-group" role="group"> -->
 
-                <MDBBtnGroup
-                  class="ps-2"
+                <div
+                  class="btn-group ps-2"
+                  role="group"
                   v-if="
                     !respuestaMostrar.respuestasEvaluador ||
                     typeof respuestaMostrar.respuestasEvaluador[pregunta[0]] === 'undefined'
                   "
                 >
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-secondary"
-                    label="SI"
-                    value="SI"
-                    :disabled="
-                      respuestaMostrar.respuestasEvaluador &&
-                      respuestaMostrar.respuestasEvaluador.length != 0
-                    "
-                    :name="pregunta[0]"
-                    v-model="respuestasEvaluador[pregunta[0]]"
-                  />
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-secondary"
-                    label="NO"
-                    value="NO"
-                    :disabled="
-                      respuestaMostrar.respuestasEvaluador &&
-                      respuestaMostrar.respuestasEvaluador.length != 0
-                    "
-                    :name="pregunta[0]"
-                    v-model="respuestasEvaluador[pregunta[0]]"
-                  />
-                </MDBBtnGroup>
+                  <div class="form-check form-check-inline">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      :name="`eval-radio-si-no-${pregunta[0]}-${index}`"
+                      :id="`eval-radio-si-${pregunta[0]}-${index}`"
+                      value="SI"
+                      :disabled="
+                        respuestaMostrar.respuestasEvaluador &&
+                        respuestaMostrar.respuestasEvaluador.length != 0
+                      "
+                      v-model="respuestasEvaluador[pregunta[0]]"
+                    />
+                    <label
+                      class="form-check-label text-success fw-bold"
+                      :for="`eval-radio-si-${pregunta[0]}-${index}`"
+                    >
+                      SI
+                    </label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      :name="`eval-radio-si-no-${pregunta[0]}-${index}`"
+                      :id="`eval-radio-no-${pregunta[0]}-${index}`"
+                      value="NO"
+                      :disabled="
+                        respuestaMostrar.respuestasEvaluador &&
+                        respuestaMostrar.respuestasEvaluador.length != 0
+                      "
+                      v-model="respuestasEvaluador[pregunta[0]]"
+                    />
+                    <label
+                      class="form-check-label text-danger fw-bold"
+                      :for="`eval-radio-no-${pregunta[0]}-${index}`"
+                    >
+                      NO
+                    </label>
+                  </div>
+                </div>
 
                 <!-- Mostrar Respuestas evaluador -->
-                <MDBBtnGroup
+                <div
+                  class="btn-group"
+                  role="group"
                   required
                   v-if="
                     respuestaMostrar.respuestasEvaluador &&
                     respuestaMostrar.respuestasEvaluador[pregunta[0]]
                   "
                 >
-                  <MDBRadio
+                  <div
+                    class="form-check form-check-inline"
                     v-if="respuestaMostrar.respuestasEvaluador[pregunta[0]] == 'VERDE'"
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-success active"
-                    label="VERDE"
-                    value="VERDE"
-                  />
-                  <MDBRadio
+                  >
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      :name="`show-eval-radio2-${pregunta[0]}-${index}`"
+                      :id="`show-eval-radio-verde-${pregunta[0]}-${index}`"
+                      value="VERDE"
+                      checked
+                      disabled
+                    />
+                    <label
+                      class="form-check-label text-success fw-bold"
+                      :for="`show-eval-radio-verde-${pregunta[0]}-${index}`"
+                    >
+                      VERDE
+                    </label>
+                  </div>
+                  <div
+                    class="form-check form-check-inline"
                     v-if="respuestaMostrar.respuestasEvaluador[pregunta[0]] == 'ROJO'"
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-danger active"
-                    label="ROJO"
-                    value="ROJO"
-                    disabled
-                    active
-                  />
-                </MDBBtnGroup>
-                <MDBBtnGroup
-                  class="ps-2"
-                  v-if="
-                    respuestaMostrar.respuestasEvaluador &&
-                    respuestaMostrar.respuestasEvaluador[pregunta[0]]
-                  "
-                >
-                  <MDBRadio
-                    v-if="respuestaMostrar.respuestasEvaluador[pregunta[0]] == 'SI'"
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-success active"
-                    label="SI"
-                  />
-                  <MDBRadio
-                    v-if="respuestaMostrar.respuestasEvaluador[pregunta[0]] == 'NO'"
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-danger active"
-                    label="NO"
-                  />
-                </MDBBtnGroup>
+                  >
+                    <input
+                      class="form-check-input"
+                      type="radio"
+                      :name="`show-eval-radio2-${pregunta[0]}-${index}`"
+                      :id="`show-eval-radio-rojo-${pregunta[0]}-${index}`"
+                      value="ROJO"
+                      checked
+                      disabled
+                    />
+                    <label
+                      class="form-check-label text-danger fw-bold"
+                      :for="`show-eval-radio-rojo-${pregunta[0]}-${index}`"
+                    >
+                      ROJO
+                    </label>
+                  </div>
+
+                  <div
+                    class="btn-group ps-2"
+                    role="group"
+                    v-if="
+                      respuestaMostrar.respuestasEvaluador &&
+                      respuestaMostrar.respuestasEvaluador[pregunta[0]]
+                    "
+                  >
+                    <div
+                      class="form-check form-check-inline"
+                      v-if="respuestaMostrar.respuestasEvaluador[pregunta[0]] == 'SI'"
+                    >
+                      <input
+                        class="form-check-input"
+                        type="radio"
+                        :name="`show-eval-radio-${pregunta[0]}-${index}`"
+                        :id="`show-eval-radio-si-${pregunta[0]}-${index}`"
+                        value="SI"
+                        checked
+                        disabled
+                      />
+                      <label
+                        class="form-check-label text-success fw-bold"
+                        :for="`show-eval-radio-si-${pregunta[0]}-${index}`"
+                      >
+                        SI
+                      </label>
+                    </div>
+                    <div
+                      class="form-check form-check-inline"
+                      v-if="respuestaMostrar.respuestasEvaluador[pregunta[0]] == 'NO'"
+                    >
+                      <input
+                        class="form-check-input"
+                        type="radio"
+                        :name="`show-eval-radio-${pregunta[0]}-${index}`"
+                        :id="`show-eval-radio-no-${pregunta[0]}-${index}`"
+                        value="NO"
+                        checked
+                        disabled
+                      />
+                      <label
+                        class="form-check-label text-danger fw-bold"
+                        :for="`show-eval-radio-no-${pregunta[0]}-${index}`"
+                      >
+                        NO
+                      </label>
+                    </div>
+                  </div>
+                </div>
               </ul>
             </template>
           </div>
@@ -194,23 +300,25 @@
       </div>
     </div>
     <div class="modal-footer">
-      <template v-if="respuestaMostrar.length != 0">
+      <template v-if="respuestaMostrar?.length != 0">
         <button
-          v-if="respuestaMostrar.fotoRespuestas.length > 0"
+          v-if="respuestaMostrar?.fotoRespuestas.length > 0"
           class="btn btn-success text-center"
           @click="verFotos()"
-          >ver fotos</button
         >
+          ver fotos
+        </button>
       </template>
-      <template v-if="respuestaMostrar.length != 0">
+      <template v-if="respuestaMostrar?.length != 0">
         <button
           color="primary"
           :disabled="
-            respuestaMostrar.respuestasEvaluador && respuestaMostrar.respuestasEvaluador.length != 0
+            respuestaMostrar?.respuestasEvaluador && respuestaMostrar?.respuestasEvaluador.length != 0
           "
           @click="evaluarRespuesta()"
-          >Evaluar</button
-        ></template
+        >
+          Evaluar
+        </button></template
       >
 
       <button color="warning" @click="respuestasAudiModal = false">Cerrar</button>
@@ -218,7 +326,9 @@
   </div>
 
   <!-- Ver fotos -->
-  <div class="modal" tabindex="-1"
+  <div
+    class="modal"
+    tabindex="-1"
     id="fotoRespuestaModal"
     labelledby="fotoRespuestaModalLabel"
     fullscreen="sm-down"
@@ -359,6 +469,4 @@ defineExpose({
 });
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

@@ -427,14 +427,34 @@ async function validarCodigoEmpleado() {
         localStorage.setItem("uidCoordinadora", usuario.uid);
         localStorage.setItem("idSqlCoordinadora", usuario.idSql);
 
-        Swal.fire("Acceso concedido", "Redirigiendo...", "success").then(() => {
-          if (accionPendiente.value === "Validar horas") {
-            router.push("/validar-horas");
-          }
-          if (accionPendiente.value === "vacaciones") {
-            router.push("/vacaciones");
-          }
-        });
+        if (codigoEmpleadoModalInstance.value) {
+          // Ocultar el modal
+          codigoEmpleadoModalInstance.value.hide();
+
+          // Esperar que se oculte completamente
+          setTimeout(() => {
+            try {
+              codigoEmpleadoModalInstance.value?.dispose();
+            } catch (e) {
+              console.warn("Error al hacer dispose del modal:", e);
+            }
+
+            codigoEmpleadoModalInstance.value = null;
+
+            // Limpiar clases/backdrop si quedaron
+            document.body.classList.remove("modal-open");
+            document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+
+            // Redirigir después de cerrar el modal
+            Swal.fire("Acceso concedido", "Redirigiendo...", "success").then(() => {
+              if (accionPendiente.value === "Validar horas") {
+                router.push("/validar-horas");
+              } else if (accionPendiente.value === "vacaciones") {
+                router.push("/vacaciones");
+              }
+            });
+          }, 350);
+        }
       } else {
         Swal.fire("Acceso denegado", "No tienes permisos", "error");
       }

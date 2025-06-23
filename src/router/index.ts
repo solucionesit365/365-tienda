@@ -110,6 +110,14 @@ const router = createRouter({
       },
       component: () => import("../components/KpiTiendaIndex.vue"),
     },
+    {
+      path: "/validar-horas",
+      name: "Validar Horas",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/ValidarHoras.vue"),
+    },
   ],
 });
 

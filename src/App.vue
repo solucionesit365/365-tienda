@@ -1,7 +1,7 @@
 <template>
   <template v-if="!loading">
     <NavComponent v-if="userStore.user.logeado" />
-    <div class="container-fluid">
+    <div class="container-fluid contenido-con-scroll">
       <BackButton />
       <RouterView />
     </div>
@@ -18,7 +18,7 @@ import { onAuthStateChanged, getAuth } from "firebase/auth";
 import { app } from "@/components/firebase/index.js";
 import { useUserStore } from "./stores/user";
 import Swal from "sweetalert2";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { axiosInstance } from "./components/axios/axios";
 import LoaderComponent from "./components/LoaderComponent.vue";
 import NavComponent from "./components/NavComponent.vue";
@@ -72,9 +72,27 @@ async function initializeAuthListener() {
   });
 }
 
+// Función para limpiar el uid de la Coordinadora
+function limpiarCoordinadora() {
+  localStorage.removeItem("uidCoordinadora");
+  localStorage.removeItem("idSqlCoordinadora");
+}
+watch(
+  () => router.currentRoute.value.path,
+  (newPath) => {
+    if (newPath !== "/validar-horas") {
+      limpiarCoordinadora();
+    }
+  },
+);
+
 onMounted(() => {
   initializeAuthListener();
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.contenido-con-scroll {
+  padding-bottom: 100px;
+}
+</style>

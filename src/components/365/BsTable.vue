@@ -22,6 +22,15 @@
         <li class="page-item" :class="{ disabled: currentPage === 1 }" @click="currentPage--">
           <a class="page-link" href="#">Anterior</a>
         </li>
+
+        <li
+          class="page-item"
+          :class="{ disabled: currentPage === 1 }"
+          @click="currentPage > 1 && currentPage--"
+        >
+          <a class="page-link" href="#">Anterior</a>
+        </li>
+
         <template v-for="page in compactPages" :key="page.key">
           <li
             v-if="page.type === 'page'"
@@ -39,7 +48,7 @@
         <li
           class="page-item"
           :class="{ disabled: currentPage === pageCount }"
-          @click="currentPage++"
+          @click="currentPage < pageCount && currentPage++"
         >
           <a class="page-link" href="#">Siguiente</a>
         </li>

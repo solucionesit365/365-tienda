@@ -80,7 +80,9 @@ function limpiarCoordinadora() {
 watch(
   () => router.currentRoute.value.path,
   (newPath) => {
-    if (newPath !== "/validar-horas") {
+    const rutasQueConservanStorage = ["/validar-horas", "/vacaciones", "/pedir-vacaciones"];
+
+    if (!rutasQueConservanStorage.includes(newPath)) {
       limpiarCoordinadora();
     }
   },

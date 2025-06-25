@@ -135,7 +135,7 @@
           </div>
 
           <div class="d-flex justify-content-center">
-            <button type="submit" class="btn btn-encargo mt-3">Crear Encargo</button>
+            <button type="submit" class="btn btn-success mt-3">Crear Encargo</button>
           </div>
         </form>
       </template>

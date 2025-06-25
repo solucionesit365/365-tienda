@@ -118,6 +118,30 @@ const router = createRouter({
       },
       component: () => import("../components/ValidarHoras.vue"),
     },
+    {
+      path: "/videoFormacion",
+      name: "Videos formación",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/VideosFormación/VideoFormacion.vue"),
+    },
+    {
+      path: "/datosFormacion",
+      name: "Datos Formacion",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/VideosFormación/datosFormacion.vue"),
+    },
+    {
+      path: "/crearFormacion",
+      name: "Nueva Formacion",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/VideosFormación/CrearFormacion.vue"),
+    },
   ],
 });
 

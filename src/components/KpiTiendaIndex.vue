@@ -48,16 +48,6 @@
                 PDF
               </button>
             </div>
-            <div class="col">
-              <button
-                type="button"
-                class="btn w-100"
-                :class="indicadoresView ? 'colorActive' : 'colorInactive'"
-                @click="moveMenu('indicadores')"
-              >
-                INDICADORES
-              </button>
-            </div>
           </div>
           <div v-if="datosView == true">
             <template v-if="datosPDF.length > 0">

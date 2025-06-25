@@ -1,5 +1,5 @@
 <template>
-  <template v-if="auditoria">
+  <template v-if="mostrarFormulario && auditoria">
     <div class="card border-top border-5">
       <div class="card-header text-right">
         <span @click="$emit('cerrar-responder-auditoria')">
@@ -9,94 +9,40 @@
 
       <div v-if="auditoria.preguntas.length" class="card-body">
         <h6 class="font-weight-bold">Preguntas Generales</h6>
-        <div v-for="(pregunta, index) in auditoria.preguntas" :key="index" class="mb-4">
-          <p><strong>Pregunta {{ index + 1 }}:</strong> {{ pregunta.pregunta }}</p>
-
-          <div v-if="pregunta.tipo === 'SINO'" class="btn-group btn-group-toggle" data-toggle="buttons">
-            <label class="btn btn-secondary" :class="{ active: respuestas[pregunta.pregunta] === 'SI' }">
-              <input type="radio" :name="pregunta.pregunta" value="SI" v-model="respuestas[pregunta.pregunta]" /> SI
-            </label>
-            <label class="btn btn-secondary" :class="{ active: respuestas[pregunta.pregunta] === 'NO' }">
-              <input type="radio" :name="pregunta.pregunta" value="NO" v-model="respuestas[pregunta.pregunta]" /> NO
-            </label>
-          </div>
-
-          <div v-else-if="pregunta.tipo === 'ROJOVERDE'" class="btn-group btn-group-toggle" data-toggle="buttons">
-            <label class="btn btn-success" :class="{ active: respuestas[pregunta.pregunta] === 'VERDE' }">
-              <input type="radio" :name="pregunta.pregunta" value="VERDE" v-model="respuestas[pregunta.pregunta]" /> VERDE
-            </label>
-            <label class="btn btn-danger" :class="{ active: respuestas[pregunta.pregunta] === 'ROJO' }">
-              <input type="radio" :name="pregunta.pregunta" value="ROJO" v-model="respuestas[pregunta.pregunta]" /> ROJO
-            </label>
-          </div>
-
-          <div v-else-if="pregunta.tipo === 'RespESCRITA'">
-            <textarea class="form-control" rows="2" v-model="respuestas[pregunta.pregunta]" placeholder="Escribe tu respuesta"></textarea>
-          </div>
-
-          <div v-else-if="pregunta.tipo === 'rango'">
-            <select class="form-control" v-model="respuestas[pregunta.pregunta]">
-              <option v-for="num in numerikos" :key="num">{{ num }}</option>
-            </select>
-          </div>
-
-          <div v-if="pregunta.archivo" class="form-group mt-2">
-            <div class="custom-file">
-              <input type="file" class="custom-file-input" @change="setFile" />
-              <label class="custom-file-label">Haz click para agregar una foto</label>
-            </div>
-          </div>
-        </div>
+        <BsStepper :items="auditoria.preguntas">
+          <template #default="{ item, step }">
+            <PreguntaContent
+              :pregunta="item"
+              :index="step"
+              v-model="respuestas[item.pregunta]"
+              @set-file="setFile"
+            />
+          </template>
+        </BsStepper>
       </div>
 
-      <template v-for="(grupo, nombreGrupo) in gruposDePreguntas">
-        <div class="card-body" v-if="grupo.length" :key="nombreGrupo">
+      <template v-for="(grupo, nombreGrupo) in gruposDePreguntas" :key="nombreGrupo">
+        <div class="card-body" v-if="grupo.length">
           <h6 class="fw-bold">{{ nombreGrupo }}</h6>
-          <div v-for="(preg, index) in grupo" :key="index" class="mb-4">
-            <p class="pregunta"><strong>Pregunta {{ index + 1 }}:</strong> {{ preg.pregunta }}</p>
-
-            <div v-if="preg.tipo === 'SINO'" class="btn-group btn-group-toggle" data-toggle="buttons">
-              <label class="btn btn-secondary" :class="{ active: respuestas[preg.pregunta] === 'SI' }">
-                <input type="radio" :name="preg.pregunta" value="SI" v-model="respuestas[preg.pregunta]" /> SI
-              </label>
-              <label class="btn btn-secondary" :class="{ active: respuestas[preg.pregunta] === 'NO' }">
-                <input type="radio" :name="preg.pregunta" value="NO" v-model="respuestas[preg.pregunta]" /> NO
-              </label>
-            </div>
-
-            <div v-else-if="preg.tipo === 'ROJOVERDE'" class="btn-group btn-group-toggle" data-toggle="buttons">
-              <label class="btn btn-success" :class="{ active: respuestas[preg.pregunta] === 'VERDE' }">
-                <input type="radio" :name="preg.pregunta" value="VERDE" v-model="respuestas[preg.pregunta]" /> VERDE
-              </label>
-              <label class="btn btn-danger" :class="{ active: respuestas[preg.pregunta] === 'ROJO' }">
-                <input type="radio" :name="preg.pregunta" value="ROJO" v-model="respuestas[preg.pregunta]" /> ROJO
-              </label>
-            </div>
-
-            <div v-else-if="preg.tipo === 'RespESCRITA'">
-              <textarea class="form-control" rows="2" v-model="respuestas[preg.pregunta]" placeholder="Escribe tu respuesta"></textarea>
-            </div>
-
-            <div v-else-if="preg.tipo === 'rango'">
-              <select class="form-control" v-model="respuestas[preg.pregunta]">
-                <option v-for="num in numerikos" :key="num">{{ num }}</option>
-              </select>
-            </div>
-
-            <div v-if="preg.archivo" class="form-group mt-2">
-              <div class="custom-file">
-                <input type="file" class="custom-file-input" @change="setFile" />
-                <label class="custom-file-label">Haz click para agregar una foto</label>
-              </div>
-            </div>
-          </div>
+          <BsStepper :items="grupo">
+            <template #default="{ item, step }">
+              <PreguntaContent
+                :pregunta="item"
+                :index="step"
+                v-model="respuestas[item.pregunta]"
+                @set-file="setFile"
+              />
+            </template>
+          </BsStepper>
         </div>
       </template>
+    </div>
 
-      <div class="card-footer text-right d-flex gap-2">
-        <button @click="guardarBorrador(auditoria._id)" class="btn btn-primary mr-2">Guardar borrador</button>
-        <button @click="enviarRespuestas" class="btn btn-success">Enviar respuestas</button>
-      </div>
+    <div class="card-footer text-right d-flex gap-2">
+      <button @click="guardarBorrador(auditoria._id)" class="btn btn-primary mr-2">
+        Guardar borrador
+      </button>
+      <button @click="enviarRespuestas" class="btn btn-success">Enviar respuestas</button>
     </div>
   </template>
 </template>
@@ -107,6 +53,8 @@ import moment from "moment";
 import { subirArchivoGeneral } from "@/components/firebase/storage";
 import { axiosInstance } from "@/components/axios/axios";
 import Swal from "sweetalert2";
+import BsStepper from "@/components/365/BsStepper.vue";
+import PreguntaContent from "@/components/365/BsPreguntaContent.vue";
 
 import { useUserStore } from "@/stores/user";
 
@@ -119,7 +67,8 @@ const fotoRespuestas: Ref<any[]> = ref([]);
 const fotosRef: Ref<any[]> = ref([]);
 const currentUser = computed(() => userStore.user);
 const archivoSubido = ref(false);
-const numerikos = ref([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+const mostrarFormulario = ref(false);
+// const numerikos = ref([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
 // Agrupa las preguntas por grupo
 const gruposDePreguntas = computed(() => {
@@ -144,8 +93,10 @@ function guardarBorrador(auditoriaId: string) {
   }).then(function () {
     respuestas.value = {}; // Reiniciar respuestas
     fotosRef.value = []; // Reiniciar fotos
+    mostrarFormulario.value = false;
+    // auditoria.value = null;
+    emit("cerrar-responder-auditoria");
   });
-  emit("cerrar-responder-auditoria");
 }
 
 function cargarBorrador(auditoriaId: string) {
@@ -160,6 +111,7 @@ function responderAuditoria(auditoriaP: any) {
   respuestas.value = {};
   fotoRespuestas.value = [];
   auditoria.value = auditoriaP;
+  mostrarFormulario.value = true;
   cargarBorrador(auditoriaP._id); // Cargar respuestas desde el almacenamiento local
 }
 function setFile(x: any) {
@@ -236,15 +188,22 @@ async function enviarRespuestas() {
     });
   }
 }
+function resetFormulario() {
+  respuestas.value = {};
+  fotosRef.value = [];
+  fotoRespuestas.value = [];
+  mostrarFormulario.value = false;
+  auditoria.value = null;
+}
 
 defineExpose({
   responderAuditoria,
+  resetFormulario,
 });
-
 </script>
 
 <style scoped>
-h6{
+h6 {
   color: #e66c5a;
 }
 </style>

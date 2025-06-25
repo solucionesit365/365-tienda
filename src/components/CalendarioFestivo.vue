@@ -1,195 +1,194 @@
 <template>
-  <div class="card border-top border-5 mt-3">
-    <div class="text-center mb-2 mt-1" v-if="!hasPermission('GestionCalendarioFestivo')">
-      <h5>
-        <strong>CALENDARIO PLUSES {{ añoSelect }}</strong>
-      </h5>
-    </div>
-    <div
-      class="row align-items-center justify-content-center"
-      v-if="hasPermission('GestionCalendarioFestivo')"
-    >
-      <div class="col-auto">
-        <select v-model="añoSelect" class="form-select form-select-lg mb-3">
-          <option value="2023">2023</option>
-          <option value="2024">2024</option>
-          <option value="2025">2025</option>
-          <option value="2026">2026</option>
-          <option value="2027">2027</option>
-        </select>
+  <div class="card mt-2">
+    <div class="card-body cardDocs">
+      <div class="text-center mb-2 mt-1" v-if="!hasPermission('GestionCalendarioFestivo')">
+        <h5>
+          <strong>CALENDARIO PLUSES {{ añoSelect }}</strong>
+        </h5>
       </div>
+      <div
+        class="row align-items-center justify-content-center"
+        v-if="hasPermission('GestionCalendarioFestivo')"
+      >
+        <div class="col-auto">
+          <select v-model="añoSelect" class="form-select form-select-lg mb-3">
+            <option value="2023">2023</option>
+            <option value="2024">2024</option>
+            <option value="2025">2025</option>
+            <option value="2026">2026</option>
+            <option value="2027">2027</option>
+          </select>
+        </div>
 
-      <!-- Botón de evento -->
-      <div class="col-auto">
-        <button class="btn btn-primary mb-3" @click="nuevoFestivo">Crear Evento</button>
-      </div>
-      <div class="col-auto">
-        <input
-          type="file"
-          accept=".ics"
-          ref="fileInput"
-          style="display: none"
-          @change="handleFileUpload"
-        />
-        <button class="btn btn-primary mb-3 ms-2" @click="fileInput && fileInput.click()">
-          Importar Festivos
-        </button>
-      </div>
-    </div>
-    <div v-if="loading" class="row text-center mt-2">
-      <div>
-        <div class="spinner-border" role="status" style="width: 5rem; height: 5rem">
-          <span class="visually-hidden">Loading...</span>
+        <!-- Botón de evento -->
+        <div class="col-auto">
+          <button class="btn btn-primary mb-3" @click="nuevoFestivo">Crear Evento</button>
+        </div>
+        <div class="col-auto">
+          <input
+            type="file"
+            accept=".ics"
+            ref="fileInput"
+            style="display: none"
+            @change="handleFileUpload"
+          />
+          <button class="btn btn-primary mb-3 ms-1" @click="fileInput && fileInput.click()">
+            Importar Festivos
+          </button>
         </div>
       </div>
-    </div>
-    <template v-else>
-      <div class="row mt-2">
-        <div class="col-md-4 mb-3" v-for="(month, index) in months" :key="month">
-          <div class="calendar-container d-flex">
+      <div v-if="loading" class="row text-center mt-2">
+        <div>
+          <div class="spinner-border" role="status" style="width: 5rem; height: 5rem">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+      <template v-else>
+        <div class="row mt-2">
+          <div class="col-md-4 mb-3" v-for="(month, index) in months" :key="month">
+            <div class="calendar-container d-flex">
+              <div class="calendar-week-numbers d-flex flex-column align-items-center me-2">
+                <div class="calendar-week-header"></div>
+                <div
+                  v-for="semanas in calculateWeekNumbers(year)[index + 1]"
+                  :key="`semana-${index}-${semanas}`"
+                  class="week-number"
+                >
+                  {{ semanas }}
+                </div>
+              </div>
+              <div class="calendar-grid flex-grow-1">
+                <div class="month-header">
+                  {{ month }}
+                </div>
+                <div class="calendar-day-header" v-for="day in daysOfWeek" :key="day">
+                  {{ day }}
+                </div>
+                <div
+                  v-for="emptyDay in getEmptyDaysBeforeStartOfMonth(index)"
+                  :key="`empty-${emptyDay}`"
+                  class="calendar-day empty"
+                ></div>
+
+                <div
+                  v-for="day in getDaysInMonth(index)"
+                  :key="day.date.toISO() || day.date.toString()"
+                  :style="getEventClass(day.date)"
+                  class="calendar-day"
+                  :title="getEventInfo(day.date)"
+                  @click="handleDayTouch(day)"
+                >
+                  {{ day.day }}
+                </div>
+              </div>
+            </div>
+            <!-- Mostrar categorías -->
             <div
-              class="calendar-week-numbers d-flex flex-column align-items-center me-2"
+              class="event-category"
+              v-if="showCategoryForMonth(index)"
+              :style="{
+                backgroundColor: getCategoryEventsForMonth(index)[0]?.color || '#FFFFFF',
+              }"
             >
-              <div class="calendar-week-header"></div>
-              <div
-                v-for="semanas in calculateWeekNumbers(year)[index + 1]"
-                :key="`semana-${index}-${semanas}`"
-                class="week-number"
-              >
-                {{ semanas }}
-              </div>
-            </div>
-            <div class="calendar-grid flex-grow-1">
-              <div class="month-header">
-                {{ month }}
-              </div>
-              <div class="calendar-day-header" v-for="day in daysOfWeek" :key="day">
-                {{ day }}
-              </div>
-              <div
-                v-for="emptyDay in getEmptyDaysBeforeStartOfMonth(index)"
-                :key="`empty-${emptyDay}`"
-                class="calendar-day empty"
-              ></div>
-
-              <div
-                v-for="day in getDaysInMonth(index)"
-                :key="day.date.toISO() || day.date.toString()"
-                :style="getEventClass(day.date)"
-                class="calendar-day"
-                :title="getEventInfo(day.date)"
-                @click="handleDayTouch(day)"
-              >
-                {{ day.day }}
-              </div>
+              <p v-for="event in getCategoryEventsForMonth(index)" :key="event.titulo">
+                <strong>{{ event.titulo }}</strong>
+              </p>
             </div>
           </div>
-          <!-- Mostrar categorías -->
-          <div
-            class="event-category"
-            v-if="showCategoryForMonth(index)"
-            :style="{
-              backgroundColor: getCategoryEventsForMonth(index)[0]?.color || '#FFFFFF',
-            }"
-          >
-            <p v-for="event in getCategoryEventsForMonth(index)" :key="event.titulo">
-              <strong>{{ event.titulo }}</strong>
-            </p>
-          </div>
         </div>
-      </div>
-    </template>
-  </div>
+      </template>
+    </div>
 
-  <!-- Modal crear evento -->
-  <div
-    class="modal fade"
-    tabindex="-1"
-    id="modalCrearEvento"
-    aria-labelledby="exampleModalCenterTitle"
-    aria-modal="true"
-    role="dialog"
-    :class="{ show: modalCrearEvento }"
-    :style="modalCrearEvento ? 'display: block; background: rgba(0,0,0,0.5);' : ''"
-    v-if="modalCrearEvento"
-  >
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content shadow rounded-4">
-        <div class="modal-header bg-primary bg-opacity-10 border-0 rounded-top-4">
-          <h5 class="modal-title" id="modalEditarEventoTitle">Editar Evento</h5>
-          <button type="button" class="btn-close" @click="modalCrearEvento = false"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label for="tituloEdit" class="form-label">Título:</label>
-            <input
-              id="tituloEdit"
-              type="text"
-              class="form-control"
-              placeholder="Título"
-              v-model="titulo"
-              required
-            />
+    <!-- Modal crear evento -->
+    <div
+      class="modal fade"
+      tabindex="-1"
+      id="modalCrearEvento"
+      aria-labelledby="exampleModalCenterTitle"
+      aria-modal="true"
+      role="dialog"
+      :class="{ show: modalCrearEvento }"
+      :style="modalCrearEvento ? 'display: block; background: rgba(0,0,0,0.5);' : ''"
+      v-if="modalCrearEvento"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow rounded-4">
+          <div class="modal-header bg-primary bg-opacity-10 border-0 rounded-top-4">
+            <h5 class="modal-title" id="modalEditarEventoTitle">Editar Evento</h5>
+            <button type="button" class="btn-close" @click="modalCrearEvento = false"></button>
           </div>
-          <div class="mb-3">
-            <label for="descripcionEdit" class="form-label">Descripción:</label>
-            <input
-              id="descripcionEdit"
-              type="text"
-              class="form-control"
-              placeholder="Descripción"
-              v-model="descripcion"
-              required
-            />
-          </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label for="fechaInicioEdit" class="form-label">Fecha de inicio:</label>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="tituloEdit" class="form-label">Título:</label>
               <input
-                id="fechaInicioEdit"
-                type="date"
+                id="tituloEdit"
+                type="text"
                 class="form-control"
-                v-model="fechaInicio"
+                placeholder="Título"
+                v-model="titulo"
                 required
               />
             </div>
-            <div class="col-md-6 mb-3">
-              <label for="fechaFinalEdit" class="form-label">Fecha de finalización:</label>
+            <div class="mb-3">
+              <label for="descripcionEdit" class="form-label">Descripción:</label>
               <input
-                id="fechaFinalEdit"
-                type="date"
+                id="descripcionEdit"
+                type="text"
                 class="form-control"
-                v-model="fechaFinal"
+                placeholder="Descripción"
+                v-model="descripcion"
                 required
               />
             </div>
-          </div>
-          <div class="mb-3">
-            <label for="colorEventoEdit" class="form-label">Color del evento:</label>
-            <input
-              type="color"
-              id="colorEventoEdit"
-              class="form-control form-control-color"
-              v-model="colorEvento"
-              style="width: 3rem; height: 2.5rem; padding: 0.2rem"
-            />
-          </div>
-          <div class="mb-3">
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="checkTodasTiendasEdit"
-                v-model="todas"
-              />
-              <label class="form-check-label" for="checkTodasTiendasEdit">
-                Todas las tiendas
-              </label>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="fechaInicioEdit" class="form-label">Fecha de inicio:</label>
+                <input
+                  id="fechaInicioEdit"
+                  type="date"
+                  class="form-control"
+                  v-model="fechaInicio"
+                  required
+                />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="fechaFinalEdit" class="form-label">Fecha de finalización:</label>
+                <input
+                  id="fechaFinalEdit"
+                  type="date"
+                  class="form-control"
+                  v-model="fechaFinal"
+                  required
+                />
+              </div>
             </div>
-          </div>
-          <div class="mb-3" v-if="!todas">
-            <label for="tiendaSeleccionadaEdit" class="form-label">Enviar a la tienda:</label>
-            <!-- <select
+            <div class="mb-3">
+              <label for="colorEventoEdit" class="form-label">Color del evento:</label>
+              <input
+                type="color"
+                id="colorEventoEdit"
+                class="form-control form-control-color"
+                v-model="colorEvento"
+                style="width: 3rem; height: 2.5rem; padding: 0.2rem"
+              />
+            </div>
+            <div class="mb-3">
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="checkTodasTiendasEdit"
+                  v-model="todas"
+                />
+                <label class="form-check-label" for="checkTodasTiendasEdit">
+                  Todas las tiendas
+                </label>
+              </div>
+            </div>
+            <div class="mb-3" v-if="!todas">
+              <label for="tiendaSeleccionadaEdit" class="form-label">Enviar a la tienda:</label>
+              <!-- <select
               id="tiendaSeleccionadaEdit"
               class="form-select"
               v-model="tiendaSeleccionada"
@@ -200,125 +199,123 @@
                 {{ tienda.text }}
               </option>
             </select> -->
-            <BsSelect
-              :multi="true"
-              :select-all="false"
-              v-model:options="tiendas"
-              v-model:selected="tiendaSeleccionada"
-              aria-placeholder="Elige una o varias tiendas"
-              text-key="nombre"
-              value-key="id"
-              :filter="true"
-            />
+              <BsSelect
+                :multi="true"
+                :select-all="false"
+                v-model:options="tiendas"
+                v-model:selected="tiendaSeleccionada"
+                aria-placeholder="Elige una o varias tiendas"
+                text-key="nombre"
+                value-key="id"
+                :filter="true"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="categoriaEdit" class="form-label">Categoría</label>
+              <select id="categoriaEdit" v-model="categoriaRes" class="form-select" required>
+                <option value="Fiesta">Fiesta</option>
+                <option value="Reunión">Reunión</option>
+                <option value="General">General</option>
+                <option value="Cierre pluses">Cierre pluses</option>
+              </select>
+            </div>
           </div>
-          <div class="mb-3">
-            <label for="categoriaEdit" class="form-label">Categoría</label>
-            <select id="categoriaEdit" v-model="categoriaRes" class="form-select" required>
-              <option value="Fiesta">Fiesta</option>
-              <option value="Reunión">Reunión</option>
-              <option value="General">General</option>
-              <option value="Cierre pluses">Cierre pluses</option>
-            </select>
+          <div class="modal-footer bg-light border-0 rounded-bottom-4">
+            <button type="button" class="btn btn-success" @click="guardarFinal()">Confirmar</button>
           </div>
-        </div>
-        <div class="modal-footer bg-light border-0 rounded-bottom-4">
-          <button type="button" class="btn btn-success" @click="guardarFinal()">
-            Confirmar
-          </button>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Modal editar evento -->
-  <div
-    class="modal fade"
-    tabindex="-1"
-    id="modalEditarEvento"
-    aria-labelledby="modalEditarEventoTitle"
-    aria-modal="true"
-    role="dialog"
-    :class="{ show: modalEditarEvento }"
-    :style="modalEditarEvento ? 'display: block; background: rgba(0,0,0,0.5);' : ''"
-    v-if="modalEditarEvento"
-  >
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content shadow rounded-4">
-        <div class="modal-header bg-primary bg-opacity-10 border-0 rounded-top-4">
-          <h5 class="modal-title" id="modalEditarEventoTitle">Editar Evento</h5>
-          <button type="button" class="btn-close" @click="modalEditarEvento = false"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-3">
-            <label for="tituloEdit" class="form-label">Título:</label>
-            <input
-              id="tituloEdit"
-              type="text"
-              class="form-control"
-              placeholder="Título"
-              v-model="titulo"
-              required
-            />
+    <!-- Modal editar evento -->
+    <div
+      class="modal fade"
+      tabindex="-1"
+      id="modalEditarEvento"
+      aria-labelledby="modalEditarEventoTitle"
+      aria-modal="true"
+      role="dialog"
+      :class="{ show: modalEditarEvento }"
+      :style="modalEditarEvento ? 'display: block; background: rgba(0,0,0,0.5);' : ''"
+      v-if="modalEditarEvento"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow rounded-4">
+          <div class="modal-header bg-primary bg-opacity-10 border-0 rounded-top-4">
+            <h5 class="modal-title" id="modalEditarEventoTitle">Editar Evento</h5>
+            <button type="button" class="btn-close" @click="modalEditarEvento = false"></button>
           </div>
-          <div class="mb-3">
-            <label for="descripcionEdit" class="form-label">Descripción:</label>
-            <input
-              id="descripcionEdit"
-              type="text"
-              class="form-control"
-              placeholder="Descripción"
-              v-model="descripcion"
-              required
-            />
-          </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label for="fechaInicioEdit" class="form-label">Fecha de inicio:</label>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="tituloEdit" class="form-label">Título:</label>
               <input
-                id="fechaInicioEdit"
-                type="date"
+                id="tituloEdit"
+                type="text"
                 class="form-control"
-                v-model="fechaInicio"
+                placeholder="Título"
+                v-model="titulo"
                 required
               />
             </div>
-            <div class="col-md-6 mb-3">
-              <label for="fechaFinalEdit" class="form-label">Fecha de finalización:</label>
+            <div class="mb-3">
+              <label for="descripcionEdit" class="form-label">Descripción:</label>
               <input
-                id="fechaFinalEdit"
-                type="date"
+                id="descripcionEdit"
+                type="text"
                 class="form-control"
-                v-model="fechaFinal"
+                placeholder="Descripción"
+                v-model="descripcion"
                 required
               />
             </div>
-          </div>
-          <div class="mb-3">
-            <label for="colorEventoEdit" class="form-label">Color del evento:</label>
-            <input
-              type="color"
-              id="colorEventoEdit"
-              class="form-control form-control-color"
-              v-model="colorEvento"
-              style="width: 3rem; height: 2.5rem; padding: 0.2rem"
-            />
-          </div>
-          <div class="mb-3">
-            <div class="form-check">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="checkTodasTiendasEdit"
-                v-model="todas"
-              />
-              <label class="form-check-label" for="checkTodasTiendasEdit">
-                Todas las tiendas
-              </label>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="fechaInicioEdit" class="form-label">Fecha de inicio:</label>
+                <input
+                  id="fechaInicioEdit"
+                  type="date"
+                  class="form-control"
+                  v-model="fechaInicio"
+                  required
+                />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="fechaFinalEdit" class="form-label">Fecha de finalización:</label>
+                <input
+                  id="fechaFinalEdit"
+                  type="date"
+                  class="form-control"
+                  v-model="fechaFinal"
+                  required
+                />
+              </div>
             </div>
-          </div>
-          <div class="mb-3" v-if="!todas">
-            <label for="tiendaSeleccionadaEdit" class="form-label">Enviar a la tienda:</label>
-            <!-- <select
+            <div class="mb-3">
+              <label for="colorEventoEdit" class="form-label">Color del evento:</label>
+              <input
+                type="color"
+                id="colorEventoEdit"
+                class="form-control form-control-color"
+                v-model="colorEvento"
+                style="width: 3rem; height: 2.5rem; padding: 0.2rem"
+              />
+            </div>
+            <div class="mb-3">
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="checkTodasTiendasEdit"
+                  v-model="todas"
+                />
+                <label class="form-check-label" for="checkTodasTiendasEdit">
+                  Todas las tiendas
+                </label>
+              </div>
+            </div>
+            <div class="mb-3" v-if="!todas">
+              <label for="tiendaSeleccionadaEdit" class="form-label">Enviar a la tienda:</label>
+              <!-- <select
               id="tiendaSeleccionadaEdit"
               class="form-select"
               v-model="tiendaSeleccionada"
@@ -329,32 +326,33 @@
                 {{ tienda.text }}
               </option>
             </select> -->
-            <BsSelect
-              :multi="true"
-              :select-all="false"
-              v-model:options="tiendas"
-              v-model:selected="tiendaSeleccionada"
-              aria-placeholder="Elige una o varias tiendas"
-              text-key="nombre"
-              value-key="id"
-              :filter="true"
-            />
+              <BsSelect
+                :multi="true"
+                :select-all="false"
+                v-model:options="tiendas"
+                v-model:selected="tiendaSeleccionada"
+                aria-placeholder="Elige una o varias tiendas"
+                text-key="nombre"
+                value-key="id"
+                :filter="true"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="categoriaEdit" class="form-label">Categoría</label>
+              <select id="categoriaEdit" v-model="categoriaRes" class="form-select" required>
+                <option value="Fiesta">Fiesta</option>
+                <option value="Reunión">Reunión</option>
+                <option value="General">General</option>
+                <option value="Cierre pluses">Cierre pluses</option>
+              </select>
+            </div>
           </div>
-          <div class="mb-3">
-            <label for="categoriaEdit" class="form-label">Categoría</label>
-            <select id="categoriaEdit" v-model="categoriaRes" class="form-select" required>
-              <option value="Fiesta">Fiesta</option>
-              <option value="Reunión">Reunión</option>
-              <option value="General">General</option>
-              <option value="Cierre pluses">Cierre pluses</option>
-            </select>
+          <div class="modal-footer bg-light border-0 rounded-bottom-4">
+            <button type="button" class="btn btn-danger" @click="borrarFestivo()">Borrar</button>
+            <button type="button" class="btn btn-success" @click="confirmarEdicion()">
+              Modificar
+            </button>
           </div>
-        </div>
-        <div class="modal-footer bg-light border-0 rounded-bottom-4">
-          <button type="button" class="btn btn-danger" @click="borrarFestivo()">Borrar</button>
-          <button type="button" class="btn btn-success" @click="confirmarEdicion()">
-            Modificar
-          </button>
         </div>
       </div>
     </div>
@@ -1060,7 +1058,6 @@ onMounted(() => {
   padding: 0.5em 0.5em;
   border-radius: 1em;
   border: 1em;
-  border-top-color: #e66c5a !important;
   box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
 }
 
@@ -1084,10 +1081,24 @@ onMounted(() => {
   gap: 0.2rem;
 }
 
+// .month-header {
+//   grid-column: 1 / -1;
+//   background: linear-gradient(90deg, #e66c5a 0%, #333 100%);
+//   color: #fff;
+//   font-weight: bold;
+//   font-size: 1.1rem;
+//   border-radius: 0.7em 0.7em 0 0;
+//   letter-spacing: 1px;
+//   margin-bottom: 0.2em;
+//   box-shadow: 0 2px 6px rgba(230, 108, 90, 0.07);
+//   text-align: center;
+//   padding: 0.5em 0;
+// }
+
 .month-header {
   grid-column: 1 / -1;
-  background: linear-gradient(90deg, #e66c5a 0%, #333 100%);
-  color: #fff;
+  background: #fff; /* Fondo blanco */
+  color: #222; /* Texto negro */
   font-weight: bold;
   font-size: 1.1rem;
   border-radius: 0.7em 0.7em 0 0;
@@ -1096,6 +1107,7 @@ onMounted(() => {
   box-shadow: 0 2px 6px rgba(230, 108, 90, 0.07);
   text-align: center;
   padding: 0.5em 0;
+  border: 2px solid #e66c5a;
 }
 
 .calendar-day-header {
@@ -1163,7 +1175,6 @@ onMounted(() => {
   font-weight: 500;
   margin-top: 6.5rem;
   margin-bottom: -4.9rem;
-
 }
 
 .event-category {

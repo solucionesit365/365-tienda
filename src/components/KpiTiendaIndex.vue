@@ -1,28 +1,34 @@
 <template>
   <div class="row mt-1">
-<div class="d-flex align-items-center gap-2 mt-2 mb-4">
-  <span class="fs-6 ms-1 me-1">Semana</span>
-  <span class="me-1 fw-bold">{{ punteroFecha!.weekNumber }}</span>
-  de {{ punteroFecha!.year }}
-  <button
-    type="button"
-    class="btn btn-primary fw-bold px-3 py-1"
-    @click="restarSemana"
-    aria-label="Semana anterior"
-  >-</button>
-  <button
-    type="button"
-    class="btn btn-primary fw-bold px-3 py-1"
-    @click="sumarSemana"
-    aria-label="Semana siguiente"
-  >+</button>
-  <button
-    type="button"
-    class="btn btn-primary fw-bold px-3 py-1"
-    @click="buscarKPI"
-    aria-label="Buscar"
-  >Buscar</button>
-</div>
+    <div class="d-flex align-items-center gap-2 mt-2 mb-4">
+      <span class="fs-6 ms-1 me-1">Semana</span>
+      <span class="me-1 fw-bold">{{ punteroFecha!.weekNumber }}</span>
+      de {{ punteroFecha!.year }}
+      <button
+        type="button"
+        class="btn btn-primary fw-bold px-3 py-1"
+        @click="restarSemana"
+        aria-label="Semana anterior"
+      >
+        -
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary fw-bold px-3 py-1"
+        @click="sumarSemana"
+        aria-label="Semana siguiente"
+      >
+        +
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary fw-bold px-3 py-1"
+        @click="buscarKPI"
+        aria-label="Buscar"
+      >
+        Buscar
+      </button>
+    </div>
 
     <div class="card-content">
       <div class="card-body">
@@ -212,6 +218,13 @@ onMounted(() => {
 </script>
 
 <style>
+.card {
+  padding: 0.5em 0.5em;
+  border-radius: 1em;
+  border: 1em;
+  box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
+}
+
 .cardDocs {
   background-color: #ffffff;
 }

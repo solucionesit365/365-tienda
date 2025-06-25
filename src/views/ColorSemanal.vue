@@ -1,4 +1,6 @@
 <template>
+    <div class="card mt-2">
+    <div class="card-body cardDocs">
   <div>
     <div class="color-container">
       <div v-if="isLoading" class="loading-spinner">
@@ -42,6 +44,8 @@
           </div>
         </div>
       </div>
+    </div>
+    </div>
     </div>
   </div>
 </template>
@@ -162,6 +166,13 @@ onMounted(() => {
   max-width: 700px;
   margin: 0 auto;
   min-height: 80vh;
+}
+
+.card {
+  padding: 0.5em 0.5em;
+  border-radius: 1em;
+  border: 1em;
+  box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
 }
 
 .color-row {

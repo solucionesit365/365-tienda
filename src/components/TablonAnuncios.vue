@@ -1,207 +1,216 @@
 <template>
-  <div class="row mt-4 mb-8">
-    <template v-if="!hayAnuncios">
-      <div class="col-xl-12 col-xs-12 col-12 col-lg-6 text-center">
-        <figure class="figure">
-          <img
-            src="@/assets/img/nodata.png"
-            class="rounded mx-auto d-block mt-3 img-fluid"
-            alt="..."
-            style="width: 70%"
-          />
-          <figcaption class="figure-caption text-center">No hay anuncios que mostrar</figcaption>
-        </figure>
-      </div>
-    </template>
-    <template v-else>
-      <template v-for="(anuncio, index) in anuncios" :key="index">
-        <div class="col-xl-4 col-xs-12 col-12 col-lg-4">
-          <div class="card p-2 mb-2">
-            <div class="d-flex justify-content-between">
-              <div class="d-flex flex-row align-items-center">
-                <div v-if="anuncio.categoria === 'Newsletter'" class="icon">
-                  <i class="fas fa-headset text-primary" />
+  <div class="card mt-2">
+    <div class="card-body cardDocs">
+      <div class="row mt-4 mb-8">
+        <template v-if="!hayAnuncios">
+          <div class="col-xl-12 col-xs-12 col-12 col-lg-6 text-center">
+            <figure class="figure">
+              <img
+                src="@/assets/img/nodata.png"
+                class="rounded mx-auto d-block mt-3 img-fluid"
+                alt="..."
+                style="width: 70%"
+              />
+              <figcaption class="figure-caption text-center">
+                No hay anuncios que mostrar
+              </figcaption>
+            </figure>
+          </div>
+        </template>
+        <template v-else>
+          <template v-for="(anuncio, index) in anuncios" :key="index">
+            <div class="col-xl-4 col-xs-12 col-12 col-lg-4">
+              <div class="card p-2 mb-2">
+                <div class="d-flex justify-content-between">
+                  <div class="d-flex flex-row align-items-center">
+                    <div v-if="anuncio.categoria === 'Newsletter'" class="icon">
+                      <i class="fas fa-headset text-primary" />
+                    </div>
+                    <div v-if="anuncio.categoria === 'Oferta trabajo'" class="icon">
+                      <i class="fas fa-star text-success" />
+                    </div>
+                    <div v-if="anuncio.categoria === 'Nota informativa'" class="icon">
+                      <i class="fas fa-exclamation-triangle text-warning" />
+                    </div>
+                    <div v-if="anuncio.categoria === 'Encuesta'" class="icon">
+                      <i class="fas fa-question-circle text-info" />
+                    </div>
+                    <div class="ms-2 c-details">
+                      <h6 class="mb-0">
+                        {{ anuncio.categoria }}
+                      </h6>
+                      <span class="text-muted">
+                        Hace
+                        {{
+                          (() => {
+                            const fechaCreacion = DateTime.fromISO(anuncio.fechaCreacion);
+                            const diferenciaDias = DateTime.now().diff(fechaCreacion, "days").days;
+                            return Math.abs(Math.floor(diferenciaDias));
+                          })()
+                        }}
+                        días
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div v-if="anuncio.categoria === 'Oferta trabajo'" class="icon">
-                  <i class="fas fa-star text-success" />
-                </div>
-                <div v-if="anuncio.categoria === 'Nota informativa'" class="icon">
-                  <i class="fas fa-exclamation-triangle text-warning" />
-                </div>
-                <div v-if="anuncio.categoria === 'Encuesta'" class="icon">
-                  <i class="fas fa-question-circle text-info" />
-                </div>
-                <div class="ms-2 c-details">
-                  <h6 class="mb-0">
-                    {{ anuncio.categoria }}
+                <div class="mt-3">
+                  <h6 class="heading text-center">
+                    {{ anuncio.titulo }}
                   </h6>
-                  <span class="text-muted">
-                    Hace
-                    {{
-                      (() => {
-                        const fechaCreacion = DateTime.fromISO(
-                          anuncio.fechaCreacion,
-                        );
-                        const diferenciaDias = DateTime.now().diff(fechaCreacion, "days").days;
-                        return Math.abs(Math.floor(diferenciaDias));
-                      })()
-                    }}
-                    días
-                  </span>
+                  <hr />
+                  <div class="d-inline-flex gap-1" id="collapsibleContent1">
+                    <div class="text-start">{{ anuncio.descripcion }} <br /></div>
+                  </div>
+                  <div class="mt-3 c-details">
+                    <div class="">
+                      <span class="text-muted"
+                        >Caduca el
+                        {{ DateTime.fromISO(anuncio.caducidad).toFormat("dd/MM/yyyy") }}</span
+                      >
+                    </div>
+                  </div>
+                </div>
+                <div class="card-footer quitarFondo">
+                  <div class="row quitarFondo">
+                    <div class="text-start col-6 col-sm-6 col-xl-4">
+                      <button
+                        type="button"
+                        class="btn"
+                        id="btnCV"
+                        v-if="anuncio.categoria === 'Oferta trabajo'"
+                        @click="
+                          whatsapp(
+                            +34 + anuncio.telefonoCreador,
+                            `Hola, me gustaría aplicar a la oferta ${anuncio.titulo}. Adjunto mi CV`,
+                          )
+                        "
+                        color="info"
+                        size="sm"
+                      >
+                        Enviar CV
+                      </button>
+                      <button
+                        type="button"
+                        class="btn"
+                        v-if="anuncio.categoria === 'Nota informativa' && anuncio.urlVideo"
+                        @click="abrirFormularioVideo(anuncio.urlVideo)"
+                        color="info"
+                        size="sm"
+                      >
+                        Ver Video
+                      </button>
+                    </div>
+                    <div class="text-end col-6 col-sm-6 col-xl-8">
+                      <button
+                        v-if="hasPermission('EditarAnuncios')"
+                        aria-controls="modalEditarAnuncio"
+                        title="Editar Anuncio"
+                        class="call-btn btn btn-outline-warning btn-floating btn-sm"
+                        @click="selectEditarAnuncio(anuncio)"
+                      >
+                        <i class="fas fa-edit" />
+                      </button>
+                      <button
+                        v-if="hasPermission('BorrarAnuncios')"
+                        title="Borrar Anuncio"
+                        class="call-btn btn btn-outline-danger btn-floating btn-sm"
+                        @click="borrarAnuncio(anuncio._id)"
+                      >
+                        <i class="fas fa-trash" />
+                      </button>
+                      <button
+                        v-if="anuncio.tipoArchivo == 'pdf' && anuncio.fotoPath"
+                        aria-controls="modalEditarAnuncio"
+                        title="Descargar Anuncio"
+                        id="btnDescargarAnuncio"
+                        class="call-btn btn btn-outline-primary btn-floating btn-sm"
+                        @click="descargarAnuncio(anuncio.fotoPath)"
+                      >
+                        <i class="far fa-file-pdf" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="mt-3">
-              <h6 class="heading text-center">
-                {{ anuncio.titulo }}
-              </h6>
-              <hr />
-              <div class="d-inline-flex gap-1" id="collapsibleContent1">
-                <div class="text-start">{{ anuncio.descripcion }} <br /></div>
-              </div>
-              <div class="mt-3 c-details">
-                <div class="">
-                  <span class="text-muted"
-                    >Caduca el
-                    {{ DateTime.fromISO(anuncio.caducidad).toFormat("dd/MM/yyyy") }}</span
-                  >
-                </div>
-              </div>
-            </div>
-            <div class="card-footer quitarFondo">
-              <div class="row quitarFondo">
-                <div class="text-start col-6 col-sm-6 col-xl-4">
-                  <button
-                    type="button"
-                    class="btn"
-                    id="btnCV"
-                    v-if="anuncio.categoria === 'Oferta trabajo'"
-                    @click="
-                      whatsapp(
-                        +34 + anuncio.telefonoCreador,
-                        `Hola, me gustaría aplicar a la oferta ${anuncio.titulo}. Adjunto mi CV`,
-                      )
-                    "
-                    color="info"
-                    size="sm"
-                  >
-                    Enviar CV
-                  </button>
-                  <button
-                    type="button"
-                    class="btn"
-                    v-if="anuncio.categoria === 'Nota informativa' && anuncio.urlVideo"
-                    @click="abrirFormularioVideo(anuncio.urlVideo)"
-                    color="info"
-                    size="sm"
-                  >
-                    Ver Video
-                  </button>
-                </div>
-                <div class="text-end col-6 col-sm-6 col-xl-8">
-                  <button
-                    v-if="hasPermission('EditarAnuncios')"
-                    aria-controls="modalEditarAnuncio"
-                    title="Editar Anuncio"
-                    class="call-btn btn btn-outline-warning btn-floating btn-sm"
-                    @click="selectEditarAnuncio(anuncio)"
-                  >
-                    <i class="fas fa-edit" />
-                  </button>
-                  <button
-                    v-if="hasPermission('BorrarAnuncios')"
-                    title="Borrar Anuncio"
-                    class="call-btn btn btn-outline-danger btn-floating btn-sm"
-                    @click="borrarAnuncio(anuncio._id)"
-                  >
-                    <i class="fas fa-trash" />
-                  </button>
-                  <button
-                    v-if="anuncio.tipoArchivo == 'pdf' && anuncio.fotoPath"
-                    aria-controls="modalEditarAnuncio"
-                    title="Descargar Anuncio"
-                    id="btnDescargarAnuncio"
-                    class="call-btn btn btn-outline-primary btn-floating btn-sm"
-                    @click="descargarAnuncio(anuncio.fotoPath)"
-                  >
-                    <i class="far fa-file-pdf" />
-                  </button>
+          </template>
+        </template>
+        <div v-if="error" class="row">
+          <div class="col-xl-6 col-xs-12 col-12 col-lg-6 text-center">
+            <figure class="figure">
+              <img
+                src="@/assets/img/nodata.png"
+                class="rounded mx-auto d-block mt-3 img-fluid"
+                alt="..."
+                style="width: 70%"
+              />
+              <figcaption class="figure-caption text-center text-danger">
+                NO SE CONECTA AL SERVIDOR contacta con informática
+                <a href="tel:603 44 88 08">603 44 88 08</a>
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </div>
+      <div class="row justify-content-center">
+        <div v-if="loading" class="col-xl-8 col-sm-12 col-12 mb-2 d-block d-sm-block d-md-none">
+          <div class="h-75">
+            <div id="test2" class="card">
+              <div class="card-body">
+                <div class="loader2">
+                  <h1>Obteniendo datos</h1>
+                  <span />
+                  <span />
+                  <span />
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </template>
-    </template>
-    <div v-if="error" class="row">
-      <div class="col-xl-6 col-xs-12 col-12 col-lg-6 text-center">
-        <figure class="figure">
-          <img
-            src="@/assets/img/nodata.png"
-            class="rounded mx-auto d-block mt-3 img-fluid"
-            alt="..."
-            style="width: 70%"
-          />
-          <figcaption class="figure-caption text-center text-danger">
-            NO SE CONECTA AL SERVIDOR contacta con informática
-            <a href="tel:603 44 88 08">603 44 88 08</a>
-          </figcaption>
-        </figure>
-      </div>
-    </div>
-  </div>
-  <div class="row justify-content-center">
-    <div v-if="loading" class="col-xl-8 col-sm-12 col-12 mb-2 d-block d-sm-block d-md-none">
-      <div class="h-75">
-        <div id="test2" class="card">
-          <div class="card-body">
-            <div class="loader2">
-              <h1>Obteniendo datos</h1>
-              <span />
-              <span />
-              <span />
+        <div v-if="loading" class="col-xl-8 col-sm-12 col-12 d-none d-sm-none d-md-block">
+          <div class="h-75">
+            <div id="bodycard" class="card border-5">
+              <div class="card-body">
+                <div class="loading">
+                  <div class="cloud" />
+                  <div class="data">
+                    <span>0</span>
+                    <span>1</span>
+                    <span>0</span>
+                    <span>1</span>
+                    <span>0</span>
+                    <span>1</span>
+                    <span>0</span>
+                    <span>1</span>
+                    <span>0</span>
+                  </div>
+                  <div class="browser">
+                    <div class="buttons" />
+                  </div>
+                </div>
+                <p class="text-center mt-3">Obteniendo datos</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-    <div v-if="loading" class="col-xl-8 col-sm-12 col-12 d-none d-sm-none d-md-block">
-      <div class="h-75">
-        <div id="bodycard" class="card border-5">
-          <div class="card-body">
-            <div class="loading">
-              <div class="cloud" />
-              <div class="data">
-                <span>0</span>
-                <span>1</span>
-                <span>0</span>
-                <span>1</span>
-                <span>0</span>
-                <span>1</span>
-                <span>0</span>
-                <span>1</span>
-                <span>0</span>
-              </div>
-              <div class="browser">
-                <div class="buttons" />
-              </div>
-            </div>
-            <p class="text-center mt-3">Obteniendo datos</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Modal ver Video -->
-  <div class="modal" tabindex="-1" id=" modalVerVideo" centered>
-    <div class="modal-body">
-      <iframe v-if="anuncioEditar" :src="anuncioEditar" frameborder="0" allowfullscreen></iframe>
-    </div>
-    <div class="modal" tabindex="-1">
-      <button type="button" class="btn" color="secondary" @click="modalVerVideo = false">
-        Cerrar
-      </button>
+      <!-- Modal ver Video -->
+      <div class="modal" tabindex="-1" id=" modalVerVideo" centered>
+        <div class="modal-body">
+          <iframe
+            v-if="anuncioEditar"
+            :src="anuncioEditar"
+            frameborder="0"
+            allowfullscreen
+          ></iframe>
+        </div>
+        <div class="modal" tabindex="-1">
+          <button type="button" class="btn" color="secondary" @click="modalVerVideo = false">
+            Cerrar
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -362,6 +371,13 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.card {
+  padding: 0.5em 0.5em;
+  border-radius: 1em;
+  border: 1em;
+  box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
+}
+
 .colorIconGreen {
   background-color: #63ceb0;
   color: white;

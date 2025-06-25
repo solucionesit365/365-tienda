@@ -1,159 +1,161 @@
 <template>
   <div v-if="mostrarAudis" class="row mt-3">
     <div class="col-12 col-sm-12 col-xl-12">
-      <div class="card border-top border-5">
-        <div class="card-header">
-          <div class="row g-4 mb-3">
-            <div class="col">
-              <button
-                class="btn w-100 fw-bold py-2 shadow-sm"
-                :style="
-                  verMisAuditorias
-                    ? 'background:#e66c5a;color:white;'
-                    : 'background:#d7d9e7;color:#777;'
-                "
-                @click="
-                  verMisAuditorias = true;
-                  cargarAuditorias();
-                "
-              >
-                AUDITORIAS
-              </button>
-            </div>
-            <div class="col" v-if="hasPermission('VerResumenAuditoria')">
-              <button
-                class="btn w-100 fw-bold py-2 shadow-sm"
-                :style="
-                  !verMisAuditorias
-                    ? 'background:#e66c5a;color:white;'
-                    : 'background:#d7d9e7;color:#777;'
-                "
-                @click="
-                  verMisAuditorias = false;
-                  respuestasAuditorias();
-                "
-              >
-                RESUMEN
-              </button>
+      <div class="card mt-2">
+        <div class="card-body cardDocs">
+          <div class="card-header">
+            <div class="row g-4 mb-3">
+              <div class="col">
+                <button
+                  class="btn w-100 fw-bold py-2 shadow-sm"
+                  :style="
+                    verMisAuditorias
+                      ? 'background:#e66c5a;color:white;'
+                      : 'background:#d7d9e7;color:#777;'
+                  "
+                  @click="
+                    verMisAuditorias = true;
+                    cargarAuditorias();
+                  "
+                >
+                  AUDITORIAS
+                </button>
+              </div>
+              <div class="col" v-if="hasPermission('VerResumenAuditoria')">
+                <button
+                  class="btn w-100 fw-bold py-2 shadow-sm"
+                  :style="
+                    !verMisAuditorias
+                      ? 'background:#e66c5a;color:white;'
+                      : 'background:#d7d9e7;color:#777;'
+                  "
+                  @click="
+                    verMisAuditorias = false;
+                    respuestasAuditorias();
+                  "
+                >
+                  RESUMEN
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="card-body" v-if="verMisAuditorias">
-          <div class="row justify-content-center mt-2">
-            <div
-              v-for="(audi, index) in auditorias"
-              v-bind:key="index"
-              class="col-xl-4 col-xs-12 col-12 col-lg-4"
-            >
-              <template v-if="audi.habilitado">
-                <div class="card p-2 mb-2">
-                  <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                      <div class="d-flex flex-row align-items-center">
-                        <div class="icon">
-                          <i class="fas fa-clipboard-list" />
-                        </div>
-                        <div class="ms-2 c-details">
-                          <h6 class="mb-0">{{ audi.tituloAuditoria }}</h6>
-                          <span class="text-muted"
-                            >Caduca: {{ parseFecha2(audi.caducidad).toFormat("dd/LL/y") }}</span
-                          >
+          <div class="card-body" v-if="verMisAuditorias">
+            <div class="row justify-content-center mt-2">
+              <div
+                v-for="(audi, index) in auditorias"
+                v-bind:key="index"
+                class="col-xl-4 col-xs-12 col-12 col-lg-4"
+              >
+                <template v-if="audi.habilitado">
+                  <div class="card p-2 mb-2">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between">
+                        <div class="d-flex flex-row align-items-center">
+                          <div class="icon">
+                            <i class="fas fa-clipboard-list" />
+                          </div>
+                          <div class="ms-2 c-details">
+                            <h6 class="mb-0">{{ audi.tituloAuditoria }}</h6>
+                            <span class="text-muted"
+                              >Caduca: {{ parseFecha2(audi.caducidad).toFormat("dd/LL/y") }}</span
+                            >
+                          </div>
                         </div>
                       </div>
+                      <div class="row mt-4">
+                        <div class="col-12">{{ audi.descripcion }}</div>
+                      </div>
                     </div>
-                    <div class="row mt-4">
-                      <div class="col-12">{{ audi.descripcion }}</div>
-                    </div>
-                  </div>
-                  <div class="card-footer text-end">
-                    <button
-                      @click="responderAuditoria(audi)"
-                      class="btn btn-success rounded-3 px-4"
-                    >
-                      Responder
-                    </button>
-                  </div>
-                </div>
-              </template>
-            </div>
-          </div>
-          <div v-if="!hayResultados" class="text-center">
-            <figure class="figure">
-              <img
-                src="@/assets/img/nodata.png"
-                class="rounded mx-auto d-block mt-3 img-fluid"
-                alt="..."
-                style="width: 80%"
-              />
-              <figcaption class="figure-caption text-center">
-                No hay Auditorias disponibles
-              </figcaption>
-            </figure>
-          </div>
-        </div>
-        <!-- Mostrar Resumen Auditorias -->
-        <template v-else>
-          <div v-if="hasPermission('VerResumenAuditoria')" class="mt-1 p-3">
-            <div class="d-flex justify-content-end gap-3 mb-3">
-              <button
-                class="btn fw-bold rounded-3 px-4 py-2 shadow-sm"
-                :style="
-                  respuestaSeleccionada === 'NO'
-                    ? 'background:red;color:white;'
-                    : 'background:#d7d9e7;color:#777;'
-                "
-                @click="
-                  respuestaSeleccionada = 'NO';
-                  respuestasAuditorias();
-                "
-                title="Ver NO"
-              >
-                <i class="fas fa-times me-1"></i> NO
-              </button>
-              <button
-                class="btn fw-bold rounded-3 px-4 py-2 shadow-sm"
-                :style="
-                  respuestaSeleccionada === 'SI'
-                    ? 'background:green;color:white;'
-                    : 'background:#d7d9e7;color:#777;'
-                "
-                @click="
-                  respuestaSeleccionada = 'SI';
-                  respuestasAuditorias();
-                "
-                title="Ver SI"
-              >
-                <i class="far fa-circle me-1"></i> SI
-              </button>
-            </div>
-            <table id="tabla" class="table align-middle bg-white mt-2 p-2" responsive>
-              <thead class="bg-light align-items-center">
-                <tr>
-                  <th>TIENDA</th>
-                  <th v-for="(item, index) in fechasUnicas" :key="index">
-                    {{ item }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <template v-for="(item, index) in tiendaUnica" :key="index">
-                  <tr>
-                    <td data-th="Tienda" >{{ item }}</td>
-                    <td v-for="(fecha, index) in fechasUnicas" :key="index" :data-th="fecha">
-                      <span
-                        :class="{
-                          'celda-gris': !getRespuesta(fecha, respuestaSeleccionada),
-                        }"
+                    <div class="card-footer text-end">
+                      <button
+                        @click="responderAuditoria(audi)"
+                        class="btn btn-success rounded-3 px-4"
                       >
-                        {{ getRespuesta(fecha, respuestaSeleccionada) || "-" }}
-                      </span>
-                    </td>
-                  </tr>
+                        Responder
+                      </button>
+                    </div>
+                  </div>
                 </template>
-              </tbody>
-            </table>
+              </div>
+            </div>
+            <div v-if="!hayResultados" class="text-center">
+              <figure class="figure">
+                <img
+                  src="@/assets/img/nodata.png"
+                  class="rounded mx-auto d-block mt-3 img-fluid"
+                  alt="..."
+                  style="width: 80%"
+                />
+                <figcaption class="figure-caption text-center">
+                  No hay Auditorias disponibles
+                </figcaption>
+              </figure>
+            </div>
           </div>
-        </template>
+          <!-- Mostrar Resumen Auditorias -->
+          <template v-else>
+            <div v-if="hasPermission('VerResumenAuditoria')" class="mt-1 p-3">
+              <div class="d-flex justify-content-end gap-3 mb-3">
+                <button
+                  class="btn fw-bold rounded-3 px-4 py-2 shadow-sm"
+                  :style="
+                    respuestaSeleccionada === 'NO'
+                      ? 'background:red;color:white;'
+                      : 'background:#d7d9e7;color:#777;'
+                  "
+                  @click="
+                    respuestaSeleccionada = 'NO';
+                    respuestasAuditorias();
+                  "
+                  title="Ver NO"
+                >
+                  <i class="fas fa-times me-1"></i> NO
+                </button>
+                <button
+                  class="btn fw-bold rounded-3 px-4 py-2 shadow-sm"
+                  :style="
+                    respuestaSeleccionada === 'SI'
+                      ? 'background:green;color:white;'
+                      : 'background:#d7d9e7;color:#777;'
+                  "
+                  @click="
+                    respuestaSeleccionada = 'SI';
+                    respuestasAuditorias();
+                  "
+                  title="Ver SI"
+                >
+                  <i class="far fa-circle me-1"></i> SI
+                </button>
+              </div>
+              <table id="tabla" class="table align-middle bg-white mt-2 p-2" responsive>
+                <thead class="bg-light align-items-center">
+                  <tr>
+                    <th>TIENDA</th>
+                    <th v-for="(item, index) in fechasUnicas" :key="index">
+                      {{ item }}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template v-for="(item, index) in tiendaUnica" :key="index">
+                    <tr>
+                      <td data-th="Tienda">{{ item }}</td>
+                      <td v-for="(fecha, index) in fechasUnicas" :key="index" :data-th="fecha">
+                        <span
+                          :class="{
+                            'celda-gris': !getRespuesta(fecha, respuestaSeleccionada),
+                          }"
+                        >
+                          {{ getRespuesta(fecha, respuestaSeleccionada) || "-" }}
+                        </span>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </template>
+        </div>
       </div>
     </div>
   </div>
@@ -449,7 +451,7 @@ table {
 
 th:first-child,
 td:first-child {
-  color:white;
+  color: white;
   font-weight: bold;
   background: #e66c5a;
 }
@@ -465,6 +467,14 @@ td {
   background-color: #616161 !important;
 }
 
+.form-control:focus,
+.form-select:focus,
+.btn:focus,
+.accordion-button:focus {
+  box-shadow: 0 0 0 0.2rem #d7d9e7 !important;
+  border-color: #d7d9e7 !important;
+  outline: none !important;
+}
 @media screen and (max-width: 640px) {
   thead {
     display: none;

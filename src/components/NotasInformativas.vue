@@ -28,7 +28,7 @@
         >Buscar</MDBBtn
       >
     </div> -->
-  <div class="card mt-2">
+   <div class="card mt-2">
     <div class="card-body cardDocs">
       <div class="row mb-3">
         <div class="col">
@@ -274,6 +274,12 @@ onMounted(() => {
 }
 .cardDocs {
   background-color: #ffffff;
+}
+.card {
+  padding: 0.5em 0.5em;
+  border-radius: 1em;
+  border: 1em;
+  box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
 }
 
 .colorActive {

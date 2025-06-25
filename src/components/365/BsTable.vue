@@ -22,15 +22,20 @@
         <li class="page-item" :class="{ disabled: currentPage === 1 }" @click="currentPage--">
           <a class="page-link" href="#">Anterior</a>
         </li>
-        <li
-          class="page-item"
-          v-for="page in pageCount"
-          :key="page"
-          :class="{ active: page === currentPage }"
-          @click="currentPage = page"
-        >
-          <a class="page-link" href="#">{{ page }}</a>
-        </li>
+        <template v-for="page in compactPages" :key="page.key">
+          <li
+            v-if="page.type === 'page'"
+            class="page-item"
+            :class="{ active: page.number === currentPage }"
+            @click="page.number !== undefined && (currentPage = page.number)"
+          >
+            <a class="page-link" href="#">{{ page.number }}</a>
+          </li>
+          <li v-else class="page-item disabled">
+            <span class="page-link">…</span>
+          </li>
+        </template>
+
         <li
           class="page-item"
           :class="{ disabled: currentPage === pageCount }"
@@ -75,6 +80,39 @@ const paginatedItems = computed(() => {
   const start = (currentPage.value - 1) * props.rowsPerPage;
   return filteredItems.value.slice(start, start + props.rowsPerPage);
 });
+
+const compactPages = computed(() => {
+  const pages: Array<{ type: string; number?: number; key: string }> = [];
+  const total = pageCount.value;
+  const current = currentPage.value;
+
+  const range = (start: number, end: number) =>
+    Array.from({ length: end - start + 1 }, (_, i) => start + i);
+
+  if (total <= 7) {
+    return range(1, total).map((n) => ({ type: "page", number: n, key: `p${n}` }));
+  }
+
+  pages.push({ type: "page", number: 1, key: "p1" });
+
+  if (current > 4) {
+    pages.push({ type: "dots", key: "start-dots" });
+  }
+
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  range(start, end).forEach((n) => {
+    pages.push({ type: "page", number: n, key: `p${n}` });
+  });
+
+  if (current < total - 3) {
+    pages.push({ type: "dots", key: "end-dots" });
+  }
+
+  pages.push({ type: "page", number: total, key: `p${total}` });
+
+  return pages;
+});
 </script>
 
 <style lang="scss" scoped>
@@ -108,6 +146,20 @@ tbody td {
   padding: 0.5rem;
   text-align: center;
   vertical-align: middle;
+}
+
+.pagination {
+  flex-wrap: wrap;
+}
+
+.page-item.disabled .page-link {
+  color: #ccc;
+}
+
+.page-item.active .page-link {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
 }
 
 /* MOBILE MODE - Card like rows */

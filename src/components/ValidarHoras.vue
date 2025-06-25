@@ -1,317 +1,325 @@
 <template>
-  <div class="row">
-    <div class="col-4 mb-2" v-if="hasPermission('ValidarHoras')">
-      <BsButton
-        class="w-100"
-        :class="{
-          colorActive: validar == true,
-          colorInactive: validar == false,
-        }"
-        @click="moverMenu('validar')"
-      >
-        VALIDAR
-      </BsButton>
-    </div>
-    <div class="text-start col-4 mb-2" v-if="hasPermission('ValidarHorasValidadas')">
-      <BsButton
-        class="w-100"
-        :class="{
-          colorActive: aprobadas == true,
-          colorInactive: aprobadas == false,
-        }"
-        @click="moverMenu('validadas')"
-      >
-        VALIDADAS
-      </BsButton>
-    </div>
-    <div v-if="hasPermission('ValidarPagos')" class="text-start col-4 mb-2">
-      <BsButton
-        class="w-100"
-        :class="{
-          colorActive: pagos == true,
-          colorInactive: pagos == false,
-        }"
-        @click="moverMenu('pagos')"
-      >
-        PAGOS
-      </BsButton>
-    </div>
-    <div v-if="hasPermission('ResumenHorasValidadas')" class="text-start col-4 mb-2">
-      <BsButton
-        class="w-100"
-        :class="{
-          colorActive: resumen == true,
-          colorInactive: resumen == false,
-        }"
-        @click="moverMenu('resumen')"
-      >
-        RESUMEN
-      </BsButton>
-    </div>
-  </div>
-
-  <div class="row">
-    <template v-if="validar">
-      <div class="row" v-if="!loading">
-        <template v-if="!loading && datos.length > 0">
-          <div
-            v-for="(item, index) in datos"
-            v-bind:key="index"
-            class="col-12 col-sm-12 col-xl-4 col-md-4 mb-2"
+  <div class="card mt-2">
+    <div class="card-body cardDocs">
+      <div class="row">
+        <div class="col-4 mb-2" v-if="hasPermission('ValidarHoras')">
+          <BsButton
+            class="w-100"
+            :class="{
+              colorActive: validar == true,
+              colorInactive: validar == false,
+            }"
+            @click="moverMenu('validar')"
           >
-            <div v-if="!item.validado" class="card border border-danger">
-              <div class="card-header">
-                <div class="row">
-                  <div class="col-6">
-                    {{ parseFecha2(item.fichajeEntrada).toFormat("dd-LL-y") }}
+            VALIDAR
+          </BsButton>
+        </div>
+        <div class="text-start col-4 mb-2" v-if="hasPermission('ValidarHorasValidadas')">
+          <BsButton
+            class="w-100"
+            :class="{
+              colorActive: aprobadas == true,
+              colorInactive: aprobadas == false,
+            }"
+            @click="moverMenu('validadas')"
+          >
+            VALIDADAS
+          </BsButton>
+        </div>
+        <div v-if="hasPermission('ValidarPagos')" class="text-start col-4 mb-2">
+          <BsButton
+            class="w-100"
+            :class="{
+              colorActive: pagos == true,
+              colorInactive: pagos == false,
+            }"
+            @click="moverMenu('pagos')"
+          >
+            PAGOS
+          </BsButton>
+        </div>
+        <div v-if="hasPermission('ResumenHorasValidadas')" class="text-start col-4 mb-2">
+          <BsButton
+            class="w-100"
+            :class="{
+              colorActive: resumen == true,
+              colorInactive: resumen == false,
+            }"
+            @click="moverMenu('resumen')"
+          >
+            RESUMEN
+          </BsButton>
+        </div>
+      </div>
+
+      <div class="row">
+        <template v-if="validar">
+          <div class="row" v-if="!loading">
+            <template v-if="!loading && datos.length > 0">
+              <div
+                v-for="(item, index) in datos"
+                v-bind:key="index"
+                class="col-12 col-sm-12 col-xl-4 col-md-4 mb-2"
+              >
+                <div v-if="!item.validado" class="card border border-danger">
+                  <div class="card-header">
+                    <div class="row">
+                      <div class="col-6">
+                        {{ parseFecha2(item.fichajeEntrada).toFormat("dd-LL-y") }}
+                      </div>
+                      <div class="col-6 text-end">
+                        Semana {{ obtenerNumeroSemana(item.fichajeEntrada) }}
+                      </div>
+                    </div>
                   </div>
-                  <div class="col-6 text-end">
-                    Semana {{ obtenerNumeroSemana(item.fichajeEntrada) }}
-                  </div>
-                </div>
-              </div>
-              <div class="card-body">
-                <div class="mb-2">{{ item.nombre }}</div>
-                <div class="mb-2">
-                  Cuadrante:
-                  <span
-                    v-if="
-                      item.cuadrante &&
-                      item.cuadrante.inicio &&
-                      item.cuadrante.final &&
-                      item.cuadrante.inicio !== item.cuadrante.final
-                    "
-                  >
-                    {{
-                      parseFecha(
-                        item.cuadrante.inicio ? item.cuadrante.inicio : item.cuadrante.entrada,
-                      )
-                    }}
-                    -
-                    {{
-                      parseFecha(
-                        item.cuadrante.final ? item.cuadrante.final : item.cuadrante.salida,
-                      )
-                    }}
-                    ({{ item.horasCuadrante }})
-                  </span>
-                  <span class="text-warning" v-else>SIN CUADRANTE DEFINIDO</span>
-                  <br />
-                </div>
-                Fichaje:
-                <span v-if="item.fichajeEntrada" class="fichajeCorrecto">{{
-                  DateTime.fromJSDate(item.fichajeEntrada, {
-                    zone: "local",
-                  }).toFormat("HH:mm")
-                }}</span>
-                <span v-else class="text-danger">ENTRADA NO FICHADA</span> -
-                <span
-                  v-if="!esSalidaFinalDelDia(item.fichajeSalida)"
-                  :class="{
-                    salidaAutomatica: item.salidaAutomatica === true,
-                    fichajeCorrecto: !item.salidaAutomatica,
-                  }"
-                >
-                  {{
-                    DateTime.fromJSDate(item.fichajeSalida, {
-                      zone: "local",
-                    }).toFormat("HH:mm")
-                  }}
-                </span>
-                <span v-else class="text-danger">
-                  <i class="fas fa-exclamation-circle"></i>
-                  <!-- No mostrar nada -->
-                </span>
-                <span v-if="item.fichajeEntrada && !esSalidaFinalDelDia(item.fichajeSalida)">
-                  ({{ convertDecimalToFormattedHours(item.horasfichajeMostrar) }})</span
-                >
-              </div>
-              <div class="card-footer">
-                <div class="row">
-                  <div class="col-6">
-                    <BsButton
-                      :class="{
-                        textDanger: item.horasFichaje > item.horasCuadrante,
-                        textNormal: item.horasFichaje <= item.horasCuadrante,
-                      }"
-                      @click="modificarHorasModal(item)"
-                      color="info"
-                    >
-                      <span>
-                        {{ item.horasFichaje + item.horasExtra + item.horasCoordinacion }}
+                  <div class="card-body">
+                    <div class="mb-2">{{ item.nombre }}</div>
+                    <div class="mb-2">
+                      Cuadrante:
+                      <span
+                        v-if="
+                          item.cuadrante &&
+                          item.cuadrante.inicio &&
+                          item.cuadrante.final &&
+                          item.cuadrante.inicio !== item.cuadrante.final
+                        "
+                      >
+                        {{
+                          parseFecha(
+                            item.cuadrante.inicio ? item.cuadrante.inicio : item.cuadrante.entrada,
+                          )
+                        }}
+                        -
+                        {{
+                          parseFecha(
+                            item.cuadrante.final ? item.cuadrante.final : item.cuadrante.salida,
+                          )
+                        }}
+                        ({{ item.horasCuadrante }})
                       </span>
-                    </BsButton>
-                    <span v-if="item.comentario.entrada">{{ item.comentario.entrada }}</span>
-                    <span v-else>{{ item.comentario.salida }}</span>
-                    <span v-if="!item.comentario.entrada && !item.comentario.salida">App</span>
+                      <span class="text-warning" v-else>SIN CUADRANTE DEFINIDO</span>
+                      <br />
+                    </div>
+                    Fichaje:
+                    <span v-if="item.fichajeEntrada" class="fichajeCorrecto">{{
+                      DateTime.fromJSDate(item.fichajeEntrada, {
+                        zone: "local",
+                      }).toFormat("HH:mm")
+                    }}</span>
+                    <span v-else class="text-danger">ENTRADA NO FICHADA</span> -
+                    <span
+                      v-if="!esSalidaFinalDelDia(item.fichajeSalida)"
+                      :class="{
+                        salidaAutomatica: item.salidaAutomatica === true,
+                        fichajeCorrecto: !item.salidaAutomatica,
+                      }"
+                    >
+                      {{
+                        DateTime.fromJSDate(item.fichajeSalida, {
+                          zone: "local",
+                        }).toFormat("HH:mm")
+                      }}
+                    </span>
+                    <span v-else class="text-danger">
+                      <i class="fas fa-exclamation-circle"></i>
+                      <!-- No mostrar nada -->
+                    </span>
+                    <span v-if="item.fichajeEntrada && !esSalidaFinalDelDia(item.fichajeSalida)">
+                      ({{ convertDecimalToFormattedHours(item.horasfichajeMostrar) }})</span
+                    >
                   </div>
-                  <div class="col-6">
-                    <div class="text-end">
-                      <BsButton @click="validarAjustes(item)" color="success">
-                        <i class="fas fa-check-circle"></i>
-                      </BsButton>
+                  <div class="card-footer">
+                    <div class="row">
+                      <div class="col-6">
+                        <BsButton
+                          :class="{
+                            textDanger: item.horasFichaje > item.horasCuadrante,
+                            textNormal: item.horasFichaje <= item.horasCuadrante,
+                          }"
+                          @click="modificarHorasModal(item)"
+                          color="info"
+                        >
+                          <span>
+                            {{ item.horasFichaje + item.horasExtra + item.horasCoordinacion }}
+                          </span>
+                        </BsButton>
+                        <span v-if="item.comentario.entrada">{{ item.comentario.entrada }}</span>
+                        <span v-else>{{ item.comentario.salida }}</span>
+                        <span v-if="!item.comentario.entrada && !item.comentario.salida">App</span>
+                      </div>
+                      <div class="col-6">
+                        <div class="text-end">
+                          <BsButton @click="validarAjustes(item)" color="success">
+                            <i class="fas fa-check-circle"></i>
+                          </BsButton>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
+            </template>
+            <template v-else>
+              <div class="card text-center" v-if="hasPermission('ValidarHoras')">
+                <div class="card-body">
+                  <h5 class="card-title">
+                    <i class="fab fa-angellist fs-1"></i>
+                  </h5>
+                  <p class="card-text" v-if="!loading">Estás al día, buen trabajo!</p>
+                  <div v-else class="d-flex justify-content-center">
+                    <div class="spinner-border" role="status" style="width: 5rem; height: 5rem">
+                      <span class="visually-hidden">Cargando...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+          <div v-else class="row text-center mt-3">
+            <div class="d-flex justify-content-center">
+              <div class="spinner-border" role="status" style="width: 5rem; height: 5rem">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
             </div>
           </div>
         </template>
-        <template v-else>
-          <div class="card text-center" v-if="hasPermission('ValidarHoras')">
-            <div class="card-body">
-              <h5 class="card-title">
-                <i class="fab fa-angellist fs-1"></i>
-              </h5>
-              <p class="card-text" v-if="!loading">Estás al día, buen trabajo!</p>
-              <div v-else class="d-flex justify-content-center">
-                <div class="spinner-border" role="status" style="width: 5rem; height: 5rem">
-                  <span class="visually-hidden">Cargando...</span>
+
+        <!-- LAS QUE YA ESTÁN VALIDADAS -->
+        <template v-if="aprobadas">
+          <HorasValidadasComponent ref="horasValidadasComponentRef" />
+        </template>
+
+        <!-- LAS QUE YA ESTÁN VALIDADAS -->
+        <template v-if="pagos">
+          <ValidarPagosComponent ref="validarPagosComponentRef" />
+        </template>
+
+        <!-- RESUMEN DE HORAS PACTADAS VS REALES -->
+        <template v-if="resumen">
+          <ResumenHoras ref="resumenHorasRef" @cambiarMenu="moverMenu" />
+        </template>
+      </div>
+
+      <!-- Modal editar horas -->
+
+      <div
+        v-if="tarjetaEditar"
+        class="modal fade"
+        id="modalEditarHoras"
+        tabindex="-1"
+        aria-labelledby="modalEditarHorasTitle"
+        aria-hidden="true"
+        :class="{ show: modalEditarHoras }"
+        :style="{ display: modalEditarHoras ? 'block' : 'none' }"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <!-- HEADER -->
+            <div class="modal-header">
+              <h5 class="modal-title" id="modalEditarHorasTitle">Ajuste de horas</h5>
+              <button
+                type="button"
+                class="btn-close"
+                aria-label="Close"
+                @click="modalEditarHoras = false"
+              ></button>
+            </div>
+
+            <!-- BODY -->
+            <div class="modal-body">
+              <div class="row">
+                <!-- HORAS EXTRAS -->
+                <div class="col-5">Ajuste horas:</div>
+                <div class="col-7">
+                  <div class="input-group">
+                    <button
+                      type="button"
+                      @click="tarjetaEditar.horasExtra = tarjetaEditar.horasExtra - 0.25"
+                      :disabled="aprendizClicked"
+                      class="input-group-text bg-warning text-light"
+                    >
+                      <i class="fas fa-minus"></i>
+                    </button>
+
+                    <input
+                      type="number"
+                      class="form-control"
+                      v-model="tarjetaEditar.horasExtra"
+                      :step="0.25"
+                      aria-label="Amount (to the nearest dollar)"
+                      disabled
+                    />
+
+                    <button
+                      type="button"
+                      @click="tarjetaEditar.horasExtra = tarjetaEditar.horasExtra + 0.25"
+                      :disabled="aprendizClicked"
+                      class="input-group-text bg-success text-light"
+                    >
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- HORAS COORDINACIÓN -->
+                <div class="col-5 mt-4">Coordinación:</div>
+                <div class="col-7 mt-4">
+                  <div class="input-group">
+                    <button
+                      type="button"
+                      @click="
+                        tarjetaEditar.horasCoordinacion = tarjetaEditar.horasCoordinacion - 0.25
+                      "
+                      :disabled="aprendizClicked"
+                      class="input-group-text bg-warning text-light"
+                    >
+                      <i class="fas fa-minus"></i>
+                    </button>
+
+                    <input
+                      type="number"
+                      class="form-control"
+                      v-model="tarjetaEditar.horasCoordinacion"
+                      :step="0.25"
+                      aria-label="Amount (to the nearest dollar)"
+                      disabled
+                    />
+
+                    <button
+                      type="button"
+                      @click="
+                        tarjetaEditar.horasCoordinacion = tarjetaEditar.horasCoordinacion + 0.25
+                      "
+                      :disabled="aprendizClicked"
+                      class="input-group-text bg-success text-light"
+                    >
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </template>
-      </div>
-      <div v-else class="row text-center mt-3">
-        <div class="d-flex justify-content-center">
-          <div class="spinner-border" role="status" style="width: 5rem; height: 5rem">
-            <span class="visually-hidden">Cargando...</span>
-          </div>
-        </div>
-      </div>
-    </template>
 
-    <!-- LAS QUE YA ESTÁN VALIDADAS -->
-    <template v-if="aprobadas">
-      <HorasValidadasComponent ref="horasValidadasComponentRef" />
-    </template>
-
-    <!-- LAS QUE YA ESTÁN VALIDADAS -->
-    <template v-if="pagos">
-      <ValidarPagosComponent ref="validarPagosComponentRef" />
-    </template>
-
-    <!-- RESUMEN DE HORAS PACTADAS VS REALES -->
-    <template v-if="resumen">
-      <ResumenHoras ref="resumenHorasRef" @cambiarMenu="moverMenu" />
-    </template>
-  </div>
-
-  <!-- Modal editar horas -->
-
-  <div
-    v-if="tarjetaEditar"
-    class="modal fade"
-    id="modalEditarHoras"
-    tabindex="-1"
-    aria-labelledby="modalEditarHorasTitle"
-    aria-hidden="true"
-    :class="{ show: modalEditarHoras }"
-    :style="{ display: modalEditarHoras ? 'block' : 'none' }"
-  >
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <!-- HEADER -->
-        <div class="modal-header">
-          <h5 class="modal-title" id="modalEditarHorasTitle">Ajuste de horas</h5>
-          <button
-            type="button"
-            class="btn-close"
-            aria-label="Close"
-            @click="modalEditarHoras = false"
-          ></button>
-        </div>
-
-        <!-- BODY -->
-        <div class="modal-body">
-          <div class="row">
-            <!-- HORAS EXTRAS -->
-            <div class="col-5">Ajuste horas:</div>
-            <div class="col-7">
-              <div class="input-group">
-                <button
-                  type="button"
-                  @click="tarjetaEditar.horasExtra = tarjetaEditar.horasExtra - 0.25"
-                  :disabled="aprendizClicked"
-                  class="input-group-text bg-warning text-light"
-                >
-                  <i class="fas fa-minus"></i>
-                </button>
-
+            <!-- FOOTER -->
+            <div class="modal-footer">
+              <div v-if="mostrarBotonAprendiz()" class="form-check me-auto">
                 <input
-                  type="number"
-                  class="form-control"
-                  v-model="tarjetaEditar.horasExtra"
-                  :step="0.25"
-                  aria-label="Amount (to the nearest dollar)"
-                  disabled
+                  class="form-check-input"
+                  type="checkbox"
+                  id="aprendizCheck"
+                  v-model="aprendizClicked"
                 />
-
-                <button
-                  type="button"
-                  @click="tarjetaEditar.horasExtra = tarjetaEditar.horasExtra + 0.25"
-                  :disabled="aprendizClicked"
-                  class="input-group-text bg-success text-light"
-                >
-                  <i class="fas fa-plus"></i>
-                </button>
+                <label class="form-check-label" for="aprendizCheck">Aprendiz</label>
               </div>
-            </div>
 
-            <!-- HORAS COORDINACIÓN -->
-            <div class="col-5 mt-4">Coordinación:</div>
-            <div class="col-7 mt-4">
-              <div class="input-group">
-                <button
-                  type="button"
-                  @click="tarjetaEditar.horasCoordinacion = tarjetaEditar.horasCoordinacion - 0.25"
-                  :disabled="aprendizClicked"
-                  class="input-group-text bg-warning text-light"
-                >
-                  <i class="fas fa-minus"></i>
-                </button>
-
-                <input
-                  type="number"
-                  class="form-control"
-                  v-model="tarjetaEditar.horasCoordinacion"
-                  :step="0.25"
-                  aria-label="Amount (to the nearest dollar)"
-                  disabled
-                />
-
-                <button
-                  type="button"
-                  @click="tarjetaEditar.horasCoordinacion = tarjetaEditar.horasCoordinacion + 0.25"
-                  :disabled="aprendizClicked"
-                  class="input-group-text bg-success text-light"
-                >
-                  <i class="fas fa-plus"></i>
-                </button>
-              </div>
+              <button type="button" class="btn btn-secondary" @click="cancelarAjuste()">
+                Descartar
+              </button>
+              <button type="button" class="btn btn-primary" @click="modalEditarHoras = false">
+                Ajustar
+              </button>
             </div>
           </div>
-        </div>
-
-        <!-- FOOTER -->
-        <div class="modal-footer">
-          <div v-if="mostrarBotonAprendiz()" class="form-check me-auto">
-            <input
-              class="form-check-input"
-              type="checkbox"
-              id="aprendizCheck"
-              v-model="aprendizClicked"
-            />
-            <label class="form-check-label" for="aprendizCheck">Aprendiz</label>
-          </div>
-
-          <button type="button" class="btn btn-secondary" @click="cancelarAjuste()">
-            Descartar
-          </button>
-          <button type="button" class="btn btn-primary" @click="modalEditarHoras = false">
-            Ajustar
-          </button>
         </div>
       </div>
     </div>
@@ -1046,6 +1054,13 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
+.card {
+  padding: 0.5em 0.5em;
+  border-radius: 1em;
+  border: 1em;
+  box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
+}
+
 .colorActive {
   background-color: #e66c5a !important;
   color: #fff !important;

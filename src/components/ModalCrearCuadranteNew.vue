@@ -94,7 +94,7 @@
                   v-for="turno in arrayCuadrantesOrdenados"
                   :key="turno._id"
                   class="tabla-row"
-                  :class="{ 
+                  :class="{
                     'row-ausencia': turno.ausencia,
                     'row-seleccionada': turnoSeleccionado && turnoSeleccionado._id === turno._id
                   }"
@@ -131,15 +131,15 @@
                   </div>
 
                   <div class="col-tienda">
-                    <select 
-                      :value="turno.idTienda" 
+                    <select
+                      :value="turno.idTienda"
                       @change="actualizarTiendaTurno(turno, parseInt(($event.target as HTMLSelectElement).value))"
                       class="form-select tienda-select-native"
                     >
                       <option value="">Seleccionar tienda</option>
-                      <option 
-                        v-for="tienda in arrayTiendasFormateado" 
-                        :key="tienda.value" 
+                      <option
+                        v-for="tienda in arrayTiendasFormateado"
+                        :key="tienda.value"
                         :value="tienda.value"
                       >
                         {{ tienda.text }}
@@ -291,7 +291,7 @@ function añadirDobleTurno() {
   if (!turnoSeleccionado.value || !inicioSemana.value) return;
 
   const diaSeleccionado = turnoSeleccionado.value.inicio.startOf("day");
-  
+
   // Buscar si ya existe un segundo turno ese día
   const turnosDelDia = arrayCuadrantes.value.filter(
     (t) => t.inicio.startOf("day").toMillis() === diaSeleccionado.toMillis()
@@ -308,7 +308,7 @@ function añadirDobleTurno() {
 
   // Crear nuevo turno en el mismo día
   const horaInicio = turnosDelDia.length === 1 ? 16 : 9; // Si ya hay un turno, empezar a las 16:00
-  
+
   handleAddCuadrante({
     dia: diaSeleccionado.set({ hour: horaInicio, minute: 0 }),
     idTienda: idTiendaDefault.value,
@@ -351,7 +351,7 @@ async function abrirModal(fechaBetween: Date, tiendas: any[], idTienda: number) 
     // Las tiendas ya vienen con la estructura correcta {text, value, idTienda}
     arrayTiendasFormateado.value = tiendas;
     console.log("Tiendas recibidas:", tiendas);
-    
+
     idTiendaDefault.value = idTienda;
     inicioSemana.value = DateTime.fromJSDate(fechaBetween).startOf("week");
 
@@ -838,13 +838,13 @@ onMounted(async () => {
 
 .tienda-select {
   width: 100%;
-  
+
   :deep(.form-control) {
     font-size: 0.85rem;
     padding: 0.375rem 0.5rem;
     border: 1px solid #ced4da;
     border-radius: 4px;
-    
+
     &:focus {
       border-color: #667eea;
       box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
@@ -859,7 +859,7 @@ onMounted(async () => {
   border: 1px solid #ced4da;
   border-radius: 4px;
   background-color: white;
-  
+
   &:focus {
     border-color: #667eea;
     box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
@@ -939,7 +939,7 @@ onMounted(async () => {
   .sidebar-info {
     width: 240px;
   }
-  
+
   .col-dia {
     width: 18%;
   }
@@ -951,7 +951,7 @@ onMounted(async () => {
   .col-horario {
     width: 35%;
   }
-  
+
   .col-horas {
     width: 15%;
   }

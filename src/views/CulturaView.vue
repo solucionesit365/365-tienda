@@ -33,7 +33,7 @@
                       <i class="fas fa-play-circle"></i>
                     </div>
                     <h5 class="card-title text-center mb-2">{{ video.titulo }}</h5>
-                    <p class="card-text text-center text-muted mb-3" style="min-height: 48px;">
+                    <p class="card-text text-center text-muted mb-3" style="min-height: 48px">
                       {{ video.descripcion }}
                     </p>
                     <div class="d-flex justify-content-center gap-2 w-100">
@@ -141,7 +141,12 @@
   </div>
 
   <!-- Modal para mostrar el video (mejorado) -->
-  <div v-if="esModalAbierto" class="modal d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+  <div
+    v-if="esModalAbierto"
+    class="modal d-block"
+    tabindex="-1"
+    style="background: rgba(0, 0, 0, 0.5)"
+  >
     <div class="modal-dialog modal-fullscreen modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
@@ -167,9 +172,7 @@
         </div>
         <div class="modal-footer">
           <span><i class="fas fa-eye"></i> : {{ videoSeleccionado?.views }}</span>
-          <button type="button" class="btn btn-secondary" @click="cerrarModal">
-            Cerrar
-          </button>
+          <button type="button" class="btn btn-secondary" @click="cerrarModal">Cerrar</button>
         </div>
       </div>
     </div>
@@ -315,17 +318,28 @@ onMounted(() => {
   overflow-y: auto;
 }
 
+.card {
+  padding: 0.5em 0.5em;
+  border-radius: 1em;
+  border: 1em;
+  box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
+}
+
 .video-card {
   border: none;
   border-radius: 1rem;
   background: #fff;
-  transition: box-shadow 0.2s, transform 0.2s;
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s;
   cursor: pointer;
   min-height: 200px;
   position: relative;
 }
 .video-card:hover {
-  box-shadow: 0 8px 32px rgba(94, 190, 163, 0.15), 0 1.5px 8px rgba(0,0,0,0.07);
+  box-shadow:
+    0 8px 32px rgba(94, 190, 163, 0.15),
+    0 1.5px 8px rgba(0, 0, 0, 0.07);
   transform: translateY(-4px) scale(1.02);
 }
 .video-icon {

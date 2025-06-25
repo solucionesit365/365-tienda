@@ -1,204 +1,205 @@
 <template>
-  <div class="row justify-content-center">
-    <div class="card mt-4 col-12 col-sm-12 col-xl-12">
-      <div class="card-header">
-        <div class="row">
-          <div class="col">
-            <button
-              class="w-100"
-              :class="{
-                colorActive: verMisIncidencias == true,
-                colorInactive: verMisIncidencias == false,
-              }"
-              @click="verMisIncidencias = true"
-            >
-              Mis Incidencias
-            </button>
-          </div>
-          <div class="col">
-            <button
-              class="w-100"
-              :class="{
-                colorActive: verMisIncidencias == false,
-                colorInactive: verMisIncidencias == true,
-              }"
-              @click="verMisIncidencias = false"
-            >
-              Abrir Incidencia
-            </button>
-          </div>
+  <div class="card mt-2">
+    <div class="card-body cardDocs">
+      <div class="row">
+        <div class="col">
+          <button
+            type="button"
+            class="btn w-100"
+            :class="{
+              colorActive: verMisIncidencias == true,
+              colorInactive: verMisIncidencias == false,
+            }"
+            @click="verMisIncidencias = true"
+          >
+            Mis Incidencias
+          </button>
+        </div>
+        <div class="col">
+          <button
+            type="button"
+            class="btn w-100"
+            :class="{
+              colorActive: verMisIncidencias == false,
+              colorInactive: verMisIncidencias == true,
+            }"
+            @click="verMisIncidencias = false"
+          >
+            Abrir Incidencia
+          </button>
         </div>
       </div>
-      <div class="row justify-content-center">
-        <template v-if="verMisIncidencias == true">
-          <!-- filtros -->
-          <div v-if="hasPermission('VerFiltrosIncidencias')" class="row">
-            <div class="col-6 col-sm-6 col-xl-3">
-              <button class="btn-primary w-100" @click="getAllIncidencias()">Todas</button>
-            </div>
-            <div class="col-6 col-sm-6 col-xl-3">
-              <select
-                v-model="estado"
-                class="form-select"
-                aria-label="Default select example"
-                @change="getAllByEstado()"
-              >
-                <option value="PENDIENTE">PENDIENTE</option>
-                <option value="EN CURSO">EN CURSO</option>
-                <option value="RESUELTA">RESUELTA</option>
-                <option value="CERRADA">CERRADA</option>
-              </select>
-            </div>
-            <div class="col-6 col-sm-6 col-xl-3">
-              <select
-                v-model="categoria"
-                class="form-select"
-                aria-label="Default select example"
-                @change="getAllByCategoria()"
-              >
-                <option value="Problemas con la cuenta">Problemas con la cuenta</option>
-                <option
-                  v-if="hasPermission('VerIncidenciasCategoriaAdmin')"
-                  value="Problemas con alguna funcionalidad"
-                >
-                  Problemas con alguna funcionalidad
-                </option>
-                <option value="General">General</option>
-                <option
-                  v-if="hasPermission('VerIncidenciasCategoriaAdmin')"
-                  value="Pregunta sobre privacidad"
-                >
-                  Pregunta sobre privacidad
-                </option>
-                <option
-                  v-if="hasPermission('VerIncidenciasCategoriaAdmin')"
-                  value="Eliminar cuenta"
-                >
-                  Eliminar cuenta
-                </option>
-                <option
-                  v-if="hasPermission('VerIncidenciasCategoriasRRHH')"
-                  value="Problemas con mi bolsa de horas"
-                >
-                  Problemas con mi bolsa de horas
-                </option>
-              </select>
-            </div>
-            <div class="col-6 col-sm-6 col-xl-3 mt-1">
-              <select
-                v-model="prioridad"
-                class="form-select"
-                aria-label="Default select example"
-                @change="getAllByPrioridad()"
-              >
-                <option value="Urgente">Urgente</option>
-                <option value="Muy urgente">Muy urgente</option>
-                <option value="Puede esperar">Puede esperar</option>
-              </select>
-            </div>
-          </div>
-
-          <div v-if="incidencias" class="col-xl-8 col-md-8 card-body">
-            <card>
-              <list-group light>
-                <template v-for="(incidencia, index) in datos" :key="index">
-                  <div>
-                    <list-group
-                      :class="{
-                        'lista d-flex justify-content-between align-items-center': true,
-                        'rrhh-destinatario': incidencia.destinatario === 'rrhh',
-                      }"
-                      @click="verIncidencia(incidencia._id)"
-                    >
-                      <div class="me-2">
-                        <div class="fw-bold p-1">
-                          {{ incidencia.nombre }}
-                        </div>
-                        <div class="text-muted p-1">
-                          {{ incidencia.categoria.substr(0, 20) }}...
-                        </div>
-                        <div
-                          class="text-muted p-1"
-                          v-if="incidencia.telefono && hasPermission('VerTodasIncidencias')"
-                        >
-                          {{ incidencia.telefono }}
-                        </div>
-                        <div class="text-muted p-1" v-else-if="incidencia.tienda">
-                          {{ incidencia.tienda }}
-                        </div>
-                      </div>
-                      <div>
-                        <span
-                          :class="{
-                            'text-warning': incidencia.estado == 'EN CURSO',
-                            'text-danger': incidencia.estado == 'PENDIENTE',
-                            'text-success': incidencia.estado == 'RESUELTA',
-                            'text-primary': incidencia.estado == 'CERRADA',
-                          }"
-                          class="d-inline fw-bold"
-                        >
-                          {{ incidencia.estado }}
-                        </span>
-                        <br />
-                        <div class="d-flex">
-                          <span class="text-muted me-2 text-button">
-                            {{ incidencia.fechaCreacion }}
-                          </span>
-                          <span>
-                            <button
-                              class="btn btn-outline-danger btn-circle ms-2"
-                              style="
-                                width: 2.2rem;
-                                height: 2.2rem;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                border-radius: 50%;
-                              "
-                              @click.stop="borrarIncidencia(incidencia._id)"
-                              title="Borrar incidencia"
-                            >
-                              <i class="fas fa-trash"></i>
-                            </button>
-                          </span>
-                        </div>
-                      </div>
-                    </list-group>
-                  </div>
-                </template>
-              </list-group>
-            </card>
-          </div>
-
-          <div class="row justify-content-center">
-            <div
-              v-if="hayIncidencias && datos.length === 0"
-              class="col-xl-6 col-xs-12 col-12 col-lg-6 text-center"
+    </div>
+    <div class="row justify-content-center">
+      <template v-if="verMisIncidencias == true">
+        <!-- filtros -->
+        <div v-if="hasPermission('VerFiltrosIncidencias')" class="row">
+          <div class="col-6 col-sm-6 col-xl-3">
+            <button
+              class="btn btn-primary fw-bold shadow-sm rounded-3 w-100"
+              @click="getAllIncidencias()"
             >
-              <figure class="figure">
-                <img
-                  src="@/assets/img/nodata.png"
-                  class="rounded mx-auto d-block mt-3 img-fluid"
-                  alt="..."
-                  style="width: 70%"
-                />
-                <figcaption class="figure-caption text-center">
-                  No hay incidencias que mostrar
-                </figcaption>
-              </figure>
-            </div>
-            <div v-if="loading" class="wrap mt-4 text-center">
-              <div class="loading">
-                <div class="bounceball" />
-                <div class="text">Cargando Información</div>
-              </div>
+              <i class="fas fa-list me-2"></i>
+              Todas
+            </button>
+          </div>
+          <div class="col-6 col-sm-6 col-xl-3">
+            <select
+              v-model="estado"
+              class="form-select"
+              aria-label="Default select example"
+              @change="getAllByEstado()"
+            >
+              <option value="PENDIENTE">PENDIENTE</option>
+              <option value="EN CURSO">EN CURSO</option>
+              <option value="RESUELTA">RESUELTA</option>
+              <option value="CERRADA">CERRADA</option>
+            </select>
+          </div>
+          <div class="col-6 col-sm-6 col-xl-3">
+            <select
+              v-model="categoria"
+              class="form-select"
+              aria-label="Default select example"
+              @change="getAllByCategoria()"
+            >
+              <option value="Problemas con la cuenta">Problemas con la cuenta</option>
+              <option
+                v-if="hasPermission('VerIncidenciasCategoriaAdmin')"
+                value="Problemas con alguna funcionalidad"
+              >
+                Problemas con alguna funcionalidad
+              </option>
+              <option value="General">General</option>
+              <option
+                v-if="hasPermission('VerIncidenciasCategoriaAdmin')"
+                value="Pregunta sobre privacidad"
+              >
+                Pregunta sobre privacidad
+              </option>
+              <option v-if="hasPermission('VerIncidenciasCategoriaAdmin')" value="Eliminar cuenta">
+                Eliminar cuenta
+              </option>
+              <option
+                v-if="hasPermission('VerIncidenciasCategoriasRRHH')"
+                value="Problemas con mi bolsa de horas"
+              >
+                Problemas con mi bolsa de horas
+              </option>
+            </select>
+          </div>
+          <div class="col-6 col-sm-6 col-xl-3">
+            <select
+              v-model="prioridad"
+              class="form-select"
+              aria-label="Default select example"
+              @change="getAllByPrioridad()"
+            >
+              <option value="Urgente">Urgente</option>
+              <option value="Muy urgente">Muy urgente</option>
+              <option value="Puede esperar">Puede esperar</option>
+            </select>
+          </div>
+        </div>
+
+        <div v-if="incidencias" class="col-xl-8 col-md-8 card-body">
+          <card>
+            <list-group light>
+              <template v-for="(incidencia, index) in datos" :key="index">
+                <div>
+                  <list-group
+                    :class="{
+                      'lista d-flex justify-content-between align-items-center': true,
+                      'rrhh-destinatario': incidencia.destinatario === 'rrhh',
+                    }"
+                    @click="verIncidencia(incidencia._id)"
+                  >
+                    <div class="me-2">
+                      <div class="fw-bold p-1">
+                        {{ incidencia.nombre }}
+                      </div>
+                      <div class="text-muted p-1">{{ incidencia.categoria.substr(0, 20) }}...</div>
+                      <div
+                        class="text-muted p-1"
+                        v-if="incidencia.telefono && hasPermission('VerTodasIncidencias')"
+                      >
+                        {{ incidencia.telefono }}
+                      </div>
+                      <div class="text-muted p-1" v-else-if="incidencia.tienda">
+                        {{ incidencia.tienda }}
+                      </div>
+                    </div>
+                    <div>
+                      <span
+                        :class="{
+                          'text-warning': incidencia.estado == 'EN CURSO',
+                          'text-danger': incidencia.estado == 'PENDIENTE',
+                          'text-success': incidencia.estado == 'RESUELTA',
+                          'text-primary': incidencia.estado == 'CERRADA',
+                        }"
+                        class="d-inline fw-bold"
+                      >
+                        {{ incidencia.estado }}
+                      </span>
+                      <br />
+                      <div class="d-flex">
+                        <span class="text-muted me-2 text-button">
+                          {{ incidencia.fechaCreacion }}
+                        </span>
+                        <span>
+                          <button
+                            class="btn btn-circle ms-2"
+                            style="
+                              width: 2.2rem;
+                              height: 2.2rem;
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                              border-radius: 50%;
+                            "
+                            @click.stop="borrarIncidencia(incidencia._id)"
+                            title="Borrar incidencia"
+                          >
+                            <i class="fas fa-trash text-danger"></i>
+                          </button>
+                        </span>
+                      </div>
+                    </div>
+                  </list-group>
+                </div>
+              </template>
+            </list-group>
+          </card>
+        </div>
+
+        <div class="row justify-content-center">
+          <div
+            v-if="hayIncidencias && datos.length === 0"
+            class="col-xl-6 col-xs-12 col-12 col-lg-6 text-center"
+          >
+            <figure class="figure">
+              <img
+                src="@/assets/img/nodata.png"
+                class="rounded mx-auto d-block mt-3 img-fluid"
+                alt="..."
+                style="width: 70%"
+              />
+              <figcaption class="figure-caption text-center">
+                No hay incidencias que mostrar
+              </figcaption>
+            </figure>
+          </div>
+          <div v-if="loading" class="wrap mt-4 text-center">
+            <div class="loading">
+              <div class="bounceball" />
+              <div class="text">Cargando Información</div>
             </div>
           </div>
-        </template>
-        <template v-else>
-          <CrearIncidencias ref="crearIncidenciasRef" />
-        </template>
-      </div>
+        </div>
+      </template>
+      <template v-else>
+        <CrearIncidencias ref="crearIncidenciasRef" />
+      </template>
     </div>
   </div>
 
@@ -818,6 +819,9 @@ onMounted(() => {
 
 .lista {
   transition: transform 0.2s;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  border: 1px solid #ececec;
 }
 
 .lista:hover {
@@ -1110,5 +1114,14 @@ onMounted(() => {
     padding-left: 0.3rem;
     padding-right: 0.3rem;
   }
+}
+
+.form-control:focus,
+.form-select:focus,
+.btn:focus,
+.accordion-button:focus {
+  box-shadow: 0 0 0 0.2rem #d7d9e7 !important;
+  border-color: #d7d9e7 !important;
+  outline: none !important;
 }
 </style>

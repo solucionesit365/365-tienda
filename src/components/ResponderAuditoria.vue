@@ -53,7 +53,7 @@
         <div class="card-body" v-if="grupo.length" :key="nombreGrupo">
           <h6 class="fw-bold">{{ nombreGrupo }}</h6>
           <div v-for="(preg, index) in grupo" :key="index" class="mb-4">
-            <p><strong>Pregunta {{ index + 1 }}:</strong> {{ preg.pregunta }}</p>
+            <p class="pregunta"><strong>Pregunta {{ index + 1 }}:</strong> {{ preg.pregunta }}</p>
 
             <div v-if="preg.tipo === 'SINO'" class="btn-group btn-group-toggle" data-toggle="buttons">
               <label class="btn btn-secondary" :class="{ active: respuestas[preg.pregunta] === 'SI' }">
@@ -93,9 +93,9 @@
         </div>
       </template>
 
-      <div class="card-footer text-right">
-        <button @click="guardarBorrador(auditoria._id)" class="btn btn-warning mr-2">Guardar borrador</button>
-        <button @click="enviarRespuestas" class="btn btn-primary">Enviar respuestas</button>
+      <div class="card-footer text-right d-flex gap-2">
+        <button @click="guardarBorrador(auditoria._id)" class="btn btn-primary mr-2">Guardar borrador</button>
+        <button @click="enviarRespuestas" class="btn btn-success">Enviar respuestas</button>
       </div>
     </div>
   </template>
@@ -244,5 +244,7 @@ defineExpose({
 </script>
 
 <style scoped>
-
+h6{
+  color: #e66c5a;
+}
 </style>

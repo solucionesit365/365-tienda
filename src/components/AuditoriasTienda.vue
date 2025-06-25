@@ -99,7 +99,7 @@
                 class="btn fw-bold rounded-3 px-4 py-2 shadow-sm"
                 :style="
                   respuestaSeleccionada === 'NO'
-                    ? 'background:#e66c5a;color:white;'
+                    ? 'background:red;color:white;'
                     : 'background:#d7d9e7;color:#777;'
                 "
                 @click="
@@ -114,7 +114,7 @@
                 class="btn fw-bold rounded-3 px-4 py-2 shadow-sm"
                 :style="
                   respuestaSeleccionada === 'SI'
-                    ? 'background:#e66c5a;color:white;'
+                    ? 'background:green;color:white;'
                     : 'background:#d7d9e7;color:#777;'
                 "
                 @click="
@@ -129,7 +129,7 @@
             <table id="tabla" class="table align-middle bg-white mt-2 p-2" responsive>
               <thead class="bg-light align-items-center">
                 <tr>
-                  <th>Tienda</th>
+                  <th>TIENDA</th>
                   <th v-for="(item, index) in fechasUnicas" :key="index">
                     {{ item }}
                   </th>
@@ -449,9 +449,9 @@ table {
 
 th:first-child,
 td:first-child {
-  color: rgb(0, 0, 0);
+  color:white;
   font-weight: bold;
-  background: #f5b95e;
+  background: #e66c5a;
 }
 
 th,

@@ -116,7 +116,23 @@ const router = createRouter({
       meta: {
         requiresAuth: true,
       },
-      component: () => import("../components/ValidarHoras.vue"),
+      component: () => import("../components/ValidarHoras/ValidarHoras.vue"),
+    },
+    {
+      path: "/vacaciones",
+      name: "Vacaciones solicitadas",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/Vacaciones/VacacionesIndex.vue"),
+    },
+    {
+      path: "/pedir-vacaciones",
+      name: "Pedir vacaciones",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/Vacaciones/PedirVacaciones.vue"),
     },
   ],
 });

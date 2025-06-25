@@ -116,6 +116,7 @@ interface Props {
   modelValue?: any; // Add modelValue for v-model support
   filter?: boolean;
   selectAll?: boolean;
+  placeholder?: string;
   searchPlaceholder?: string;
   optionsSelectedLabel?: string;
   label?: string;
@@ -129,6 +130,7 @@ const props = withDefaults(defineProps<Props>(), {
   filter: false,
   selectAll: false,
   searchPlaceholder: "Buscar...",
+  placeholder: "Seleccione una opción",
   optionsSelectedLabel: "opciones seleccionadas",
   multi: false,
   textKey: "text",
@@ -183,7 +185,7 @@ const displayText = computed(() => {
   if (props.multi) {
     const selectedCount = Array.isArray(internalSelected.value) ? internalSelected.value.length : 0;
     if (selectedCount === 0) {
-      return "Seleccione una opción";
+      return props.placeholder;
     }
     return `${selectedCount} ${props.optionsSelectedLabel}`;
   } else {
@@ -191,7 +193,7 @@ const displayText = computed(() => {
     if (internalSelected.value) {
       return getOptionText(internalSelected.value);
     }
-    return "Seleccione una opción";
+    return props.placeholder;
   }
 });
 
@@ -333,8 +335,6 @@ const handleClickOutside = (event: MouseEvent) => {
 // Lifecycle
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
-  console.log("BsSelect mounted with options:", props.options);
-  console.log("Initial selected:", externalValue.value);
 });
 
 onUnmounted(() => {

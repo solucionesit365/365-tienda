@@ -386,18 +386,18 @@ const error = ref(false);
 const currentUser = computed(() => userStore.user);
 let eventoActual: any;
 const months = [
-  "GENER",
-  "FEBRER",
-  "MARÇ",
+  "ENERO",
+  "FEBRERO",
+  "MARZO",
   "ABRIL",
-  "MAIG",
-  "JUNY",
-  "JULIOL",
-  "AGOST",
-  "SETEMBRE",
+  "MAYO",
+  "JUNIO",
+  "JULIO",
+  "AGOSTO",
+  "SEPTIEMBRE",
   "OCTUBRE",
-  "NOVEMBRE",
-  "DESEMBRE",
+  "NOVIEMBRE",
+  "DICIEMBRE",
 ];
 const year = ref(DateTime.now().year);
 const añoSelect = ref(year.value);

@@ -1,4 +1,6 @@
 <template>
+    <div class="card mt-2">
+    <div class="card-body cardDocs">
   <h5 class="mt-4 fw-bold textColor">Vacaciones de:</h5>
   <BsSelect
     v-model:selected="trabajadorSelect"
@@ -190,6 +192,8 @@
       </div>
     </BsModalFooter>
   </BsModal>
+  </div>
+</div>
 </template>
 
 <script setup lang="ts">
@@ -575,6 +579,13 @@ onMounted(async () => {
   flex-wrap: wrap;
   gap: 1rem;
   justify-content: flex-end;
+}
+
+.card {
+  padding: 0.5em 0.5em;
+  border-radius: 1em;
+  border: 1em;
+  box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
 }
 
 @media (max-width: 900px) {

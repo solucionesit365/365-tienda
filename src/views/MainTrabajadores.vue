@@ -508,6 +508,9 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+h3{
+  font-family:Georgia, 'Times New Roman', Times, serif;
+}
 /* CSS para aplicar en tu archivo de estilos */
 .background-element {
   /* Estilos base para el elemento con fondo */

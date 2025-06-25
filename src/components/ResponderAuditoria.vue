@@ -3,7 +3,7 @@
     <div class="card border-top border-5">
       <div class="card-header text-right">
         <span @click="$emit('cerrar-responder-auditoria')">
-          <span class="badge badge-light ml-2" style="color: #ab47bc">AUDITORIAS</span>
+          <span class="badge badge-light ml-2" style="color: black">AUDITORIAS</span>
         </span>
       </div>
 

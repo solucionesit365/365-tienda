@@ -1,7 +1,7 @@
 <template>
   <div class="mb-4">
     <p>
-      <strong>Pregunta {{ index + 1 }}:</strong> {{ pregunta.pregunta }}
+      {{ pregunta.pregunta }}
     </p>
 
     <!-- SINO -->

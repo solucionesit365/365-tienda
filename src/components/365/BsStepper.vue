@@ -1,47 +1,36 @@
 <template>
-  <div class="card">
-    <div class="card-body text-center">
-      <!-- Paso actual -->
-      <p class="mb-3">Paso {{ currentStep + 1 }} de {{ totalSteps }}</p>
+  <div class="stepper-container">
+    <!-- Título del paso -->
+    <div class="step-header">
+      <p>
+        <strong>Pregunta {{ currentStep + 1 }} de {{ totalSteps }}</strong>
+      </p>
+    </div>
 
-      <!-- Contenido dinámico por slot -->
-      <slot :step="currentStep" :item="currentItem"></slot>
+    <!-- Contenido (solo la pregunta/respuesta, sin "Pregunta X" aquí dentro) -->
+    <div class="step-content">
+      <slot :step="currentStep" :item="currentItem" />
+    </div>
 
-      <!-- Barra de progreso -->
-      <div class="d-flex justify-content-between align-items-center mt-4">
-        <button class="btn btn-outline-primary" @click="prevStep" :disabled="currentStep === 0">
-          ← Atrás
+    <!-- Navegación y progreso -->
+    <div class="step-footer">
+      <div class="step-controls">
+        <button class="btn-nav" @click="prevStep" :disabled="currentStep === 0">◀ ANTERIOR</button>
+        <button class="btn-nav" @click="nextStep" :disabled="currentStep >= totalSteps - 1">
+          SIGUIENTE ▶
         </button>
+      </div>
 
-        <div v-if="showProgress" class="flex-grow-1 mx-3">
-          <div class="progress">
-            <div
-              class="progress-bar"
-              role="progressbar"
-              :style="{ width: progress + '%' }"
-              :aria-valuenow="progress"
-              aria-valuemin="0"
-              aria-valuemax="100"
-            ></div>
-          </div>
-        </div>
-
-        <button
-          class="btn btn-outline-primary"
-          @click="nextStep"
-          :disabled="currentStep >= totalSteps - 1"
-        >
-          Siguiente →
-        </button>
+      <div v-if="showProgress" class="progress-container">
+        <div class="progress-bar" :style="{ width: progress + '%' }"></div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, defineEmits, ref, watch } from "vue";
+import { ref, computed, defineProps, defineEmits, watch } from "vue";
 
-// Props
 const props = defineProps<{
   items: any[];
   stepLimitForDots?: number;
@@ -52,16 +41,12 @@ const emit = defineEmits<{
   (e: "step-change", currentStep: number, item: any): void;
 }>();
 
-// Data
 const currentStep = ref(props.startStep ?? 0);
-
-// Computed
 const totalSteps = computed(() => props.items.length);
 const currentItem = computed(() => props.items[currentStep.value]);
-const showProgress = computed(() => totalSteps.value > (props.stepLimitForDots ?? 4));
+const showProgress = computed(() => totalSteps.value > (props.stepLimitForDots ?? 3));
 const progress = computed(() => ((currentStep.value + 1) / totalSteps.value) * 100);
 
-// Methods
 function nextStep() {
   if (currentStep.value < totalSteps.value - 1) {
     currentStep.value++;
@@ -80,12 +65,64 @@ function emitStep() {
   emit("step-change", currentStep.value, currentItem.value);
 }
 
-// Emit on init
 watch(currentStep, emitStep, { immediate: true });
 </script>
 
 <style scoped>
+.stepper-container {
+  margin-bottom: 2rem;
+  background-color: white;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #e0e0e0;
+}
+
+.step-header {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #333;
+}
+
+.step-content {
+  padding: 0.5rem 0 1rem 0;
+}
+
+.step-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.step-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-nav {
+  background-color: transparent;
+  color: #1976d2;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+}
+
+.btn-nav:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.progress-container {
+  height: 4px;
+  background-color: #e0e0e0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
 .progress-bar {
+  height: 100%;
+  background-color: #1976d2;
   transition: width 0.3s ease;
 }
 </style>

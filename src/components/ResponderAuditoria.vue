@@ -1,395 +1,101 @@
 <template>
- <template v-if="auditoria">
-    <div class="card card border-top border-5">
-      <div class="card-header text-end">
-        <span @click="$emit('cerrar-responder-auditoria')"
-          ><MDBBadge color="light" class="ms-2"
-            ><span style="color: #ab47bc">AUDITORIAS</span></MDBBadge
-          ></span
-        >
-      </div>
-      <div v-if="auditoria.preguntas != 0" class="card-body">
-        <MDBStepper
-          mobile
-          mobileProgress
-          nextBtn="Siguiente"
-          backBtn="Anterior"
-          stepTxt="Pregunta"
-          stepOfTxt="de"
-        >
-          <MDBStepperStep
-            active
-            v-for="(pregunta, index) in auditoria.preguntas"
-            v-bind:key="index"
-          >
-            <MDBStepperHead :icon="(index + 1).toString()">
-              Pregunta {{ index + 1 }}
-            </MDBStepperHead>
-            <MDBStepperContent>
-              {{ pregunta.pregunta }}
-              <!-- si es SINO -->
-              <div v-if="pregunta.tipo == 'SINO'">
-                <MDBBtnGroup>
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-secondary"
-                    label="SI"
-                    :name="pregunta.pregunta"
-                    value="SI"
-                    v-model="respuestas[pregunta.pregunta]"
-                  />
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-secondary"
-                    label="NO"
-                    :name="pregunta.pregunta"
-                    value="NO"
-                    v-model="respuestas[pregunta.pregunta]"
-                  />
-                </MDBBtnGroup>
-                <br />
-              </div>
-              <!-- Si es ROJO/VERDE -->
-              <div v-if="pregunta.tipo == 'ROJOVERDE'">
-                <MDBBtnGroup required v-if="pregunta.tipo == 'ROJOVERDE'">
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-success"
-                    label="VERDE"
-                    value="VERDE"
-                    :name="pregunta.pregunta"
-                    v-model="respuestas[pregunta.pregunta]"
-                  />
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-danger"
-                    label="ROJO"
-                    value="ROJO"
-                    :name="pregunta.pregunta"
-                    v-model="respuestas[pregunta.pregunta]"
-                  />
-                </MDBBtnGroup>
-              </div>
-              <div v-if="pregunta.tipo == 'RespESCRITA'">
-                <MDBTextarea
-                  label="Escribe tu respuesta"
-                  rows="2"
-                  v-model="respuestas[pregunta.pregunta]"
-                />
-              </div>
-              <div v-if="pregunta.tipo == 'rango'">
-                <select class="form-select" v-model="respuestas[pregunta.pregunta]">
-                  <option v-for="num in numerikos" :key="num">
-                    {{ num }}
-                  </option>
-                </select>
-              </div>
-              <div class="form-group" v-if="pregunta.archivo">
-                <MDBFileUpload
-                  class="border border-info"
-                  default-msg="Haz click para agregar una foto"
-                  preview-msg="Haz click para agregar una foto"
-                  remove-btn="Eliminar"
-                  @change="setFile"
-                />
-              </div>
-            </MDBStepperContent>
-          </MDBStepperStep>
-        </MDBStepper>
+  <template v-if="auditoria">
+    <div class="card border-top border-5">
+      <div class="card-header text-right">
+        <span @click="$emit('cerrar-responder-auditoria')">
+          <span class="badge badge-light ml-2" style="color: #ab47bc">AUDITORIAS</span>
+        </span>
       </div>
 
-      <div class="card-body" v-if="auditoria.preguntasDependientaA != 0">
-        <h6 class="fw-bold">Preguntas Dependienta A</h6>
-        <MDBStepper
-          mobile
-          mobileProgress
-          nextBtn="Siguiente"
-          backBtn="Anterior"
-          stepTxt="Pregunta"
-          stepOfTxt="de"
-        >
-          <MDBStepperStep
-            active
-            v-for="(preguntaDA, index) in auditoria.preguntasDependientaA"
-            v-bind:key="index"
-          >
-            <MDBStepperHead :icon="(index + 1).toString()">
-              Pregunta {{ index + 1 }}
-            </MDBStepperHead>
-            <MDBStepperContent>
-              {{ preguntaDA.pregunta }}
-              <!-- si es SINO -->
-              <div v-if="preguntaDA.tipo == 'SINO'">
-                <MDBBtnGroup>
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-secondary"
-                    label="SI"
-                    :name="preguntaDA.pregunta"
-                    value="SI"
-                    v-model="respuestas[preguntaDA.pregunta]"
-                  />
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-secondary"
-                    label="NO"
-                    :name="preguntaDA.pregunta"
-                    value="NO"
-                    v-model="respuestas[preguntaDA.pregunta]"
-                  />
-                </MDBBtnGroup>
-                <br />
-              </div>
-              <!-- Si es ROJO/VERDE -->
-              <div v-if="preguntaDA.tipo == 'ROJOVERDE'">
-                <MDBBtnGroup required v-if="preguntaDA.tipo == 'ROJOVERDE'">
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-success"
-                    label="VERDE"
-                    value="VERDE"
-                    :name="preguntaDA.pregunta"
-                    v-model="respuestas[preguntaDA.pregunta]"
-                  />
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-danger"
-                    label="ROJO"
-                    value="ROJO"
-                    :name="preguntaDA.pregunta"
-                    v-model="respuestas[preguntaDA.pregunta]"
-                  />
-                </MDBBtnGroup>
-              </div>
-              <div class="mb-2" v-if="preguntaDA.tipo == 'RespESCRITA'">
-                <MDBTextarea
-                  label="Escribe tu respuesta"
-                  rows="2"
-                  v-model="respuestas[preguntaDA.pregunta]"
-                />
-              </div>
-              <div v-if="preguntaDA.tipo == 'rango'">
-                <select class="form-select" v-model="respuestas[preguntaDA.pregunta]">
-                  <option v-for="num in numerikos" :key="num">
-                    {{ num }}
-                  </option>
-                </select>
-              </div>
-              <div class="form-group" v-if="preguntaDA.archivo">
-                <MDBFileUpload
-                  class="border border-info"
-                  default-msg="Haz click para agregar una foto"
-                  preview-msg="Haz click para agregar una foto"
-                  remove-btn="Eliminar"
-                  @change="setFile"
-                />
-              </div>
-            </MDBStepperContent>
-          </MDBStepperStep>
-        </MDBStepper>
+      <div v-if="auditoria.preguntas.length" class="card-body">
+        <h6 class="font-weight-bold">Preguntas Generales</h6>
+        <div v-for="(pregunta, index) in auditoria.preguntas" :key="index" class="mb-4">
+          <p><strong>Pregunta {{ index + 1 }}:</strong> {{ pregunta.pregunta }}</p>
+
+          <div v-if="pregunta.tipo === 'SINO'" class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-secondary" :class="{ active: respuestas[pregunta.pregunta] === 'SI' }">
+              <input type="radio" :name="pregunta.pregunta" value="SI" v-model="respuestas[pregunta.pregunta]" /> SI
+            </label>
+            <label class="btn btn-secondary" :class="{ active: respuestas[pregunta.pregunta] === 'NO' }">
+              <input type="radio" :name="pregunta.pregunta" value="NO" v-model="respuestas[pregunta.pregunta]" /> NO
+            </label>
+          </div>
+
+          <div v-else-if="pregunta.tipo === 'ROJOVERDE'" class="btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-success" :class="{ active: respuestas[pregunta.pregunta] === 'VERDE' }">
+              <input type="radio" :name="pregunta.pregunta" value="VERDE" v-model="respuestas[pregunta.pregunta]" /> VERDE
+            </label>
+            <label class="btn btn-danger" :class="{ active: respuestas[pregunta.pregunta] === 'ROJO' }">
+              <input type="radio" :name="pregunta.pregunta" value="ROJO" v-model="respuestas[pregunta.pregunta]" /> ROJO
+            </label>
+          </div>
+
+          <div v-else-if="pregunta.tipo === 'RespESCRITA'">
+            <textarea class="form-control" rows="2" v-model="respuestas[pregunta.pregunta]" placeholder="Escribe tu respuesta"></textarea>
+          </div>
+
+          <div v-else-if="pregunta.tipo === 'rango'">
+            <select class="form-control" v-model="respuestas[pregunta.pregunta]">
+              <option v-for="num in numerikos" :key="num">{{ num }}</option>
+            </select>
+          </div>
+
+          <div v-if="pregunta.archivo" class="form-group mt-2">
+            <div class="custom-file">
+              <input type="file" class="custom-file-input" @change="setFile" />
+              <label class="custom-file-label">Haz click para agregar una foto</label>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="card-body" v-if="auditoria.preguntasDependientaB_C.length != 0">
-        <h6 class="fw-bold">Preguntas Dependienta B/C</h6>
-        <MDBStepper
-          mobile
-          mobileProgress
-          nextBtn="Siguiente"
-          backBtn="Anterior"
-          stepTxt="Pregunta"
-          stepOfTxt="de"
-        >
-          <MDBStepperStep
-            active
-            v-for="(preguntaDBC, index) in auditoria.preguntasDependientaB_C"
-            v-bind:key="index"
-          >
-            <MDBStepperHead :icon="(index + 1).toString()">
-              Pregunta {{ index + 1 }}
-            </MDBStepperHead>
-            <MDBStepperContent>
-              {{ preguntaDBC.pregunta }}
-              <!-- si es SINO -->
-              <div v-if="preguntaDBC.tipo == 'SINO'">
-                <MDBBtnGroup>
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-secondary"
-                    label="SI"
-                    :name="preguntaDBC.pregunta"
-                    value="SI"
-                    v-model="respuestas[preguntaDBC.pregunta]"
-                  />
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-secondary"
-                    label="NO"
-                    :name="preguntaDBC.pregunta"
-                    value="NO"
-                    v-model="respuestas[preguntaDBC.pregunta]"
-                  />
-                </MDBBtnGroup>
-                <br />
-              </div>
-              <!-- Si es ROJO/VERDE -->
-              <div v-if="preguntaDBC.tipo == 'ROJOVERDE'">
-                <MDBBtnGroup required v-if="preguntaDBC.tipo == 'ROJOVERDE'">
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-success"
-                    label="VERDE"
-                    value="VERDE"
-                    :name="preguntaDBC.pregunta"
-                    v-model="respuestas[preguntaDBC.pregunta]"
-                  />
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-danger"
-                    label="ROJO"
-                    value="ROJO"
-                    :name="preguntaDBC.pregunta"
-                    v-model="respuestas[preguntaDBC.pregunta]"
-                  />
-                </MDBBtnGroup>
-              </div>
-              <div class="mb-2" v-if="preguntaDBC.tipo == 'RespESCRITA'">
-                <MDBTextarea
-                  label="Escribe tu respuesta"
-                  rows="2"
-                  v-model="respuestas[preguntaDBC.pregunta]"
-                />
-              </div>
-              <div v-if="preguntaDBC.tipo == 'rango'">
-                <select class="form-select" v-model="respuestas[preguntaDBC.pregunta]">
-                  <option v-for="num in numerikos" :key="num">
-                    {{ num }}
-                  </option>
-                </select>
-              </div>
-              <div class="form-group" v-if="preguntaDBC.archivo">
-                <MDBFileUpload
-                  class="border border-info"
-                  default-msg="Haz click para agregar una foto"
-                  preview-msg="Haz click para agregar una foto"
-                  remove-btn="Eliminar"
-                  @change="setFile"
-                />
-              </div>
-            </MDBStepperContent>
-          </MDBStepperStep>
-        </MDBStepper>
-      </div>
+      <template v-for="(grupo, nombreGrupo) in gruposDePreguntas">
+        <div class="card-body" v-if="grupo.length" :key="nombreGrupo">
+          <h6 class="fw-bold">{{ nombreGrupo }}</h6>
+          <div v-for="(preg, index) in grupo" :key="index" class="mb-4">
+            <p><strong>Pregunta {{ index + 1 }}:</strong> {{ preg.pregunta }}</p>
 
-      <div class="card-body" v-if="auditoria.preguntasResponsable != 0">
-        <h6 class="fw-bold">Preguntas Responsable</h6>
-        <MDBStepper
-          mobile
-          mobileProgress
-          nextBtn="Siguiente"
-          backBtn="Anterior"
-          stepTxt="Pregunta"
-          stepOfTxt="de"
-        >
-          <MDBStepperStep
-            active
-            v-for="(preguntaRes, index) in auditoria.preguntasResponsable"
-            v-bind:key="index"
-          >
-            <MDBStepperHead :icon="(index + 1).toString()">
-              Pregunta {{ index + 1 }}
-            </MDBStepperHead>
-            <MDBStepperContent>
-              {{ preguntaRes.pregunta }}
-              <!-- si es SINO -->
-              <div v-if="preguntaRes.tipo == 'SINO'">
-                <MDBBtnGroup>
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-secondary"
-                    label="SI"
-                    :name="preguntaRes.pregunta"
-                    value="SI"
-                    v-model="respuestas[preguntaRes.pregunta]"
-                  />
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-secondary"
-                    label="NO"
-                    :name="preguntaRes.pregunta"
-                    value="NO"
-                    v-model="respuestas[preguntaRes.pregunta]"
-                  />
-                </MDBBtnGroup>
-                <br />
-              </div>
-              <!-- Si es ROJO/VERDE -->
-              <div v-if="preguntaRes.tipo == 'ROJOVERDE'">
-                <MDBBtnGroup required v-if="preguntaRes.tipo == 'ROJOVERDE'">
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-success"
-                    label="VERDE"
-                    value="VERDE"
-                    :name="preguntaRes.pregunta"
-                    v-model="respuestas[preguntaRes.pregunta]"
-                  />
-                  <MDBRadio
-                    :btnCheck="true"
-                    :wrap="false"
-                    labelClass="btn btn-danger"
-                    label="ROJO"
-                    value="ROJO"
-                    :name="preguntaRes.pregunta"
-                    v-model="respuestas[preguntaRes.pregunta]"
-                  />
-                </MDBBtnGroup>
-              </div>
-              <div class="mb-2" v-if="preguntaRes.tipo == 'RespESCRITA'">
-                <MDBTextarea
-                  label="Escribe tu respuesta"
-                  rows="2"
-                  v-model="respuestas[preguntaRes.pregunta]"
-                />
-              </div>
-              <div v-if="preguntaRes.tipo == 'rango'">
-                <select class="form-select" v-model="respuestas[preguntaRes.pregunta]">
-                  <option v-for="num in numerikos" :key="num">
-                    {{ num }}
-                  </option>
-                </select>
-              </div>
-              <div class="form-group" v-if="preguntaRes.archivo">
-                <MDBFileUpload
-                  class="border border-info"
-                  default-msg="Haz click para agregar una foto"
-                  preview-msg="Haz click para agregar una foto"
-                  remove-btn="Eliminar"
-                  @change="setFile"
-                />
-              </div>
-            </MDBStepperContent>
-          </MDBStepperStep>
-        </MDBStepper>
-      </div>
+            <div v-if="preg.tipo === 'SINO'" class="btn-group btn-group-toggle" data-toggle="buttons">
+              <label class="btn btn-secondary" :class="{ active: respuestas[preg.pregunta] === 'SI' }">
+                <input type="radio" :name="preg.pregunta" value="SI" v-model="respuestas[preg.pregunta]" /> SI
+              </label>
+              <label class="btn btn-secondary" :class="{ active: respuestas[preg.pregunta] === 'NO' }">
+                <input type="radio" :name="preg.pregunta" value="NO" v-model="respuestas[preg.pregunta]" /> NO
+              </label>
+            </div>
 
-      <div class="card-footer">
-        <MDBBtn @click="guardarBorrador(auditoria._id)" color="warning">Guardar borrador</MDBBtn>
-        <MDBBtn @click="enviarRespuestas()" color="primary">Enviar respuestas</MDBBtn>
+            <div v-else-if="preg.tipo === 'ROJOVERDE'" class="btn-group btn-group-toggle" data-toggle="buttons">
+              <label class="btn btn-success" :class="{ active: respuestas[preg.pregunta] === 'VERDE' }">
+                <input type="radio" :name="preg.pregunta" value="VERDE" v-model="respuestas[preg.pregunta]" /> VERDE
+              </label>
+              <label class="btn btn-danger" :class="{ active: respuestas[preg.pregunta] === 'ROJO' }">
+                <input type="radio" :name="preg.pregunta" value="ROJO" v-model="respuestas[preg.pregunta]" /> ROJO
+              </label>
+            </div>
+
+            <div v-else-if="preg.tipo === 'RespESCRITA'">
+              <textarea class="form-control" rows="2" v-model="respuestas[preg.pregunta]" placeholder="Escribe tu respuesta"></textarea>
+            </div>
+
+            <div v-else-if="preg.tipo === 'rango'">
+              <select class="form-control" v-model="respuestas[preg.pregunta]">
+                <option v-for="num in numerikos" :key="num">{{ num }}</option>
+              </select>
+            </div>
+
+            <div v-if="preg.archivo" class="form-group mt-2">
+              <div class="custom-file">
+                <input type="file" class="custom-file-input" @change="setFile" />
+                <label class="custom-file-label">Haz click para agregar una foto</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <div class="card-footer text-right">
+        <button @click="guardarBorrador(auditoria._id)" class="btn btn-warning mr-2">Guardar borrador</button>
+        <button @click="enviarRespuestas" class="btn btn-primary">Enviar respuestas</button>
       </div>
     </div>
   </template>
@@ -414,6 +120,16 @@ const fotosRef: Ref<any[]> = ref([]);
 const currentUser = computed(() => userStore.user);
 const archivoSubido = ref(false);
 const numerikos = ref([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+// Agrupa las preguntas por grupo
+const gruposDePreguntas = computed(() => {
+  if (!auditoria.value) return {};
+  return {
+    "Preguntas Dependienta A": auditoria.value.preguntasDependientaA || [],
+    "Preguntas Dependienta B/C": auditoria.value.preguntasDependientaB_C || [],
+    "Preguntas Responsable": auditoria.value.preguntasResponsable || [],
+  };
+});
 
 function guardarBorrador(auditoriaId: string) {
   // Guardar respuestas en el almacenamiento local

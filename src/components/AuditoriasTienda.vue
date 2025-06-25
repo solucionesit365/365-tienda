@@ -357,6 +357,12 @@ function countAuditoriaRedondasFecha2(data: any) {
 function cerrarResponderAuditoria() {
   mostrarAudis.value = true;
   mostrarResponderAuditoria.value = false;
+
+  if (modalResponderAuditoriaRef.value) {
+    modalResponderAuditoriaRef.value.resetFormulario();
+  }
+
+  auditoriaSeleccionada.value = null;
 }
 
 async function getTiendas() {

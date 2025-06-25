@@ -86,7 +86,7 @@ const router = createRouter({
       },
       component: () => import("../components/CalendarioFestivo.vue"),
     },
-        {
+    {
       path: "/auditorias-tienda",
       name: "Auditorias tienda",
       meta: {
@@ -94,7 +94,7 @@ const router = createRouter({
       },
       component: () => import("../components/AuditoriasTienda.vue"),
     },
-        {
+    {
       path: "/crearAuditoria",
       name: "Crear auditoria",
       meta: {
@@ -102,13 +102,45 @@ const router = createRouter({
       },
       component: () => import("../components/CrearAuditoria.vue"),
     },
-        {
+    {
       path: "/auditorias",
       name: "Auditorias",
       meta: {
         requiresAuth: true,
       },
       component: () => import("../components/AuditoriasIndex.vue"),
+    },
+    {
+      path: "/NotasInformativas",
+      name: "Notas informativas",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/NotasInformativas.vue"),
+    },
+    {
+      path: "/kpis-tiendas",
+      name: "KPI",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/KPIsView.vue"),
+    },
+    {
+      path: "/kpiTiendaIndex",
+      name: "KPI Tienda",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/KpiTiendaIndex.vue"),
+    },
+    {
+      path: "/validar-horas",
+      name: "Validar Horas",
+      meta: {
+        requiresAuth: true,
+      },
+      component: () => import("../components/ValidarHoras.vue"),
     },
   ],
 });

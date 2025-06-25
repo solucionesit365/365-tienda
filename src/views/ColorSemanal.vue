@@ -5,26 +5,27 @@
         <i class="fas fa-spinner fa-spin text-primary fa-2x"></i>
       </div>
       <div v-else>
-        <div v-if="colorIn" class="color-display">
-          <p class="color-label">Color que ENTRA:</p>
-          <div class="color-box" :style="{ backgroundColor: getColorHex(colorIn) }"></div>
-          <p class="color-name">{{ translateColor(colorIn) }}</p>
-        </div>
-        <div v-if="colorOut" class="color-display">
-          <p class="color-label">Color a ELIMINAR:</p>
-          <div class="color-box" :style="{ backgroundColor: getColorHex(colorOut) }"></div>
-          <p class="color-name">{{ translateColor(colorOut) }}</p>
+        <div class="color-row mb-4">
+          <div v-if="colorIn" class="color-display me-4">
+            <p class="color-label">Color que ENTRA:</p>
+            <div class="color-box" :style="{ backgroundColor: getColorHex(colorIn) }"></div>
+            <p class="color-name">{{ translateColor(colorIn) }}</p>
+          </div>
+          <div v-if="colorOut" class="color-display">
+            <p class="color-label">Color a ELIMINAR:</p>
+            <div class="color-box" :style="{ backgroundColor: getColorHex(colorOut) }"></div>
+            <p class="color-name">{{ translateColor(colorOut) }}</p>
+          </div>
         </div>
 
-        <p style="margin-top: 1.5rem">
+        <p class="mt-3 text-center">
           Última actualización:
-          <span class="fw-bold">semana {{ updatedAt }}</span> <br />
+          <span class="fw-bold">semana {{ updatedAt }}</span>
         </p>
 
-        <!-- Sección de selección de color para el responsable -->
         <div v-if="isResponsible" class="color-selection">
-          <p class="color-label text-center">Selecciona el nuevo color que entrará esta semana</p>
-          <div class="color-options">
+          <p class="color-label text-center mb-3">Selecciona el nuevo color que entrará esta semana</p>
+          <div class="color-options-row">
             <div
               v-for="(color, index) in availableColors"
               :key="color"
@@ -34,6 +35,7 @@
                 class="color-option"
                 :style="{ backgroundColor: getColorHex(color) }"
                 @click="confirmColorChange(color)"
+                :title="translateColor(color)"
               ></div>
               <div v-if="index < availableColors.length - 1" class="color-connector"></div>
             </div>
@@ -65,7 +67,6 @@ const getColors = async () => {
 
     colorIn.value = resColors.data.colorIn;
     colorOut.value = resColors.data.colorOut;
-    // Show week only
     updatedAt.value = DateTime.fromISO(resColors.data.updatedAt).toFormat("W");
   } catch (err) {
     console.error(err);
@@ -79,7 +80,6 @@ const getColors = async () => {
   }
 };
 
-// Función para confirmar el cambio de color
 const confirmColorChange = async (color: any) => {
   const result = await Swal.fire({
     title: "¿Estás seguro?",
@@ -97,8 +97,6 @@ const confirmColorChange = async (color: any) => {
       await axiosInstance.post("color-semanal/saveColorIn", {
         color,
       });
-
-      // colorOut.value = color;
 
       getColors();
 
@@ -118,7 +116,6 @@ const confirmColorChange = async (color: any) => {
   }
 };
 
-// Función para traducir el color al castellano
 const translateColor = (color: any) => {
   switch (color) {
     case "green":
@@ -134,7 +131,6 @@ const translateColor = (color: any) => {
   }
 };
 
-// Función para obtener el valor hexadecimal personalizado del color
 const getColorHex = (color: any) => {
   switch (color) {
     case "green":
@@ -146,7 +142,7 @@ const getColorHex = (color: any) => {
     case "brown":
       return "#8D6E63";
     default:
-      return "#FFFFFF"; // Color blanco por defecto si el valor es desconocido
+      return "#FFFFFF";
   }
 };
 
@@ -163,29 +159,45 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   gap: 30px;
+  max-width: 700px;
+  margin: 0 auto;
+  min-height: 80vh;
+}
+
+.color-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 40px;
+  width: 100%;
 }
 
 .color-display {
   display: flex;
   flex-direction: column;
   align-items: center;
+  min-width: 180px;
 }
 
 .color-box {
-  width: 150px;
-  height: 150px;
-  border: 0px;
-  margin-bottom: 10px; /*Espacio entre el cuadrado y el texto*/
+  width: 110px;
+  height: 110px;
+  border-radius: 1.2em;
+  border: 2px solid #e0e0e0;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
 }
 
 .color-name {
   font-size: 20px;
   font-weight: bold;
+  margin-top: 0.5em;
 }
 
 .color-label {
   font-size: 18px;
   margin-bottom: 5px;
+  font-weight: 500;
 }
 
 .color-selection {
@@ -195,11 +207,13 @@ onMounted(() => {
   align-items: center;
 }
 
-.color-options {
+.color-options-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 18px;
   margin-top: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .color-option-wrapper {
@@ -211,18 +225,21 @@ onMounted(() => {
   width: 50px;
   height: 50px;
   cursor: pointer;
-  border: 2px solid black;
-  transition: transform 0.2s ease;
+  border: 3px solid #333;
+  border-radius: 0.7em;
+  transition: transform 0.2s, border-color 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .color-option:hover {
-  transform: scale(1.1);
+  transform: scale(1.13);
+  border-color: #e66c5a;
 }
 
 .color-connector {
-  width: 30px; /* Longitud de la línea que conecta los colores */
-  height: 2px; /* Grosor de la línea */
-  background-color: black; /* Color de la línea */
+  width: 30px;
+  height: 2px;
+  background-color: #333;
   position: relative;
   margin-left: 5px;
   margin-right: 5px;
@@ -231,20 +248,38 @@ onMounted(() => {
 .color-connector::after {
   content: "";
   position: absolute;
-  top: 50%; /* Centra verticalmente la flecha */
-  right: -5px; /* Ajusta la posición horizontal de la flecha */
+  top: 50%;
+  right: -5px;
   transform: translateY(-50%) rotate(45deg);
   width: 6px;
   height: 6px;
-  border-right: 2px solid black;
-  border-top: 2px solid black;
+  border-right: 2px solid #333;
+  border-top: 2px solid #333;
 }
 
 .loading-spinner {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 200px; /* Ajusta según el espacio que quieras reservar */
+  min-height: 200px;
   width: 100%;
+}
+
+@media (max-width: 700px) {
+  .color-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  .color-display {
+    min-width: 0;
+  }
+  .color-box {
+    width: 90px;
+    height: 90px;
+  }
+  .color-options-row {
+    gap: 10px;
+  }
 }
 </style>

@@ -47,9 +47,8 @@
       <div class="row mt-2">
         <div class="col-md-4 mb-3" v-for="(month, index) in months" :key="month">
           <div class="calendar-container d-flex">
-            <!-- Números de semana -->
             <div
-              class="calendar-week-numbers d-flex flex-column align-items-center justify-content-end me-2"
+              class="calendar-week-numbers d-flex flex-column align-items-center me-2"
             >
               <div class="calendar-week-header"></div>
               <div
@@ -60,7 +59,6 @@
                 {{ semanas }}
               </div>
             </div>
-            <!-- Calendario -->
             <div class="calendar-grid flex-grow-1">
               <div class="month-header">
                 {{ month }}
@@ -191,7 +189,7 @@
           </div>
           <div class="mb-3" v-if="!todas">
             <label for="tiendaSeleccionadaEdit" class="form-label">Enviar a la tienda:</label>
-            <select
+            <!-- <select
               id="tiendaSeleccionadaEdit"
               class="form-select"
               v-model="tiendaSeleccionada"
@@ -201,7 +199,17 @@
               <option v-for="tienda in tiendas" :key="tienda.value" :value="tienda.value">
                 {{ tienda.text }}
               </option>
-            </select>
+            </select> -->
+            <BsSelect
+              :multi="true"
+              :select-all="false"
+              v-model:options="tiendas"
+              v-model:selected="tiendaSeleccionada"
+              aria-placeholder="Elige una o varias tiendas"
+              text-key="nombre"
+              value-key="id"
+              :filter="true"
+            />
           </div>
           <div class="mb-3">
             <label for="categoriaEdit" class="form-label">Categoría</label>
@@ -214,7 +222,7 @@
           </div>
         </div>
         <div class="modal-footer bg-light border-0 rounded-bottom-4">
-          <button type="button" class="btn" color="primary" @click="guardarFinal()">
+          <button type="button" class="btn btn-success" @click="guardarFinal()">
             Confirmar
           </button>
         </div>
@@ -310,7 +318,7 @@
           </div>
           <div class="mb-3" v-if="!todas">
             <label for="tiendaSeleccionadaEdit" class="form-label">Enviar a la tienda:</label>
-            <select
+            <!-- <select
               id="tiendaSeleccionadaEdit"
               class="form-select"
               v-model="tiendaSeleccionada"
@@ -320,7 +328,17 @@
               <option v-for="tienda in tiendas" :key="tienda.value" :value="tienda.value">
                 {{ tienda.text }}
               </option>
-            </select>
+            </select> -->
+            <BsSelect
+              :multi="true"
+              :select-all="false"
+              v-model:options="tiendas"
+              v-model:selected="tiendaSeleccionada"
+              aria-placeholder="Elige una o varias tiendas"
+              text-key="nombre"
+              value-key="id"
+              :filter="true"
+            />
           </div>
           <div class="mb-3">
             <label for="categoriaEdit" class="form-label">Categoría</label>
@@ -334,7 +352,7 @@
         </div>
         <div class="modal-footer bg-light border-0 rounded-bottom-4">
           <button type="button" class="btn btn-danger" @click="borrarFestivo()">Borrar</button>
-          <button type="button" class="btn btn-primary" @click="confirmarEdicion()">
+          <button type="button" class="btn btn-success" @click="confirmarEdicion()">
             Modificar
           </button>
         </div>
@@ -350,6 +368,7 @@ import { DateTime } from "luxon";
 import Swal from "sweetalert2";
 import { hasPermission } from "@/components/rolesPermisos";
 import { useUserStore } from "@/stores/user";
+import BsSelect from "./365/BsSelect.vue";
 
 const userStore = useUserStore();
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -368,7 +387,6 @@ const loading = ref(true);
 const error = ref(false);
 const currentUser = computed(() => userStore.user);
 let eventoActual: any;
-
 const months = [
   "GENER",
   "FEBRER",
@@ -760,9 +778,7 @@ function getTiendas() {
   axiosInstance
     .get("tiendas")
     .then((resTiendas) => {
-      tiendas.value = resTiendas.data.map((tienda: any) => {
-        return { value: tienda.id, text: tienda.nombre };
-      });
+      tiendas.value = resTiendas.data;
     })
     .catch((err) => {
       console.log(err);
@@ -1044,7 +1060,7 @@ onMounted(() => {
   padding: 0.5em 0.5em;
   border-radius: 1em;
   border: 1em;
-  border-top-color: #6b03f4 !important;
+  border-top-color: #e66c5a !important;
   box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
 }
 
@@ -1145,8 +1161,9 @@ onMounted(() => {
   color: #bdbdbd;
   font-size: 0.95rem;
   font-weight: 500;
-  margin-top: 0.199rem;
-  margin-bottom: 0.528rem;
+  margin-top: 6.5rem;
+  margin-bottom: -4.9rem;
+
 }
 
 .event-category {

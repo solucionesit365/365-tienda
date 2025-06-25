@@ -1,14 +1,14 @@
 <template>
   <div class="card border-0 shadow-lg rounded-4 mt-4">
     <div class="card-body cardDocs">
-      <h4 class="mb-4 fw-bold text-center" style="color:#e66c5a;">
-        <i class="fas fa-graduation-cap me-2" style="color:#e66c5a;"></i>Datos Formación
+      <h4 class="mb-4 fw-bold text-center" style="color: #e66c5a">
+        <i class="fas fa-graduation-cap me-2" style="color: #e66c5a"></i>Datos Formación
       </h4>
       <div class="row justify-content-center">
         <div class="col-12 col-md-8 mb-4">
           <div class="input-group shadow-sm">
-            <span class="input-group-text bg-white border-end-0" style="color:#e66c5a;">
-              <i class="fas fa-search" style="color:#e66c5a;" />
+            <span class="input-group-text bg-white border-end-0" style="color: #e66c5a">
+              <i class="fas fa-search" style="color: #e66c5a" />
             </span>
             <input
               id="buscador"
@@ -22,45 +22,51 @@
         </div>
         <div class="col-12">
           <div v-if="loading" class="text-center my-5">
-            <div class="spinner-border text-primary" style="width:3rem;height:3rem;" role="status">
+            <div
+              class="spinner-border text-primary"
+              style="width: 3rem; height: 3rem"
+              role="status"
+            >
               <span class="visually-hidden">Cargando...</span>
             </div>
           </div>
           <div v-else>
-            <div class="table-responsive rounded-3 shadow-sm">
-              <table class="table table-hover align-middle mb-0">
-                <thead class="table-primary">
-                  <tr>
-                    <th>Título Video</th>
-                    <th>Fecha</th>
-                    <th>Categoría</th>
-                    <th>Tienda</th>
-                    <th>Quién lo ha visto</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(row, idx) in filteredRows"
-                    :key="idx"
-                  >
-                    <td class="fw-semibold">{{ row.titulo }}</td>
-                    <td>{{ row.visto }}</td>
-                    <td>
-                      <span class="badge bg-primary bg-opacity-10 text-primary border border-primary">{{ row.categoria }}</span>
-                    </td>
-                    <td>
-                      <span class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary">{{ row.tienda }}</span>
-                    </td>
-                    <td>{{ row.nombre }}</td>
-                  </tr>
-                  <tr v-if="filteredRows.length === 0">
-                    <td colspan="5" class="text-center text-muted py-4">
-                      <i class="fas fa-info-circle me-2"></i>No hay resultados
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <BsTable :items="filteredRows" :rowsPerPage=10>
+              <template #head>
+                <tr>
+                  <th>Título Video</th>
+                  <th>Fecha</th>
+                  <th>Categoría</th>
+                  <th>Tienda</th>
+                  <th>Quién lo ha visto</th>
+                </tr>
+              </template>
+
+              <template #body="{ item, index }">
+                <tr :key="index">
+                  <td class="fw-semibold">{{ item.titulo }}</td>
+                  <td>{{ item.visto }}</td>
+                  <td>
+                    <span
+                      class="badge bg-primary bg-opacity-10 text-primary border border-primary"
+                      >{{ item.categoria }}</span
+                    >
+                  </td>
+                  <td>
+                    <span
+                      class="badge bg-secondary bg-opacity-10 text-secondary border border-secondary"
+                      >{{ item.tienda }}</span
+                    >
+                  </td>
+                  <td>{{ item.nombre }}</td>
+                </tr>
+                <tr v-if="filteredRows.length === 0">
+                  <td colspan="5" class="text-center text-muted py-4">
+                    <i class="fas fa-info-circle me-2"></i>No hay resultados
+                  </td>
+                </tr>
+              </template>
+            </BsTable>
           </div>
         </div>
       </div>
@@ -72,6 +78,7 @@
 import { ref, onMounted, computed } from "vue";
 import { axiosInstance } from "@/components/axios/axios";
 import { DateTime } from "luxon";
+import BsTable from "@/components/365/BsTable.vue";
 
 const vistosFormacion = ref<any[]>([]);
 const search3 = ref("");
@@ -116,9 +123,7 @@ const filteredRows = computed(() => {
   if (!search3.value) return vistosFormacion.value;
   const search = search3.value.toLowerCase();
   return vistosFormacion.value.filter((row: any) =>
-    Object.values(row).some((val: any) =>
-      String(val).toLowerCase().includes(search)
-    )
+    Object.values(row).some((val: any) => String(val).toLowerCase().includes(search)),
   );
 });
 

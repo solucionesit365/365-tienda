@@ -19,10 +19,6 @@
       aria-label="Page navigation"
     >
       <ul class="pagination">
-        <li class="page-item" :class="{ disabled: currentPage === 1 }" @click="currentPage--">
-          <a class="page-link" href="#">Anterior</a>
-        </li>
-
         <li
           class="page-item"
           :class="{ disabled: currentPage === 1 }"

@@ -22,6 +22,22 @@ export function descargarArchivo(filePath: string) {
     });
 }
 
+export async function subirArchivoConNombre(file: File, rutaCompleta: string) {
+  if (file && rutaCompleta) {
+    const storageRef = ref(storage, rutaCompleta);
+    try {
+      await uploadBytes(storageRef, file);
+      return storageRef.fullPath;
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  } else {
+    console.log("Debes subir un archivo y especificar la ruta completa.");
+    return null;
+  }
+}
+
 // Obtener URL archivo para visualizar en tag Image
 export async function obtenerUrlImagen(filePath: string) {
   const referencia = ref(storage, filePath);

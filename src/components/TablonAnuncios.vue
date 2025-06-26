@@ -73,22 +73,13 @@
                 <div class="card-footer quitarFondo">
                   <div class="row quitarFondo">
                     <div class="text-start col-6 col-sm-6 col-xl-4">
-                      <button
-                        type="button"
-                        class="btn"
-                        id="btnCV"
+                      <BsButton
                         v-if="anuncio.categoria === 'Oferta trabajo'"
-                        @click="
-                          whatsapp(
-                            +34 + anuncio.telefonoCreador,
-                            `Hola, me gustaría aplicar a la oferta ${anuncio.titulo}. Adjunto mi CV`,
-                          )
-                        "
-                        color="info"
+                        @click="abrirModalCandidato(anuncio)"
+                        color="primary"
                         size="sm"
+                        >INSCRIBIRME</BsButton
                       >
-                        Enviar CV
-                      </button>
                       <button
                         type="button"
                         class="btn"
@@ -294,6 +285,64 @@
     </div>
   </div>
   <div v-if="modalFormulario" class="modal-backdrop fade show" style="z-index: 1040"></div>
+
+  <!-- Modal de Enviar Candidatura -->
+  <div
+    class="modal fade"
+    tabindex="-1"
+    :class="{ show: modalCandidato }"
+    :style="modalCandidato ? 'display: block; background: rgba(0,0,0,0.5);' : 'display: none;'"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Enviar candidatura</h5>
+          <button type="button" class="btn-close" @click="modalCandidato = false"></button>
+        </div>
+        <div class="modal-body">
+          <form @submit.prevent="enviarCandidato">
+            <div class="mb-2">
+              <label class="form-label">Nombre</label>
+              <input v-model="formCandidato.nombre" type="text" class="form-control" required />
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Apellidos</label>
+              <input v-model="formCandidato.apellidos" type="text" class="form-control" required />
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Tienda</label>
+              <input v-model="formCandidato.tienda" type="text" class="form-control" required />
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Teléfono</label>
+              <input v-model="formCandidato.telefono" type="tel" class="form-control" required />
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Email</label>
+              <input v-model="formCandidato.email" type="email" class="form-control" required />
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Adjuntar archivo (CV, PDF, etc.)</label>
+              <input
+                type="file"
+                class="form-control"
+                @change="onFileChange"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              />
+            </div>
+            <div class="text-end">
+              <button type="button" class="btn btn-secondary me-2" @click="modalCandidato = false">
+                Descartar
+              </button>
+              <button type="submit" class="btn btn-success">Enviar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -301,13 +350,15 @@ import { onMounted, ref, type Ref } from "vue";
 import { getAllDocs } from "@/components/firebase/firestore";
 import Swal from "sweetalert2";
 import {
-  // borrarArchivo,
+  subirArchivoGeneral,
+  subirArchivoConNombre,
   descargarArchivo,
   obtenerUrlImagen,
 } from "@/components/firebase/storage";
 import { axiosInstance } from "@/components/axios/axios";
 import { hasPermission } from "@/components/rolesPermisos";
 import { DateTime } from "luxon";
+import BsButton from "@/components/365/BsButton.vue";
 
 const anuncios: Ref<any[]> = ref([]);
 //const collapse1 = ref(true);
@@ -315,8 +366,18 @@ const modalFormulario = ref(false);
 const hayAnuncios = ref(false);
 const loading = ref(true);
 const anuncioEditar: Ref<any> = ref();
-
+const file: Ref<any[]> = ref([]);
 const tiendas: Ref<any[]> = ref([]);
+const modalCandidato = ref(false);
+const formCandidato = ref({
+  nombre: "",
+  apellidos: "",
+  tienda: "",
+  telefono: "",
+  email: "",
+});
+const anuncioOferta: Ref<any> = ref(null);
+const archivoCandidato: Ref<any> = ref(null);
 // const urlExterna = ref("");
 const error = ref(false);
 const modalVerVideo = ref(false);
@@ -441,24 +502,10 @@ function getTiendas() {
   });
 }
 
-function whatsapp(tel: string, mensaje: string) {
-  window.open(`https://wa.me/${tel}?text=${encodeURIComponent(mensaje)}`);
-}
-
 onMounted(() => {
   cargarAnuncios();
   getTiendas();
 });
-
-// Maneja el cambio de archivo PDF en el formulario de edición
-function onFileChange(event: Event) {
-  const target = event.target as HTMLInputElement;
-  if (target.files && target.files.length > 0) {
-    const file = target.files[0];
-    // Aquí puedes guardar el archivo en anuncioEditar o manejar la subida
-    anuncioEditar.value.archivoPDF = file;
-  }
-}
 
 // Método para cancelar la edición y cerrar el modal
 function cancelarEdicion() {
@@ -469,28 +516,114 @@ function cancelarEdicion() {
 // Método para guardar los cambios del anuncio editado
 async function guardarCambiosAnuncio() {
   try {
-    loading.value = true;
-    // Si hay un archivo PDF nuevo, deberías subirlo aquí antes de guardar los cambios
-    // Por simplicidad, solo enviamos los datos editados
-    const res = await axiosInstance.post("anuncios/updateAnuncio", anuncioEditar.value);
-    if (res.data.ok) {
+    if (file.value[0]) {
+      if (file.value[0].type !== "application/pdf")
+        throw Error("Solamente se admiten archivos tipo PDF");
+
+      const nuevoArchivo = await subirArchivoGeneral(file.value[0], "anuncios");
+
+      if (nuevoArchivo) {
+        //borrarArchivo(anuncioEditar.value.fotoPath);
+        anuncioEditar.value.fotoPath = nuevoArchivo;
+      } else throw Error("Error al guardar el nuevo archivo, contacta con informatica");
+    }
+
+    if (anuncioEditar.value.titulo == "") throw Error("Introduce el titulo del anuncio");
+
+    if (anuncioEditar.value.descripcion == "") throw Error("Introduce la descripción del anuncio");
+
+    if (anuncioEditar.value.caducidad == "")
+      throw Error("Introduce la fecha de caducidad del anuncio");
+
+    if (anuncioEditar.value.urlExterna == "") throw Error("Introduce una url");
+
+    if (anuncioEditar.value.categoria == "") throw Error("Introduce la categoria del anuncio");
+
+    const doc = {
+      _id: anuncioEditar.value._id,
+      titulo: anuncioEditar.value.titulo,
+      descripcion: anuncioEditar.value.descripcion,
+      caducidad: anuncioEditar.value.caducidad,
+      categoria: anuncioEditar.value.categoria,
+      fotoPath: anuncioEditar.value.fotoPath,
+    };
+
+    const resUpdate = await axiosInstance.post("anuncios/updateAnuncio", doc);
+
+    if (resUpdate.data.ok) {
       Swal.fire({
         icon: "success",
         title: "Perfecto",
-        text: "Anuncio actualizado correctamente",
+        text: "El anuncio ha sido editado",
+        showConfirmButton: false,
         timer: 2000,
-        showCancelButton: false,
+        timerProgressBar: true,
       });
       modalFormulario.value = false;
       cargarAnuncios();
-    } else {
-      throw Error("No se ha podido actualizar el anuncio");
-    }
+    } else throw Error("No se ha podido actualizar el anuncio");
   } catch (err) {
     console.log(err);
-    Swal.fire("Oops...", "Ha habido un error al guardar los cambios", "error");
-  } finally {
-    loading.value = false;
+    Swal.fire("Oops...", "Ha habido un error", "error");
+  }
+}
+
+function abrirModalCandidato(anuncio: any) {
+  anuncioOferta.value = anuncio;
+  formCandidato.value = {
+    nombre: "",
+    apellidos: "",
+    tienda: "",
+    telefono: "",
+    email: "",
+  };
+  modalCandidato.value = true;
+}
+function onFileChange(event: any) {
+  const fileObj = event.target.files[0] || null;
+  archivoCandidato.value = fileObj;
+  // Guarda el nombre original del archivo para usarlo en el storage
+  if (fileObj) {
+    archivoCandidato.value._nombreOriginal = fileObj.name;
+  }
+}
+async function enviarCandidato() {
+  try {
+    Swal.fire({
+      title: "Enviando...",
+      text: "Por favor espera mientras se envía tu candidatura.",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+    let archivoUrl = null;
+    if (archivoCandidato.value) {
+      const nombreArchivo = archivoCandidato.value._nombreOriginal || archivoCandidato.value.name;
+      // Usa la nueva función para subir el archivo con el nombre exacto
+      archivoUrl = await subirArchivoConNombre(
+        archivoCandidato.value,
+        `candidatos/${nombreArchivo}`,
+      );
+    }
+    const payload = {
+      nombre: formCandidato.value.nombre,
+      apellidos: formCandidato.value.apellidos,
+      tienda: formCandidato.value.tienda,
+      telefono: formCandidato.value.telefono,
+      email: formCandidato.value.email,
+      oferta: anuncioOferta.value?.titulo || "",
+      archivo: archivoUrl,
+    };
+    await axiosInstance.post("anuncios/enviar-candidato", payload);
+    Swal.close();
+    modalCandidato.value = false;
+    Swal.fire("Enviado", "Tu candidatura ha sido enviada correctamente.", "success");
+  } catch (error) {
+    Swal.close();
+    Swal.fire("Error", "No se pudo enviar la candidatura.", "error");
+    console.error(error);
   }
 }
 </script>

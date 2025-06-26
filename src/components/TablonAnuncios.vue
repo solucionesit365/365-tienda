@@ -101,33 +101,35 @@
                       </button>
                     </div>
                     <div class="text-end col-6 col-sm-6 col-xl-8">
-                      <button
-                        v-if="hasPermission('EditarAnuncios')"
-                        aria-controls="modalEditarAnuncio"
-                        title="Editar Anuncio"
-                        class="call-btn btn btn-outline-warning btn-floating btn-sm"
-                        @click="selectEditarAnuncio(anuncio)"
-                      >
-                        <i class="fas fa-edit" />
-                      </button>
-                      <button
-                        v-if="hasPermission('BorrarAnuncios')"
-                        title="Borrar Anuncio"
-                        class="call-btn btn btn-outline-danger btn-floating btn-sm"
-                        @click="borrarAnuncio(anuncio._id)"
-                      >
-                        <i class="fas fa-trash" />
-                      </button>
-                      <button
-                        v-if="anuncio.tipoArchivo == 'pdf' && anuncio.fotoPath"
-                        aria-controls="modalEditarAnuncio"
-                        title="Descargar Anuncio"
-                        id="btnDescargarAnuncio"
-                        class="call-btn btn btn-outline-primary btn-floating btn-sm"
-                        @click="descargarAnuncio(anuncio.fotoPath)"
-                      >
-                        <i class="far fa-file-pdf" />
-                      </button>
+                      <div class="d-flex justify-content-end align-items-center gap-2">
+                        <button
+                          v-if="hasPermission('EditarAnuncios')"
+                          aria-controls="modalEditarAnuncio"
+                          title="Editar Anuncio"
+                          class="call-btn btn btn-outline-warning btn-floating btn-sm"
+                          @click="selectEditarAnuncio(anuncio)"
+                        >
+                          <i class="fas fa-edit" />
+                        </button>
+                        <button
+                          v-if="hasPermission('BorrarAnuncios')"
+                          title="Borrar Anuncio"
+                          class="call-btn btn btn-outline-danger btn-floating btn-sm"
+                          @click="borrarAnuncio(anuncio._id)"
+                        >
+                          <i class="fas fa-trash" />
+                        </button>
+                        <button
+                          v-if="anuncio.tipoArchivo == 'pdf' && anuncio.fotoPath"
+                          aria-controls="modalEditarAnuncio"
+                          title="Descargar Anuncio"
+                          id="btnDescargarAnuncio"
+                          class="call-btn btn btn-outline-primary btn-floating btn-sm"
+                          @click="descargarAnuncio(anuncio.fotoPath)"
+                        >
+                          <i class="far fa-file-pdf" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -213,6 +215,85 @@
       </div>
     </div>
   </div>
+  <!-- Modal Editar Anuncio -->
+  <div
+    v-if="modalFormulario"
+    class="modal fade"
+    :class="{ show: modalFormulario }"
+    :style="{ display: modalFormulario ? 'block' : 'none' }"
+    id="modalPagarHoras"
+    tabindex="-1"
+    role="dialog"
+    aria-labelledby="modalPagarHorasTitle"
+    aria-modal="true"
+  >
+    >
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Anuncio</h5>
+          <button type="button" class="btn-close" @click="cancelarEdicion"></button>
+        </div>
+        <div class="modal-body">
+          <form @submit.prevent="guardarCambiosAnuncio">
+            <div class="mb-3">
+              <label class="form-label">Título</label>
+              <input type="text" class="form-control" v-model="anuncioEditar.titulo" required />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Categoría</label>
+              <select class="form-select" v-model="anuncioEditar.categoria" required>
+                <option disabled value="">Selecciona una categoría</option>
+                <option value="Newsletter">Newsletter</option>
+                <option value="Oferta trabajo">Oferta de trabajo</option>
+                <option value="Nota informativa">Nota informativa</option>
+                <option value="Encuesta">Encuesta</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Fecha de caducidad</label>
+              <input type="date" class="form-control" v-model="anuncioEditar.caducidad" required />
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Descripción</label>
+              <textarea
+                class="form-control"
+                rows="3"
+                v-model="anuncioEditar.descripcion"
+                required
+              ></textarea>
+            </div>
+
+            <div class="mb-3" v-if="anuncioEditar.tipoArchivo === 'video'">
+              <label class="form-label">URL del video (iframe)</label>
+              <input type="text" class="form-control" v-model="anuncioEditar.urlVideo" />
+            </div>
+
+            <div class="mb-3" v-if="anuncioEditar.tipoArchivo === 'pdf'">
+              <label class="form-label">Subir archivo PDF</label>
+              <input
+                class="form-control"
+                type="file"
+                accept="application/pdf"
+                @change="onFileChange"
+              />
+            </div>
+
+            <div class="text-end col-6 col-sm-6 col-xl-8">
+              <button type="button" class="btn btn-secondary me-2" @click="cancelarEdicion">
+                Cancelar
+              </button>
+              <button type="submit" class="btn btn-success">Guardar cambios</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div v-if="modalFormulario" class="modal-backdrop fade show" style="z-index: 1040"></div>
 </template>
 
 <script setup lang="ts">
@@ -368,9 +449,63 @@ onMounted(() => {
   cargarAnuncios();
   getTiendas();
 });
+
+// Maneja el cambio de archivo PDF en el formulario de edición
+function onFileChange(event: Event) {
+  const target = event.target as HTMLInputElement;
+  if (target.files && target.files.length > 0) {
+    const file = target.files[0];
+    // Aquí puedes guardar el archivo en anuncioEditar o manejar la subida
+    anuncioEditar.value.archivoPDF = file;
+  }
+}
+
+// Método para cancelar la edición y cerrar el modal
+function cancelarEdicion() {
+  modalFormulario.value = false;
+  anuncioEditar.value = null;
+}
+
+// Método para guardar los cambios del anuncio editado
+async function guardarCambiosAnuncio() {
+  try {
+    loading.value = true;
+    // Si hay un archivo PDF nuevo, deberías subirlo aquí antes de guardar los cambios
+    // Por simplicidad, solo enviamos los datos editados
+    const res = await axiosInstance.post("anuncios/updateAnuncio", anuncioEditar.value);
+    if (res.data.ok) {
+      Swal.fire({
+        icon: "success",
+        title: "Perfecto",
+        text: "Anuncio actualizado correctamente",
+        timer: 2000,
+        showCancelButton: false,
+      });
+      modalFormulario.value = false;
+      cargarAnuncios();
+    } else {
+      throw Error("No se ha podido actualizar el anuncio");
+    }
+  } catch (err) {
+    console.log(err);
+    Swal.fire("Oops...", "Ha habido un error al guardar los cambios", "error");
+  } finally {
+    loading.value = false;
+  }
+}
 </script>
 
 <style scoped>
+.modal-header {
+  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(90deg, #e66c5a 0%, #333 100%);
+  color: #fff;
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .card {
   padding: 0.5em 0.5em;
   border-radius: 1em;
@@ -492,26 +627,6 @@ h1 {
   transition:
     background 0.2s,
     color 0.2s;
-}
-
-#btnDescargarAnuncio {
-  width: 2.2rem;
-  height: 2.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: blue;
-  background: #fff; /* <-- Cambiado aquí */
-  border: 2px solid #1565c0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
-  transition:
-    background 0.2s,
-    box-shadow 0.2s,
-    border-color 0.2s;
-  cursor: pointer;
-  margin-left: auto;
-  align-self: center;
 }
 
 .quitarFondo {

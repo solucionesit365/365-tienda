@@ -24,7 +24,9 @@
           :class="{ disabled: currentPage === 1 }"
           @click="currentPage > 1 && currentPage--"
         >
-          <a class="page-link" href="#">Anterior</a>
+          <button class="page-link" aria-label="Anterior">
+            <i class="fas fa-chevron-left"></i>
+          </button>
         </li>
 
         <template v-for="page in compactPages" :key="page.key">
@@ -34,7 +36,7 @@
             :class="{ active: page.number === currentPage }"
             @click="page.number !== undefined && (currentPage = page.number)"
           >
-            <a class="page-link" href="#">{{ page.number }}</a>
+            <button class="page-link">{{ page.number }}</button>
           </li>
           <li v-else class="page-item disabled">
             <span class="page-link">…</span>
@@ -46,7 +48,9 @@
           :class="{ disabled: currentPage === pageCount }"
           @click="currentPage < pageCount && currentPage++"
         >
-          <a class="page-link" href="#">Siguiente</a>
+          <button class="page-link" aria-label="Siguiente">
+            <i class="fas fa-chevron-right"></i>
+          </button>
         </li>
       </ul>
     </nav>
@@ -154,7 +158,22 @@ tbody td {
 }
 
 .pagination {
+  display: flex;
   flex-wrap: wrap;
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+
+.page-item {
+  flex: 0 0 auto;
+}
+
+.page-link {
+  min-width: 2.5rem;
+  text-align: center;
+  white-space: nowrap;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.9rem;
 }
 
 .page-item.disabled .page-link {
@@ -165,6 +184,17 @@ tbody td {
   background-color: #0d6efd;
   border-color: #0d6efd;
   color: white;
+}
+@media (max-width: 576px) {
+  .page-link {
+    font-size: 0.85rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .page-item {
+    flex: 1 1 auto;
+    max-width: 3rem;
+  }
 }
 
 /* MOBILE MODE - Card like rows */

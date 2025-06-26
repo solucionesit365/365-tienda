@@ -81,55 +81,60 @@
                 </div>
 
                 <!-- Modal para editar el video -->
-                <div class="modal" tabindex="-1" id="modalEditar" labelledby="modalEditar" centered>
-                  <div class="modal-header">
-                    <h5 class="modal-title">Editar video</h5>
-                  </div>
-                  <div class="modal-body">
-                    <div class="card-title">
-                      <!-- modificar titulo -->
-                      <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon1">@</span>
-                        <input
-                          type="text"
-                          class="form-control"
-                          placeholder="Username"
-                          aria-label="Username"
-                          aria-describedby="basic-addon1"
-                        />
+                <div
+                  v-if="modalEditar"
+                  class="modal d-block"
+                  tabindex="-1"
+                  style="background: rgba(0, 0, 0, 0.5)"
+                >
+                  <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <h5 class="modal-title">Editar video</h5>
+                        <button
+                          type="button"
+                          class="btn-close"
+                          @click="modalEditar = false"
+                        ></button>
                       </div>
-                      <!-- modificar descripcion -->
-                      <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon1">@</span>
-                        <input
-                          type="text"
-                          class="form-control"
-                          placeholder="Username"
-                          aria-label="Username"
-                          aria-describedby="basic-addon1"
-                        />
+                      <div class="modal-body">
+                        <div class="input-group mb-3">
+                          <span class="input-group-text">Titulo</span>
+                          <input
+                            type="text"
+                            class="form-control"
+                            placeholder="Título"
+                            v-model="videoEditar.titulo"
+                          />
+                        </div>
+                        <div class="input-group mb-3">
+                          <span class="input-group-text">Descripción</span>
+                          <input
+                            type="text"
+                            class="form-control"
+                            placeholder="Descripción"
+                            v-model="videoEditar.descripcion"
+                          />
+                        </div>
+                        <div class="input-group mb-3">
+                          <span class="input-group-text">Url del video</span>
+                          <input
+                            type="text"
+                            class="form-control"
+                            placeholder="URL del Video"
+                            v-model="videoEditar.urlVideo"
+                          />
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button class="btn btn-secondary" @click="modalEditar = false">
+                          Descartar
+                        </button>
+                        <button class="btn btn-primary" @click="editarVideo(videoEditar)">
+                          Modificar
+                        </button>
                       </div>
                     </div>
-                    <div class="col-auto">
-                      <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon1">@</span>
-                        <input
-                          type="text"
-                          class="form-control"
-                          placeholder="Username"
-                          aria-label="Username"
-                          aria-describedby="basic-addon1"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn">
-                      Base class color="secondary" @click="modalEditar = false">Descartar
-                    </button>
-                    <button type="button" class="btn">
-                      Base class color="primary" @click="editarVideo(videoEditar)">Modificar
-                    </button>
                   </div>
                 </div>
               </div>
@@ -203,6 +208,32 @@ function abrirModal(video: any) {
 function abrirModalEdita(video: any) {
   videoEditar.value = video;
   modalEditar.value = true;
+}
+
+function editarVideo(video: any) {
+  axiosInstance
+    .post("cultura365/updateVideo", video)
+    .then((response) => {
+      const data = response.data;
+      if (data.ok) {
+        modalEditar.value = false;
+        mostrarVideo();
+        Swal.fire({
+          icon: "success",
+          title: "Perfecto",
+          text: `Video modificado`,
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+        });
+      } else {
+        throw new Error("No se ha podido editar el video");
+      }
+    })
+
+    .catch((error) => {
+      console.log(error);
+    });
 }
 
 function eliminarVideo(video: any) {
@@ -379,5 +410,15 @@ onMounted(() => {
     width: 2.5rem;
     height: 2.5rem;
   }
+}
+
+.modal-header {
+  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(90deg, #e66c5a 0%, #333 100%);
+  color: #fff;
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 </style>

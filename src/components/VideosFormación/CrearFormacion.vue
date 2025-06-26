@@ -47,11 +47,11 @@
               <label v-if="!todas" for="basic-url" class="form-label">Enviar a la tienda:</label>
               <div v-if="!todas" class="input-group mb-3">
                 <select v-model="tienda" class="form-select" style="outline: none" required>
-                <option value="" disabled selected>Selecciona una tienda</option>
-                <option v-for="tienda in arrayTiendas" :key="tienda.value" :value="tienda.value">
-                  {{ tienda.text }}
-                </option>
-              </select>
+                  <option value="" disabled selected>Selecciona una tienda</option>
+                  <option v-for="tienda in arrayTiendas" :key="tienda.value" :value="tienda.value">
+                    {{ tienda.text }}
+                  </option>
+                </select>
               </div>
               <div class="form-check mt-2">
                 <input class="form-check-input" type="checkbox" id="todasTiendas" v-model="todas" />
@@ -182,5 +182,11 @@ onMounted(() => {
 
 .roundIcon {
   background-color: #c6f5d5;
+}
+
+label {
+  color: #e66c5a;
+  font-weight: bold;
+  font-size: 1.1rem;
 }
 </style>

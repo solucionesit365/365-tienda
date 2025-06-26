@@ -274,13 +274,10 @@
 >
   <div class="modal-dialog">
     <div class="modal-content">
-      <!-- Encabezado del modal -->
       <div class="modal-header">
         <h5 class="modal-title" id="modalEditarVideoTitle">Editar Video</h5>
         <button type="button" class="btn-close" @click="modalEditar = false"></button>
       </div>
-
-      <!-- Cuerpo del modal -->
       <div class="modal-body">
         <form @submit.prevent="editarVideo(videoEditar)">
           <div class="mb-3">
@@ -317,8 +314,6 @@
           </div>
         </form>
       </div>
-
-      <!-- Pie del modal -->
       <div class="modal-footer">
         <div class="d-flex justify-content-end gap-2 w-100">
           <button
@@ -722,8 +717,6 @@ onMounted(() => {
   border-bottom: 1px solid #e0e0e0;
   background: linear-gradient(90deg, #e66c5a 0%, #333 100%);
   color: #fff;
-  border-top-left-radius: 1rem;
-  border-top-right-radius: 1rem;
   padding: 1.2rem 1.5rem;
   display: flex;
   align-items: center;

@@ -241,7 +241,7 @@
 
                 <!-- Modal para editar el video -->
                 <div
-                  class="modal F"
+                  class="modal"
                   tabindex="-1"
                   v-if="modalEditar"
                   aria-modal="true"
@@ -262,126 +262,83 @@
                       </div>
 
                       <!-- Cuerpo del modal -->
-                       <div
-  class="modal"
-  :class="{ show: modalEditar }"
-  tabindex="-1"
-  style="display: block"
-  v-if="modalEditar"
-  aria-labelledby="modalEditarVideoTitle"
-  aria-modal="true"
-  role="dialog"
->
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="modalEditarVideoTitle">Editar Video</h5>
-        <button type="button" class="btn-close" @click="modalEditar = false"></button>
-      </div>
-      <div class="modal-body">
-        <form @submit.prevent="editarVideo(videoEditar)">
-          <div class="mb-3">
-            <label class="form-label fw-bold">Título</label>
-            <input
-              type="text"
-              class="form-control"
-              v-model="videoEditar.titulo"
-              placeholder="Título"
-              required
-            />
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-bold">Descripción</label>
-            <input
-              type="text"
-              class="form-control"
-              v-model="videoEditar.descripcion"
-              placeholder="Descripción"
-              required
-            />
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-bold">URL IFRAME Youtube</label>
-            <input
-              type="text"
-              class="form-control"
-              v-model="videoEditar.urlVideo"
-              placeholder="Copia el IFRAME del video desde Youtube"
-              required
-            />
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <div class="d-flex justify-content-end gap-2 w-100">
-          <button
-            type="button"
-            class="btn btn-secondary"
-            @click="modalEditar = false"
-          >
-            Descartar
-          </button>
-          <button
-            type="submit"
-            class="btn btn-corporativo"
-            @click="editarVideo(videoEditar)"
-          >
-            Modificar
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-                      <!-- <div class="modal-body">
-                        <form @submit.prevent="editarVideo(videoEditar)">
-                          <div class="mb-3">
-                            <label class="form-label fw-bold">Título</label>
-                            <input
-                              type="text"
-                              class="form-control"
-                              v-model="videoEditar.titulo"
-                              placeholder="Título"
-                              required
-                            />
-                          </div>
-                          <div class="mb-3">
-                            <label class="form-label fw-bold">Descripción</label>
-                            <input
-                              type="text"
-                              class="form-control"
-                              v-model="videoEditar.descripcion"
-                              placeholder="Descripción"
-                              required
-                            />
-                          </div>
-                          <div class="mb-3">
-                            <label class="form-label fw-bold">URL IFRAME Youtube</label>
-                            <input
-                              type="text"
-                              class="form-control"
-                              v-model="videoEditar.urlVideo"
-                              placeholder="Copia el IFRAME del video desde Youtube"
-                              required
-                            />
-                          </div>
-
-                          <div class="modal-footer">
-                            <div class="d-flex justify-content-end gap-2 mt-4">
+                      <div
+                        class="modal"
+                        :class="{ show: modalEditar }"
+                        tabindex="-1"
+                        style="display: block"
+                        v-if="modalEditar"
+                        aria-labelledby="modalEditarVideoTitle"
+                        aria-modal="true"
+                        role="dialog"
+                      >
+                        <div class="modal-dialog">
+                          <div class="modal-content">
+                            <div class="modal-header">
+                              <h5 class="modal-title" id="modalEditarVideoTitle">Editar Video</h5>
                               <button
                                 type="button"
-                                class="btn btn-secondary"
+                                class="btn-close"
                                 @click="modalEditar = false"
-                              >
-                                Descartar
-                              </button>
-                              <button type="submit" class="btn btn-corporativo">Modificar</button>
+                              ></button>
+                            </div>
+                            <div class="modal-body">
+                              <form @submit.prevent="editarVideo(videoEditar)">
+                                <div class="mb-3">
+                                  <label class="form-label fw-bold">Título</label>
+                                  <input
+                                    type="text"
+                                    class="form-control"
+                                    v-model="videoEditar.titulo"
+                                    placeholder="Título"
+                                    required
+                                  />
+                                </div>
+
+                                <div class="mb-3">
+                                  <label class="form-label fw-bold">Descripción</label>
+                                  <input
+                                    type="text"
+                                    class="form-control"
+                                    v-model="videoEditar.descripcion"
+                                    placeholder="Descripción"
+                                    required
+                                  />
+                                </div>
+
+                                <div class="mb-3">
+                                  <label class="form-label fw-bold">URL IFRAME Youtube</label>
+                                  <input
+                                    type="text"
+                                    class="form-control"
+                                    v-model="videoEditar.urlVideo"
+                                    placeholder="Copia el IFRAME del video desde Youtube"
+                                    required
+                                  />
+                                </div>
+                              </form>
+                            </div>
+                            <div class="modal-footer">
+                              <div class="d-flex justify-content-end gap-2 w-100">
+                                <button
+                                  type="button"
+                                  class="btn btn-secondary"
+                                  @click="modalEditar = false"
+                                >
+                                  Descartar
+                                </button>
+                                <button
+                                  type="submit"
+                                  class="btn btn-corporativo"
+                                  @click="editarVideo(videoEditar)"
+                                >
+                                  Modificar
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </form>
-                      </div> -->
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

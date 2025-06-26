@@ -176,7 +176,7 @@ async function getPDF() {
     await axiosInstance
       .get("kpi-tiendas/getKPIS", {
         params: {
-          semana: punteroFecha.value.weekNumber - 1,
+          semana: punteroFecha.value.weekNumber,
           año: punteroFecha.value.year,
           tienda: currentUser.value.idTienda,
         },

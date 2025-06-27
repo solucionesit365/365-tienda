@@ -1,43 +1,39 @@
 <template>
-  <div class="bs-select-wrapper">
-    <!-- Label -->
-    <label v-if="label" class="form-label">{{ label }}</label>
+  <!-- INPUT GROUP (label left o right) -->
+  <div v-if="useInputGroup" :class="['input-group', inputGroupSizeClass]">
+    <!-- Label a la izquierda -->
+    <span v-if="label && labelPosition === 'left'" class="input-group-text">{{ label }}</span>
 
-    <!-- Select Container -->
-    <div class="dropdown" ref="dropdownRef">
-      <!-- Select Input -->
+    <!-- Dropdown como “input” -->
+    <div class="dropdown flex-fill" ref="dropdownRef">
       <div
         class="form-select d-flex justify-content-between align-items-center"
-        :class="{ show: isOpen }"
-        @click="toggleDropdown"
+        :class="[sizeClass, { show: isOpen }]"
         role="button"
         tabindex="0"
+        @click="toggleDropdown"
         @keydown.enter.prevent="toggleDropdown"
         @keydown.escape="closeDropdown"
       >
-        <span class="selected-text">
-          {{ displayText }}
-        </span>
+        <span class="selected-text">{{ displayText }}</span>
         <i class="bi bi-chevron-down ms-2"></i>
       </div>
-
-      <!-- Dropdown Menu -->
       <div class="dropdown-menu w-100" :class="{ show: isOpen }" @click.stop>
-        <!-- Search Input -->
+        <!-- Search -->
         <div v-if="filter" class="p-2">
           <input
             v-model="searchQuery"
             type="text"
-            class="form-control form-control-sm"
-            :placeholder="searchPlaceholder || 'Buscar...'"
+            class="form-control"
+            :class="controlSizeClass"
+            :placeholder="searchPlaceholder"
             @input="handleSearch"
             @click.stop
             ref="searchInput"
           />
         </div>
-
-        <!-- Select All Option -->
-        <div v-if="multi && selectAll && filteredOptions.length > 0" class="dropdown-item">
+        <!-- “Seleccionar todos” -->
+        <div v-if="multi && selectAll && filteredOptions.length" class="dropdown-item">
           <div class="form-check">
             <input
               class="form-check-input"
@@ -51,17 +47,13 @@
             </label>
           </div>
         </div>
+        <div v-if="multi && selectAll && filteredOptions.length" class="dropdown-divider"></div>
 
-        <div v-if="multi && selectAll && filteredOptions.length > 0" class="dropdown-divider"></div>
-
-        <!-- Options List -->
+        <!-- Opciones -->
         <div class="dropdown-options" style="max-height: 300px; overflow-y: auto">
-          <!-- No Results -->
-          <div v-if="filteredOptions.length === 0" class="dropdown-item-text text-muted">
+          <div v-if="!filteredOptions.length" class="dropdown-item-text text-muted">
             No se encontraron resultados
           </div>
-
-          <!-- Multi Select Options -->
           <template v-else-if="multi">
             <div
               v-for="option in filteredOptions"
@@ -86,8 +78,98 @@
               </div>
             </div>
           </template>
+          <template v-else>
+            <button
+              v-for="option in filteredOptions"
+              :key="`single-${getOptionValue(option)}`"
+              type="button"
+              class="dropdown-item"
+              :class="{ active: isOptionSelected(option) }"
+              @click="selectOption(option)"
+            >
+              {{ getOptionText(option) }}
+            </button>
+          </template>
+        </div>
+      </div>
+    </div>
 
-          <!-- Single Select Options -->
+    <!-- Label a la derecha -->
+    <span v-if="label && labelPosition === 'right'" class="input-group-text">{{ label }}</span>
+  </div>
+
+  <!-- LAYOUT “top” (por defecto) -->
+  <div v-else :class="['bs-select-wrapper', wrapperClass]">
+    <label v-if="label" :class="labelClass">{{ label }}</label>
+    <div class="dropdown" ref="dropdownRef">
+      <div
+        class="form-select d-flex justify-content-between align-items-center"
+        :class="[sizeClass, { show: isOpen }]"
+        role="button"
+        tabindex="0"
+        @click="toggleDropdown"
+        @keydown.enter.prevent="toggleDropdown"
+        @keydown.escape="closeDropdown"
+      >
+        <span class="selected-text">{{ displayText }}</span>
+        <i class="bi bi-chevron-down ms-2"></i>
+      </div>
+      <div class="dropdown-menu w-100" :class="{ show: isOpen }" @click.stop>
+        <div v-if="filter" class="p-2">
+          <input
+            v-model="searchQuery"
+            type="text"
+            class="form-control"
+            :class="controlSizeClass"
+            :placeholder="searchPlaceholder"
+            @input="handleSearch"
+            @click.stop
+            ref="searchInput"
+          />
+        </div>
+        <div v-if="multi && selectAll && filteredOptions.length" class="dropdown-item">
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              :checked="isAllSelected"
+              @change="toggleSelectAll"
+              :id="`select-all-${uid}`"
+            />
+            <label class="form-check-label w-100" :for="`select-all-${uid}`">
+              Seleccionar todos
+            </label>
+          </div>
+        </div>
+        <div v-if="multi && selectAll && filteredOptions.length" class="dropdown-divider"></div>
+        <div class="dropdown-options" style="max-height: 300px; overflow-y: auto">
+          <div v-if="!filteredOptions.length" class="dropdown-item-text text-muted">
+            No se encontraron resultados
+          </div>
+          <template v-else-if="multi">
+            <div
+              v-for="option in filteredOptions"
+              :key="`multi-${getOptionValue(option)}`"
+              class="dropdown-item"
+              @click.stop
+            >
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  :checked="isOptionSelected(option)"
+                  @change="toggleOption(option)"
+                  :id="`option-${uid}-${getOptionValue(option)}`"
+                />
+                <label
+                  class="form-check-label w-100"
+                  :for="`option-${uid}-${getOptionValue(option)}`"
+                >
+                  {{ getOptionText(option) }}
+                </label>
+              </div>
+            </div>
+          </template>
           <template v-else>
             <button
               v-for="option in filteredOptions"
@@ -117,10 +199,12 @@ interface Props {
   filter?: boolean;
   selectAll?: boolean;
   placeholder?: string;
+  labelPosition?: "top" | "left" | "right";
   searchPlaceholder?: string;
   optionsSelectedLabel?: string;
   label?: string;
   multi?: boolean;
+  size?: "sm" | "md" | "lg";
   textKey?: string;
   valueKey?: string;
 }
@@ -130,12 +214,54 @@ const props = withDefaults(defineProps<Props>(), {
   filter: false,
   selectAll: false,
   searchPlaceholder: "Buscar...",
+  labelPosition: "top",
   placeholder: "Seleccione una opción",
   optionsSelectedLabel: "opciones seleccionadas",
   multi: false,
+  size: "md",
   textKey: "text",
   valueKey: "value",
 });
+
+const useInputGroup = computed(
+  () => props.labelPosition === "left" || props.labelPosition === "right",
+);
+
+const inputGroupSizeClass = computed(() => {
+  switch (props.size) {
+    case "sm":
+      return "input-group-sm";
+    case "lg":
+      return "input-group-lg";
+    default:
+      return "";
+  }
+});
+
+const sizeClass = computed(() => {
+  switch (props.size) {
+    case "sm":
+      return "form-select-sm";
+    case "lg":
+      return "form-select-lg";
+    default:
+      return ""; // 'md' no añade nada
+  }
+});
+
+const controlSizeClass = computed(() => {
+  switch (props.size) {
+    case "sm":
+      return "form-control-sm";
+    case "lg":
+      return "form-control-lg";
+    default:
+      return "";
+  }
+});
+
+const wrapperClass = computed(() => "d-flex flex-column");
+const labelClass = computed(() => "form-label mb-1");
 
 // Emits
 const emit = defineEmits<{

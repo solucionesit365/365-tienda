@@ -96,7 +96,7 @@
                   class="tabla-row"
                   :class="{
                     'row-ausencia': turno.ausencia,
-                    'row-seleccionada': turnoSeleccionado && turnoSeleccionado._id === turno._id
+                    'row-seleccionada': turnoSeleccionado && turnoSeleccionado._id === turno._id,
                   }"
                   @click="seleccionarTurno(turno)"
                 >
@@ -133,7 +133,12 @@
                   <div class="col-tienda">
                     <select
                       :value="turno.idTienda"
-                      @change="actualizarTiendaTurno(turno, parseInt(($event.target as HTMLSelectElement).value))"
+                      @change="
+                        actualizarTiendaTurno(
+                          turno,
+                          parseInt(($event.target as HTMLSelectElement).value),
+                        )
+                      "
                       class="form-select tienda-select-native"
                     >
                       <option value="">Seleccionar tienda</option>
@@ -150,7 +155,6 @@
                   <div class="col-horas">
                     <span class="horas-turno"> {{ calcularHorasTurno(turno) }}h </span>
                   </div>
-
                 </div>
               </div>
             </div>
@@ -176,7 +180,6 @@
       </div>
     </div>
   </BsModal>
-
 </template>
 
 <script setup lang="ts">
@@ -194,7 +197,6 @@ import LoaderComponent from "@/components/LoaderCuadrantes.vue";
 import { useUserStore } from "@/stores/user";
 import type { TCuadranteFrontend, TCuadranteBackend } from "@/interfaces/Cuadrante.interface";
 import type { TTrabajador } from "@/interfaces/Trabajador.interface";
-
 
 // Estado
 const userStore = useUserStore();
@@ -263,7 +265,6 @@ function calcularHorasTurno(turno: any) {
   return turno.final.diff(turno.inicio, "hours").hours.toFixed(1);
 }
 
-
 // Funciones de actualización
 function actualizarHora(turno: any, tipo: "inicio" | "final", event: Event) {
   const input = event.target as HTMLInputElement;
@@ -294,7 +295,7 @@ function añadirDobleTurno() {
 
   // Buscar si ya existe un segundo turno ese día
   const turnosDelDia = arrayCuadrantes.value.filter(
-    (t) => t.inicio.startOf("day").toMillis() === diaSeleccionado.toMillis()
+    (t) => t.inicio.startOf("day").toMillis() === diaSeleccionado.toMillis(),
   );
 
   if (turnosDelDia.length >= 2) {
@@ -468,26 +469,40 @@ async function getTrabajadores() {
 
 async function getCuadranteEmpleado(fecha: DateTime, idTrabajador: number) {
   cargando.value = true;
+  // Recuperar UID de Coordinadora desde localStorage si existe
   const uidGuardado = localStorage.getItem("uidCoordinadora");
   const uidParaConsultar = uidGuardado || currentUser.value.uid;
-  const resCuadrantes = await axiosInstance.get("cuadrantes/individual", {
-    params: {
-      fecha: fecha.toJSDate().toISOString(),
-      idTrabajador,
-      uid: uidParaConsultar,
-    },
-  });
 
-  if (resCuadrantes.data.ok) {
+  try {
+    const resCuadrantes = await axiosInstance.get("cuadrantes/individual", {
+      params: {
+        fecha: fecha.toJSDate().toISOString(),
+        idTrabajador,
+        uid: uidParaConsultar,
+      },
+    });
+
     cargando.value = false;
-    return resCuadrantes.data.data.map((turno: TCuadranteBackend) => ({
+
+    return resCuadrantes.data.map((turno: TCuadranteBackend) => ({
       ...turno,
       inicio: DateTime.fromJSDate(new Date(turno.inicio)),
       final: DateTime.fromJSDate(new Date(turno.final)),
     }));
-  } else throw Error("No se ha podido cargar el cuadrante individual");
+  } catch (error) {
+    console.log(error);
+    // Type guard for Axios error
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "response" in error &&
+      (error as any).response &&
+      (error as any).response.status === 401
+    ) {
+      Swal.fire("Oops...", "No tienes permisos para ver este cuadrante", "error");
+    } else Swal.fire("Oops...", "Ha habido un error", "error");
+  }
 }
-
 function updateTurno(updatedTurno: any) {
   const index = buscarIndexFromTurno(updatedTurno._id);
   arrayCuadrantes.value[index] = updatedTurno;
@@ -514,8 +529,6 @@ async function handleAddCuadrante({ dia, idTienda, ausencia }: any) {
     arrayCuadrantes.value.splice(posicionInsertar, 0, nuevoCuadrante);
   }
 }
-
-
 
 function buscarIndexFromTurno(idTurno: any) {
   return arrayCuadrantes.value.findIndex((element) => element._id === idTurno);

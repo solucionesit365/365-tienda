@@ -24,13 +24,20 @@ const props = withDefaults(defineProps<Props>(), {
 const attrs = useAttrs();
 
 const groupClasses = computed(() => {
-  // clase base: btn-group o btn-group-vertical
   const base = props.vertical ? "btn-group-vertical" : "btn-group";
-  // si hay tamaño, btn-group-sm o btn-group-lg
   const sizeClass = props.size ? `${base}-${props.size}` : "";
-  // Vue fusionará attrs.class con este array
-  return [base, sizeClass];
+  // d-flex en xs, inline-flex en sm+; w-100 en xs
+  const responsive = "d-flex d-sm-inline-flex w-100";
+  return [base, sizeClass, responsive];
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+/* Sólo hace falta forzar el flex-grow de los botones */
+::v-deep(.btn-group > .btn) {
+  /* Esto se aplicará en todos los breakpoints, pero
+     como en sm+ el grupo es inline-flex y no ocupa 100%,
+     no notarás la repartición en desktop */
+  flex: 1 1 0;
+}
+</style>

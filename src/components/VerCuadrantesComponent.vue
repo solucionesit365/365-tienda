@@ -1,31 +1,29 @@
 <template>
-  <div class="cuadrantes-container">
-    <!-- Header optimizado para tablet -->
-    <header class="cuadrantes-header">
-      <div class="header-left">
-        <div class="semana-controls">
-          <h2 class="semana-titulo">
-            Semana {{ punteroFecha.weekNumber }} - {{ punteroFecha.year }}
-          </h2>
-          <div class="week-navigation">
-            <BsButton class="nav-btn" variant="outline" size="sm" @click="restarSemana()">
-              <i class="fas fa-chevron-left"></i>
-            </BsButton>
-            <BsButton class="nav-btn" variant="outline" size="sm" @click="sumarSemana()">
-              <i class="fas fa-chevron-right"></i>
-            </BsButton>
-            <BsButton color="primary" size="sm" @click="getTurnos()">Actualizar</BsButton>
-          </div>
+  <div class="container-fluid d-flex flex-column vh-100 p-0">
+    <!-- HEADER -->
+    <header
+      class="d-flex justify-content-between align-items-center p-3 bg-white border-bottom shadow-sm flex-wrap"
+    >
+      <div class="d-flex align-items-center mb-2 mb-md-0">
+        <h2 class="h4 mb-0 me-3">Semana {{ punteroFecha.weekNumber }} – {{ punteroFecha.year }}</h2>
+        <div class="btn-group" role="group" aria-label="Navegación semana">
+          <BsButton variant="outline-secondary" size="lg" @click="restarSemana()">
+            <i class="fas fa-chevron-left"></i>
+          </BsButton>
+          <BsButton variant="outline-secondary" size="lg" @click="sumarSemana()">
+            <i class="fas fa-chevron-right"></i>
+          </BsButton>
+          <BsButton color="success" size="lg" @click="getTurnos()">
+            <i class="fas fa-redo-alt"></i>
+          </BsButton>
         </div>
       </div>
-
-      <!-- Controles de acción optimizados -->
-      <div class="header-actions">
+      <div class="d-flex align-items-center gap-2">
         <template v-if="!hasPermission('ModoTienda')">
           <BsButton
             v-if="hasPermission('CrearCuadrante')"
             color="success"
-            size="sm"
+            size="lg"
             @click="abrirModalCrearCuadrante()"
           >
             <i class="fas fa-plus me-1"></i> Turno
@@ -33,7 +31,7 @@
           <BsButton
             v-if="hasPermission('CrearCuadrante')"
             color="warning"
-            size="sm"
+            size="lg"
             @click="modalCopiarSemanasRef.abrirModal(currentUser.idTienda, punteroFecha.weekNumber)"
           >
             <i class="fas fa-copy me-1"></i> Copiar
@@ -47,271 +45,227 @@
       </div>
     </header>
 
-    <!-- Filtros y controles optimizados para tablet -->
-    <section v-if="hasPermission('ConsultarCuadrante')" class="filtros-section">
-      <div class="filtros-card">
-        <div class="filtros-row">
-          <div class="filtro-item">
-            <label class="filtro-label">Tiendas</label>
-            <BsSelect
-              v-model:options="arrayTiendas"
-              v-model:selected="tiendaSeleccionada"
-              :filter="true"
-              :select-all="true"
-              :search-placeholder="'Buscar tienda'"
-              :options-selected-label="'tienda/s seleccionada/s'"
-              :preselect="false"
-              class="filtro-select"
-            />
-          </div>
-
-          <div class="filtros-actions">
-            <BsButton color="success" @click="buscarCuadrante()">
-              <i class="fas fa-search me-1"></i> Buscar
-            </BsButton>
-
-            <BsButton
-              v-if="getRole('Super_Admin', 'RRHH_ADMIN', 'Analisis_Datos', 'Procesos')"
-              color="primary"
-              @click="getInformeTiendas()"
-            >
-              <i class="fas fa-store me-1"></i> Todas
-            </BsButton>
-
-            <BsButton
-              v-if="getRole('Super_Admin', 'RRHH_ADMIN', 'Analisis_Datos', 'Procesos')"
-              :disabled="resCuadrantes2.length == 0"
-              color="success"
-              variant="outline"
-              @click="nombreExcelModal = true"
-            >
-              <i class="fas fa-file-excel"></i>
-            </BsButton>
-
-            <BsButton
-              v-if="hasPermission('VerResumCuadrantes')"
-              color="info"
-              @click="router.push('/resumenCuadrantes')"
-            >
-              <i class="fas fa-chart-bar me-1"></i> Resumen
-            </BsButton>
-          </div>
+    <!-- FILTROS -->
+    <section v-if="hasPermission('ConsultarCuadrante')" class="p-3">
+      <BsButtonGroup class="gap-3 flex-wrap">
+        <div class="flex-grow-1">
+          <BsSelect
+            v-model:options="arrayTiendas"
+            v-model:selected="tiendaSeleccionada"
+            :filter="true"
+            :select-all="true"
+            size="lg"
+            label="Tienda"
+            label-position="left"
+            :search-placeholder="'Buscar tienda'"
+            :options-selected-label="'tienda/s seleccionada/s'"
+            :preselect="false"
+            class="w-100"
+          />
         </div>
-      </div>
+
+        <BsButton outline icon="search" color="success" @click="buscarCuadrante()">
+          Buscar
+        </BsButton>
+
+        <BsButton
+          outline
+          v-if="getRole('Super_Admin', 'RRHH_ADMIN', 'Analisis_Datos', 'Procesos')"
+          icon="store"
+          color="primary"
+          @click="getInformeTiendas()"
+        >
+          Todas las tiendas
+        </BsButton>
+
+        <BsButton
+          outline
+          v-if="getRole('Super_Admin', 'RRHH_ADMIN', 'Analisis_Datos', 'Procesos')"
+          :disabled="resCuadrantes2.length === 0"
+          icon="file-excel"
+          color="success"
+          @click="nombreExcelModal = true"
+        >
+          Descargar excel
+        </BsButton>
+
+        <BsButton
+          outline
+          v-if="hasPermission('VerResumCuadrantes')"
+          icon="chart-bar"
+          color="info"
+          @click="router.push('/resumenCuadrantes')"
+        >
+          Resumen
+        </BsButton>
+      </BsButtonGroup>
     </section>
 
-    <!-- Contenido principal -->
-    <main class="cuadrantes-main">
-      <div v-if="!loadingCuadrantes" class="tabla-container">
-        <!-- Buscador optimizado -->
-        <div class="search-container">
-          <BsInput
-            id="buscador"
-            :input-group="true"
-            :form-outline="false"
-            aria-label="buscar por nombre"
-            placeholder="Buscar empleado por nombre..."
-            @keyup="searchByName()"
-            class="search-input"
-          >
-            <span class="input-group-text">
-              <i class="fas fa-search"></i>
-            </span>
-          </BsInput>
-        </div>
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-fill overflow-auto p-3">
+      <!-- Buscador -->
+      <div v-if="!loadingCuadrantes" class="mb-3">
+        <BsInput
+          :input-group="true"
+          :form-outline="false"
+          placeholder="Buscar empleado por nombre..."
+          @keyup="searchByName()"
+          class="w-100"
+        >
+          <span class="input-group-text">
+            <i class="fas fa-search"></i>
+          </span>
+        </BsInput>
+      </div>
 
-        <!-- Tabla optimizada para tablet landscape -->
-        <div class="cuadrantes-table-wrapper">
-          <table class="cuadrantes-table">
-            <thead>
-              <tr>
-                <th class="col-nombre sticky-col">Empleado</th>
-                <th v-for="(_, index) in 7" :key="index" class="col-dia">
-                  <div class="dia-header">
-                    <div class="dia-nombre">
-                      {{ punteroFecha.plus({ days: index }).toFormat("EEE", { locale: "es" }) }}
-                    </div>
-                    <div class="dia-fecha">
-                      {{ punteroFecha.plus({ days: index }).toFormat("dd/MM") }}
-                    </div>
+      <!-- Tabla -->
+      <div v-if="!loadingCuadrantes" class="table-responsive">
+        <table class="table table-bordered table-hover mb-0">
+          <thead class="table-dark position-sticky top-0">
+            <tr>
+              <th class="sticky-left bg-dark">Empleado</th>
+              <th v-for="(_, index) in 7" :key="index" class="text-center">
+                <div>
+                  {{ punteroFecha.plus({ days: index }).toFormat("EEE", { locale: "es" }) }}
+                </div>
+                <div>{{ punteroFecha.plus({ days: index }).toFormat("dd/MM") }}</div>
+              </th>
+              <th class="text-center">H. Cuadrante</th>
+              <th class="text-center">H. Contrato</th>
+              <th class="text-center">Diferencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="(turno, index) in arrayTurnos"
+              :key="index"
+              :class="{ 'table-warning': currentUser.idSql === turno.idTrabajador }"
+            >
+              <td class="sticky-left bg-white">{{ cleanName(turno.nombre) }}</td>
+              <td v-for="(turnos2, i2) in turno.turnos" :key="i2">
+                <div v-if="turnos2.length">
+                  <div v-for="(turnoDia, i3) in turnos2" :key="i3" class="mb-1">
+                    <template v-if="turnoDia.ausencia">
+                      <span class="badge bg-warning text-dark">
+                        {{ turnoDia.ausencia.tipo }}
+                        <span v-if="!turnoDia.ausencia.completa">
+                          {{ turnoDia.ausencia.horas }}h
+                        </span>
+                      </span>
+                    </template>
+                    <template v-else-if="turnoDia.totalHoras > 0">
+                      <div class="d-flex flex-column small">
+                        <span>
+                          {{ DateTime.fromISO(turnoDia.inicio).toFormat("HH:mm") }}
+                          –
+                          {{ DateTime.fromISO(turnoDia.final).toFormat("HH:mm") }}
+                        </span>
+                        <span
+                          class="badge"
+                          :class="
+                            turnoDia.idTienda !==
+                            (turno.idTiendaOrigen || tiendaSeleccionada || currentUser.idTienda)
+                              ? 'bg-danger'
+                              : 'bg-success'
+                          "
+                        >
+                          {{ getNombreTienda(turnoDia.idTienda) }}
+                        </span>
+                      </div>
+                    </template>
+                    <template v-else>
+                      <span class="text-muted">-</span>
+                    </template>
                   </div>
-                </th>
-                <th class="col-horas">H. Cuadrante</th>
-                <th class="col-horas">H. Contrato</th>
-                <th class="col-horas diferencia">Diferencia</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="(turno, index) in arrayTurnos"
-                :key="index"
-                :class="{ 'fila-usuario': currentUser.idSql === turno.idTrabajador }"
-              >
-                <td class="col-nombre sticky-col">
-                  <div class="empleado-info">
-                    <span class="empleado-nombre">{{ cleanName(turno.nombre) }}</span>
-                  </div>
-                </td>
-
-                <td
-                  v-for="(turnos2, index2) in turno.turnos"
-                  :key="index2"
-                  class="col-dia"
-                  :data-th="
-                    punteroFecha.plus({ days: index2 }).toFormat('EEE dd', { locale: 'es' })
+                </div>
+              </td>
+              <td class="text-center">
+                <strong>{{ getTotalHorasCuadranteLinea(turno).toFixed(2) }}h</strong>
+              </td>
+              <td class="text-center">
+                <span v-if="turno.turnos[0][0].horasContrato">
+                  {{ turno.turnos[0][0].horasContrato.toFixed(2) }}h
+                </span>
+                <span v-else>-</span>
+              </td>
+              <td class="text-center">
+                <span
+                  :class="
+                    getTotalHorasCuadranteLinea(turno) - turno.turnos[0][0].horasContrato > 0
+                      ? 'text-success'
+                      : 'text-danger'
                   "
                 >
-                  <div class="turno-cell">
-                    <div v-for="(turnoDia, index3) in turnos2" :key="index3" class="turno-item">
-                      <template v-if="turnoDia.ausencia">
-                        <div class="ausencia-badge">
-                          <span v-if="turnoDia?.ausencia.tipo" class="ausencia-tipo">{{
-                            turnoDia.ausencia.tipo
-                          }}</span>
-                          <span v-if="!turnoDia.ausencia.completa" class="ausencia-horas">
-                            {{ turnoDia.ausencia.horas }}h
-                          </span>
-                        </div>
-                      </template>
-
-                      <template v-else-if="turnoDia.totalHoras > 0">
-                        <div class="turno-horario">
-                          <div class="horario">
-                            {{ DateTime.fromISO(turnoDia.inicio).toFormat("HH:mm") }} -
-                            {{ DateTime.fromISO(turnoDia.final).toFormat("HH:mm") }}
-                          </div>
-                          <div
-                            class="tienda-badge"
-                            :class="{
-                              'tienda-diferente':
-                                turnoDia.idTienda !==
-                                (turno.idTiendaOrigen ||
-                                  tiendaSeleccionada ||
-                                  currentUser.idTienda),
-                            }"
-                          >
-                            {{ getNombreTienda(turnoDia.idTienda) }}
-                          </div>
-                        </div>
-                      </template>
-
-                      <span v-else class="sin-turno">-</span>
-                    </div>
-                  </div>
-                </td>
-
-                <td class="col-horas" data-th="H. Cuadrante">
-                  <strong>{{ getTotalHorasCuadranteLinea(turno).toFixed(2) }}h</strong>
-                </td>
-
-                <td class="col-horas" data-th="H. Contrato">
-                  <span v-if="turno.turnos[0][0].horasContrato">
-                    {{ turno.turnos[0][0].horasContrato.toFixed(2) }}h
-                  </span>
-                  <span v-else>-</span>
-                </td>
-
-                <td class="col-horas diferencia" data-th="Diferencia">
-                  <span
-                    :class="{
-                      'diferencia-positiva':
-                        getTotalHorasCuadranteLinea(turno) - turno.turnos[0][0].horasContrato > 0,
-                      'diferencia-negativa':
-                        getTotalHorasCuadranteLinea(turno) - turno.turnos[0][0].horasContrato < 0,
-                    }"
-                  >
-                    {{
-                      (
-                        getTotalHorasCuadranteLinea(turno) - turno.turnos[0][0].horasContrato
-                      ).toFixed(2)
-                    }}h
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                  {{
+                    (getTotalHorasCuadranteLinea(turno) - turno.turnos[0][0].horasContrato).toFixed(
+                      2,
+                    )
+                  }}h
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      <!-- Loading state -->
-      <div v-else class="loading-container">
-        <BsSpinner :style="{ width: '3rem', height: '3rem' }" />
-        <p class="loading-text">Cargando cuadrantes...</p>
+      <!-- Loading -->
+      <div
+        v-if="loadingCuadrantes"
+        class="d-flex flex-column align-items-center justify-content-center h-100"
+      >
+        <BsSpinner style="width: 3rem; height: 3rem" />
+        <p>Cargando cuadrantes...</p>
       </div>
 
-      <!-- Empty state -->
-      <div v-if="!loadingCuadrantes && arrayTurnos?.length === 0" class="empty-state">
-        <div class="empty-icon">
-          <i class="fas fa-calendar-times"></i>
-        </div>
-        <h3>No hay datos disponibles</h3>
+      <!-- Empty -->
+      <div
+        v-if="!loadingCuadrantes && !arrayTurnos.length"
+        class="d-flex flex-column align-items-center justify-content-center h-100"
+      >
+        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+        <h5>No hay datos disponibles</h5>
         <p>No se encontraron cuadrantes para los filtros seleccionados.</p>
-        <BsButton color="primary" @click="getTurnos()">
-          <i class="fas fa-refresh me-1"></i> Intentar de nuevo
-        </BsButton>
+        <BsButton color="primary" @click="getTurnos()">Intentar de nuevo</BsButton>
       </div>
     </main>
-  </div>
 
-  <!-- Modales -->
-  <BsModal
-    id="nombreExcelModal"
-    tabindex="-1"
-    labelledby="nombreExcelModalTitle"
-    v-model="nombreExcelModal"
-    :centered="true"
-  >
-    <BsModalHeader @close="nombreExcelModal = false">
-      <BsModalTitle id="nombreExcelModalTitle">¿Cómo quieres llamar al archivo?</BsModalTitle>
-    </BsModalHeader>
-    <BsModalBody>
-      <BsInput label="Nombre de archivo" v-model="nombreExcel" />
-    </BsModalBody>
-    <BsModalFooter>
-      <BsButton color="secondary" @click="nombreExcelModal = false">Cancelar</BsButton>
-      <BsButton @click="importExcelxD()" color="success">Descargar</BsButton>
-    </BsModalFooter>
-  </BsModal>
+    <!-- MODALES -->
+    <BsModal id="nombreExcelModal" v-model="nombreExcelModal" centered>
+      <BsModalHeader @close="nombreExcelModal = false">
+        <BsModalTitle>¿Cómo quieres llamar al archivo?</BsModalTitle>
+      </BsModalHeader>
+      <BsModalBody>
+        <BsInput label="Nombre de archivo" v-model="nombreExcel" />
+      </BsModalBody>
+      <BsModalFooter>
+        <BsButton color="secondary" @click="nombreExcelModal = false">Cancelar</BsButton>
+        <BsButton color="success" @click="importExcelxD()">Descargar</BsButton>
+      </BsModalFooter>
+    </BsModal>
 
-  <ModalCrearCuadrante2Component ref="modalCrearCuadrante2Ref" />
-  <ModalCopiarSemanas ref="modalCopiarSemanasRef" />
+    <ModalCrearCuadrante2Component ref="modalCrearCuadrante2Ref" />
+    <ModalCopiarSemanas ref="modalCopiarSemanasRef" />
 
-  <BsModal
-    id="codigoEmpleadoModal"
-    v-model="codigoEmpleadoModal"
-    tabindex="-1"
-    labelledby="codigoEmpleadoModalLabel"
-  >
-    <BsModalHeader @close="codigoEmpleadoModal = false">
-      <BsModalTitle id="codigoEmpleadoModalLabel">Introducir Código de Empleado</BsModalTitle>
-    </BsModalHeader>
-    <BsModalBody>
-      <div class="row justify-content-center">
-        <div class="col-12 col-xl-6 col-md-6">
-          <h4 class="text-center mt-3">
-            Ingresa tu código de empleado
-            <span
-              class="tooltip-icon"
-              title="Puedes encontrar tu código de empleado en tu apartado principal."
-              style="color: #007bff; cursor: pointer; margin-left: 5px"
-            ></span>
-          </h4>
-          <div class="input-group mt-4">
-            <input id="inputCodigo" type="text" class="form-control" v-model="codigoEmpleado" />
+    <BsModal id="codigoEmpleadoModal" v-model="codigoEmpleadoModal">
+      <BsModalHeader @close="codigoEmpleadoModal = false">
+        <BsModalTitle>Introducir Código de Empleado</BsModalTitle>
+      </BsModalHeader>
+      <BsModalBody>
+        <div class="row justify-content-center">
+          <div class="col-12 col-md-6">
+            <h5 class="text-center">Ingresa tu código de empleado</h5>
+            <div class="input-group mt-3">
+              <input type="text" class="form-control" v-model="codigoEmpleado" />
+            </div>
           </div>
         </div>
-      </div>
-      <div class="text-center">
-        <BsButton
-          class="text-light mt-4 m-auto rounded-8 w-auto"
-          color="success"
-          @click="validarCodigoEmpleado"
-        >
-          Validar
-        </BsButton>
-      </div>
-    </BsModalBody>
-  </BsModal>
+      </BsModalBody>
+      <BsModalFooter>
+        <BsButton color="secondary" @click="codigoEmpleadoModal = false"> Cancelar </BsButton>
+        <BsButton color="success" @click="validarCodigoEmpleado"> Validar </BsButton>
+      </BsModalFooter>
+    </BsModal>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -338,6 +292,7 @@ import { getEquipoDe } from "@/components/equipoGeneral";
 import * as XLSX from "xlsx";
 import router from "@/router";
 import { useUserStore } from "@/stores/user";
+import BsButtonGroup from "./365/BsButtonGroup.vue";
 
 const userStore = useUserStore();
 const punteroFecha = ref(DateTime.now().startOf("week").setLocale("es"));

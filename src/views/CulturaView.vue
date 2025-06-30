@@ -56,29 +56,6 @@
                     </div>
                   </div>
                 </div>
-                <!-- Modal para mostrar el video -->
-                <div class="modal" tabindex="-1" fullscreen>
-                  <div v-if="!videoReproducido" @click="reproducirVideo()">
-                    <button type="button" class="mt-1 btn-close" aria-label="Close" color="primary">
-                      Reproducir Video
-                    </button>
-                  </div>
-                  <iframe
-                    v-show="videoReproducido"
-                    height="1200"
-                    :src="videoSeleccionado?.urlVideo"
-                    frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen
-                  >
-                  </iframe>
-                  <div class="modal-footer">
-                    <span><i class="fas fa-eye"></i> : {{ videoSeleccionado?.views }}</span>
-                    <button type="button" class="btn" color="secondary" @click="cerrarModal">
-                      >Cerrar
-                    </button>
-                  </div>
-                </div>
 
                 <!-- Modal para editar el video -->
                 <div
@@ -319,7 +296,16 @@ async function mostrarVideo() {
 function cerrarModal() {
   esModalAbierto.value = false;
   videoReproducido.value = false;
+
+  if (videoSeleccionado.value) {
+    videoSeleccionado.value = {
+      ...videoSeleccionado.value,
+      urlVideo: "",
+    };
+  }
+
 }
+
 
 onMounted(() => {
   mostrarVideo();

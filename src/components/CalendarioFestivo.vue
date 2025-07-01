@@ -22,7 +22,7 @@
 
         <!-- Botón de evento -->
         <div class="col-auto">
-          <button class="btn btn-primary mb-3" @click="nuevoFestivo">Crear Evento</button>
+          <button class="btn btn-success mb-3" @click="nuevoFestivo">Crear Evento</button>
         </div>
         <div class="col-auto">
           <input

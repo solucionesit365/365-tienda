@@ -48,7 +48,7 @@
             :class="videosView ? 'colorActive' : 'colorInactive'"
             @click="moverMenu('Video')"
           >
-            Video
+            VIDEO
           </button>
         </div>
       </div>

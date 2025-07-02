@@ -96,7 +96,7 @@
                   class="tabla-row"
                   :class="{
                     'row-ausencia': turno.ausencia,
-                    'row-seleccionada': turnoSeleccionado && turnoSeleccionado._id === turno._id
+                    'row-seleccionada': turnoSeleccionado && turnoSeleccionado._id === turno._id,
                   }"
                   @click="seleccionarTurno(turno)"
                 >
@@ -133,7 +133,12 @@
                   <div class="col-tienda">
                     <select
                       :value="turno.idTienda"
-                      @change="actualizarTiendaTurno(turno, parseInt(($event.target as HTMLSelectElement).value))"
+                      @change="
+                        actualizarTiendaTurno(
+                          turno,
+                          parseInt(($event.target as HTMLSelectElement).value),
+                        )
+                      "
                       class="form-select tienda-select-native"
                     >
                       <option value="">Seleccionar tienda</option>
@@ -150,7 +155,6 @@
                   <div class="col-horas">
                     <span class="horas-turno"> {{ calcularHorasTurno(turno) }}h </span>
                   </div>
-
                 </div>
               </div>
             </div>
@@ -176,11 +180,10 @@
       </div>
     </div>
   </BsModal>
-
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed, watch, inject, type Ref } from "vue";
+import { ref, computed, watch, inject, type Ref } from "vue";
 import Swal from "sweetalert2";
 import { DateTime } from "luxon";
 import { axiosInstance } from "@/components/axios/axios";
@@ -194,7 +197,6 @@ import LoaderComponent from "@/components/LoaderCuadrantes.vue";
 import { useUserStore } from "@/stores/user";
 import type { TCuadranteFrontend, TCuadranteBackend } from "@/interfaces/Cuadrante.interface";
 import type { TTrabajador } from "@/interfaces/Trabajador.interface";
-
 
 // Estado
 const userStore = useUserStore();
@@ -263,7 +265,6 @@ function calcularHorasTurno(turno: any) {
   return turno.final.diff(turno.inicio, "hours").hours.toFixed(1);
 }
 
-
 // Funciones de actualización
 function actualizarHora(turno: any, tipo: "inicio" | "final", event: Event) {
   const input = event.target as HTMLInputElement;
@@ -294,7 +295,7 @@ function añadirDobleTurno() {
 
   // Buscar si ya existe un segundo turno ese día
   const turnosDelDia = arrayCuadrantes.value.filter(
-    (t) => t.inicio.startOf("day").toMillis() === diaSeleccionado.toMillis()
+    (t) => t.inicio.startOf("day").toMillis() === diaSeleccionado.toMillis(),
   );
 
   if (turnosDelDia.length >= 2) {
@@ -355,6 +356,7 @@ async function abrirModal(fechaBetween: Date, tiendas: any[], idTienda: number) 
     idTiendaDefault.value = idTienda;
     inicioSemana.value = DateTime.fromJSDate(fechaBetween).startOf("week");
 
+    await getTrabajadores();
     await iniciarDatos(inicioSemana.value);
     modalCrearCuadrante.value = true;
   } else Swal.fire("Oops...", "Datos iniciales incorrectos", "error");
@@ -515,8 +517,6 @@ async function handleAddCuadrante({ dia, idTienda, ausencia }: any) {
   }
 }
 
-
-
 function buscarIndexFromTurno(idTurno: any) {
   return arrayCuadrantes.value.findIndex((element) => element._id === idTurno);
 }
@@ -553,9 +553,9 @@ defineExpose({
   abrirModal,
 });
 
-onMounted(async () => {
-  await getTrabajadores();
-});
+// onMounted(async () => {
+//   await getTrabajadores();
+// });
 </script>
 
 <style scoped>

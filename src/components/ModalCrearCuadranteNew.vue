@@ -12,7 +12,6 @@
         <aside class="sidebar-info">
           <div class="sidebar-header">
             <h5 class="titulo">Cuadrante Semanal</h5>
-            <div class="semana-info">Semana {{ semanaActual }} - {{ yearActual }}</div>
           </div>
 
           <div class="selector-trabajador">

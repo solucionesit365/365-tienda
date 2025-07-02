@@ -105,7 +105,7 @@
                     <figcaption class="figure-caption text-center">
                       <h4>
                         No hay ningún KPI de la semana
-                        {{ punteroFecha.weekNumber - 1 }}
+                        {{ punteroFecha.weekNumber }}
                       </h4>
                     </figcaption>
                   </figure>

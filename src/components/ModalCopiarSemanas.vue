@@ -1,8 +1,8 @@
 <template>
-  <BsModal 
-    id="modalCopiarSemana" 
-    tabindex="-1" 
-    labelledby="modalLabel" 
+  <BsModal
+    id="modalCopiarSemana"
+    tabindex="-1"
+    labelledby="modalLabel"
     v-model="modalCopiarSemana"
     :centered="true"
   >
@@ -19,8 +19,10 @@
           <div class="alert alert-info d-flex align-items-center" role="alert">
             <i class="fas fa-info-circle me-2"></i>
             <div>
-              <strong>¿Qué hace esta acción?</strong><br>
-              Copia todos los turnos de una semana seleccionada a la semana actual ({{ semanaActual }}).
+              <strong>¿Qué hace esta acción?</strong><br />
+              Copia todos los turnos de una semana seleccionada a la semana actual ({{
+                semanaActual
+              }}).
             </div>
           </div>
         </div>
@@ -81,14 +83,14 @@
         <i class="fas fa-times me-1"></i>
         Cancelar
       </BsButton>
-      <BsButton 
-        color="warning" 
+      <BsButton
+        color="warning"
         :disabled="!semanaElegida || copiando"
         @click="semanaElegida && copiarSemana(semanaElegida)"
       >
         <span v-if="copiando" class="spinner-border spinner-border-sm me-2"></span>
         <i v-else class="fas fa-copy me-1"></i>
-        {{ copiando ? 'Copiando...' : 'Copiar Semana' }}
+        {{ copiando ? "Copiando..." : "Copiar Semana" }}
       </BsButton>
     </BsModalFooter>
   </BsModal>
@@ -122,14 +124,14 @@ const semanaActual = computed(() => DateTime.now().weekNumber);
 function crearArraySemanas(): void {
   opcionesSemanas.value = [];
   const yearActual = DateTime.now().year;
-  
+
   // Crear opciones para todas las semanas del año
   for (let i = 1; i <= 52; i++) {
     try {
       const semanaDateTime = DateTime.fromObject({ weekYear: yearActual, weekNumber: i });
       const firstDayOfWeek = semanaDateTime.startOf("week");
       const lastDayOfWeek = semanaDateTime.endOf("week");
-      
+
       if (firstDayOfWeek.isValid && lastDayOfWeek.isValid) {
         opcionesSemanas.value.push({
           text: `Semana ${i} - Del ${firstDayOfWeek.toFormat("dd MMM")} al ${lastDayOfWeek.toFormat("dd MMM")}`,
@@ -140,19 +142,27 @@ function crearArraySemanas(): void {
       console.warn(`Error creando semana ${i}:`, error);
     }
   }
-  
+
   // Filtrar la semana actual para evitar auto-copia
   opcionesSemanas.value = opcionesSemanas.value.filter(
-    semana => semana.value !== semanaActual.value
+    (semana) => semana.value !== semanaActual.value,
   );
 }
 
 function getSemanaTexto(numeroSemana: number): string {
-  const opcion = opcionesSemanas.value.find(s => s.value === numeroSemana);
+  const opcion = opcionesSemanas.value.find((s) => s.value === numeroSemana);
   return opcion ? opcion.text : `Semana ${numeroSemana}`;
 }
 
 function abrirModal(valorIdTienda: number, valorNSemanaOrigen: number): void {
+  if (!valorIdTienda) {
+    Swal.fire({
+      icon: "error",
+      title: "ID de tienda requerido",
+      text: "Por favor, proporciona un ID de tienda válido.",
+    });
+    throw new Error("ID de tienda no puede ser nulo o indefinido");
+  }
   idTienda.value = valorIdTienda;
   nSemanaOrigen.value = valorNSemanaOrigen;
   semanaElegida.value = null;
@@ -199,16 +209,16 @@ async function copiarSemana(nSemanaDestino: number): Promise<void> {
 
   try {
     copiando.value = true;
-    
+
     const yearActual = DateTime.now().year;
-    const lunesOrigen = DateTime.fromObject({ 
-      weekYear: yearActual, 
-      weekNumber: nSemanaDestino 
+    const lunesOrigen = DateTime.fromObject({
+      weekYear: yearActual,
+      weekNumber: nSemanaDestino,
     }).startOf("week");
-    
-    const lunesDestino = DateTime.fromObject({ 
-      weekYear: yearActual, 
-      weekNumber: semanaActual.value 
+
+    const lunesDestino = DateTime.fromObject({
+      weekYear: yearActual,
+      weekNumber: semanaActual.value,
     }).startOf("week");
 
     const response = await axiosInstance.post("cuadrantes/copiarSemanaCuadrante", {
@@ -226,18 +236,20 @@ async function copiarSemana(nSemanaDestino: number): Promise<void> {
         timer: 2000,
         timerProgressBar: true,
       });
-      
+
       cerrarModal();
     } else {
       throw new Error(response.data.message || "Error en la respuesta del servidor");
     }
   } catch (err: any) {
     console.error("Error al copiar semana:", err);
-    
+
     Swal.fire({
       icon: "error",
       title: "Error al copiar",
-      text: err.response?.data?.message || "Ha ocurrido un error inesperado. Por favor, inténtelo de nuevo.",
+      text:
+        err.response?.data?.message ||
+        "Ha ocurrido un error inesperado. Por favor, inténtelo de nuevo.",
       confirmButtonText: "Entendido",
     });
   } finally {
@@ -264,7 +276,7 @@ defineExpose({
 
 .info-section {
   margin-bottom: 1.5rem;
-  
+
   .alert {
     border-radius: 8px;
     border-left: 4px solid #17a2b8;
@@ -285,7 +297,7 @@ defineExpose({
     border-radius: 10px;
     border: 1px solid #e9ecef;
   }
-  
+
   .card-title {
     color: #6c757d;
     margin-bottom: 1rem;
@@ -298,7 +310,7 @@ defineExpose({
   justify-content: center;
   gap: 1rem;
   margin: 1rem 0;
-  
+
   .week-badge {
     display: flex;
     flex-direction: column;
@@ -307,28 +319,28 @@ defineExpose({
     padding: 1rem;
     border-radius: 8px;
     min-width: 120px;
-    
+
     &.source {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
     }
-    
+
     &.target {
       background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
       color: white;
     }
-    
+
     i {
       font-size: 1.5rem;
     }
-    
+
     span {
       font-size: 0.875rem;
       font-weight: 500;
       text-align: center;
     }
   }
-  
+
   .arrow {
     color: #6c757d;
     font-size: 1.5rem;
@@ -337,9 +349,15 @@ defineExpose({
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 // Responsive para tablets
@@ -347,11 +365,11 @@ defineExpose({
   .copy-flow {
     flex-direction: column;
     gap: 0.5rem;
-    
+
     .arrow {
       transform: rotate(90deg);
     }
-    
+
     .week-badge {
       min-width: 200px;
     }
@@ -364,7 +382,7 @@ defineExpose({
     border-radius: 8px;
     border: 2px solid #e9ecef;
     padding: 0.75rem;
-    
+
     &:focus {
       border-color: #f39c12;
       box-shadow: 0 0 0 0.2rem rgba(243, 156, 18, 0.25);

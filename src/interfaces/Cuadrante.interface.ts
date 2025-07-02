@@ -9,8 +9,6 @@ export interface TCuadranteFrontend {
   final: DateTime;
   nombre: string;
   totalHoras: number;
-  enviado: boolean;
-  historialPlanes: string[];
   horasContrato: number;
   ausencia: TAusenciaMin;
   bolsaHorasInicial: number;
@@ -27,8 +25,6 @@ export interface TCuadranteBackend {
   final: string;
   nombre: string;
   totalHoras: number;
-  enviado: boolean;
-  historialPlanes: string[];
   horasContrato: number;
   ausencia: TAusenciaMin | null;
   bolsaHorasInicial: number;

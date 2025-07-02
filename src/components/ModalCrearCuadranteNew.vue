@@ -12,7 +12,9 @@
         <aside class="sidebar-info">
           <div class="sidebar-header">
             <h5 class="titulo">Cuadrante Semanal</h5>
-            <div class="semana-info">Semana {{ semanaActual }} - {{ yearActual }}</div>
+            <div class="semana-info">
+              Semana {{ props.selectedDate.weekNumber }} - {{ props.selectedDate.year }}
+            </div>
           </div>
 
           <div class="selector-trabajador">
@@ -39,6 +41,10 @@
           </div>
 
           <div class="acciones-sidebar">
+            <BsButton color="warning" class="w-100 mb-2" @click="administrarPlantillasTurno()">
+              <i class="bi bi-plus-circle me-2"></i>
+              Administrar plantillas
+            </BsButton>
             <BsButton
               color="primary"
               class="w-100 mb-2"
@@ -46,7 +52,7 @@
               @click="añadirDobleTurno"
             >
               <i class="bi bi-plus-circle me-2"></i>
-              Añadir Doble Turno
+              Añadir doble Turno
             </BsButton>
 
             <BsButton
@@ -57,7 +63,7 @@
             >
               <span v-if="guardando" class="spinner-border spinner-border-sm me-2"></span>
               <i v-else class="bi bi-check-circle me-2"></i>
-              Guardar Cambios
+              Guardar cambios
             </BsButton>
 
             <BsButton
@@ -83,10 +89,11 @@
             <!-- Vista de tabla cuando hay trabajador seleccionado -->
             <div v-if="trabajadorSelected" class="tabla-cuadrante">
               <div class="tabla-header">
-                <div class="col-dia">Día</div>
-                <div class="col-horario">Horario</div>
-                <div class="col-tienda">Tienda</div>
-                <div class="col-horas">Horas</div>
+                <div class="col">Día</div>
+                <div class="col">Horario</div>
+                <div class="col">Nuevo</div>
+                <div class="col">Tienda</div>
+                <div class="col">Horas</div>
               </div>
 
               <div class="tabla-body">
@@ -100,14 +107,14 @@
                   }"
                   @click="seleccionarTurno(turno)"
                 >
-                  <div class="col-dia">
+                  <div class="col">
                     <div class="dia-info">
                       <span class="dia-nombre">{{ formatearDia(turno.inicio) }}</span>
                       <span class="dia-fecha">{{ formatearFecha(turno.inicio) }}</span>
                     </div>
                   </div>
 
-                  <div class="col-horario">
+                  <div class="col">
                     <div class="horario-wrapper">
                       <input
                         type="time"
@@ -130,7 +137,11 @@
                     </div>
                   </div>
 
-                  <div class="col-tienda">
+                  <div class="col">
+                    <!-- <BsCheckBox v-model="false" /> -->
+                  </div>
+
+                  <div class="col">
                     <select
                       :value="turno.idTienda"
                       @change="
@@ -142,17 +153,13 @@
                       class="form-select tienda-select-native"
                     >
                       <option value="">Seleccionar tienda</option>
-                      <option
-                        v-for="tienda in arrayTiendasFormateado"
-                        :key="tienda.value"
-                        :value="tienda.value"
-                      >
-                        {{ tienda.text }}
+                      <option v-for="tienda in arrayTiendas" :key="tienda.id" :value="tienda.id">
+                        {{ tienda.nombre }}
                       </option>
                     </select>
                   </div>
 
-                  <div class="col-horas">
+                  <div class="col">
                     <span class="horas-turno"> {{ calcularHorasTurno(turno) }}h </span>
                   </div>
                 </div>
@@ -180,6 +187,12 @@
       </div>
     </div>
   </BsModal>
+
+  <PlantillasTurnoModal
+    ref="plantillasModal"
+    :idTienda="props.selectedTienda?.id!"
+    @plantillas-updated="getPlantillasTurno(props.selectedTienda!.id)"
+  />
 </template>
 
 <script setup lang="ts">
@@ -195,26 +208,33 @@ import LoaderComponent from "@/components/LoaderCuadrantes.vue";
 
 // Stores e interfaces
 import { useUserStore } from "@/stores/user";
-import type { TCuadranteFrontend, TCuadranteBackend } from "@/interfaces/Cuadrante.interface";
+import type { TCuadranteFrontend } from "@/interfaces/Cuadrante.interface";
 import type { TTrabajador } from "@/interfaces/Trabajador.interface";
+import { useTiendaStore } from "@/stores/tienda";
+import type { TTienda } from "@/interfaces/Tienda.interface";
+import PlantillasTurnoModal from "@/components/ModalPlantillasTurno.vue";
+// import BsCheckBox from "./365/BsCheckBox.vue";
+import { Cuadrante } from "./kernel/Cuadrante";
 
-// Estado
+const props = defineProps<{
+  selectedDate: DateTime;
+  selectedTienda: TTienda | null;
+}>();
 const userStore = useUserStore();
-const arrayTiendas: Ref<any[]> = ref([]);
-const arrayTiendasFormateado: Ref<any[]> = ref([]);
-const idTiendaDefault = ref(0);
+const tiendaStore = useTiendaStore();
+const plantillasModal = ref<InstanceType<typeof PlantillasTurnoModal> | null>(null);
+const arrayTiendas = computed(() => tiendaStore.tiendas);
 const trabajadorSelected = ref(null);
 const inicioSemana: Ref<DateTime | null> = ref(null);
 const modalCrearCuadrante = ref(false);
-const semanaActual = DateTime.now().weekNumber;
-const yearActual = DateTime.now().year;
 const guardando = ref(false);
 const trabajadores: Ref<{ text: string; value: number }[]> = ref([]);
 const currentUser = computed(() => userStore.user);
-const arrayCuadrantes: Ref<any[]> = ref([]);
+const arrayCuadrantes: Ref<TCuadranteFrontend[]> = ref([]);
 const cargando = ref(false);
 const turnoSeleccionado: Ref<any> = ref(null);
-const getCuadrantes = inject<() => TCuadranteFrontend[]>("getCuadrantes");
+const plantillasTurno = ref<{ id: string; nombre: string }[]>([]);
+const reloadCuadrante = inject<() => TCuadranteFrontend[]>("reloadCuadrante");
 
 // Computed
 const totalHoras = computed(() => {
@@ -312,7 +332,7 @@ function añadirDobleTurno() {
 
   handleAddCuadrante({
     dia: diaSeleccionado.set({ hour: horaInicio, minute: 0 }),
-    idTienda: idTiendaDefault.value,
+    idTienda: userStore.getIdTienda,
     ausencia: null,
   });
 }
@@ -346,28 +366,31 @@ async function eliminarTurnoSeleccionado() {
 }
 
 // Funciones existentes
-async function abrirModal(fechaBetween: Date, tiendas: any[], idTienda: number) {
-  if (fechaBetween && tiendas.length > 0 && idTienda) {
-    arrayTiendas.value = tiendas;
-    // Las tiendas ya vienen con la estructura correcta {text, value, idTienda}
-    arrayTiendasFormateado.value = tiendas;
-    console.log("Tiendas recibidas:", tiendas);
+async function abrirModal(fechaBetween: DateTime) {
+  if (!fechaBetween) {
+    Swal.fire("Oops...", "Datos iniciales incorrectos", "error");
+    return;
+  }
 
-    idTiendaDefault.value = idTienda;
-    inicioSemana.value = DateTime.fromJSDate(fechaBetween).startOf("week");
+  inicioSemana.value = fechaBetween.startOf("week");
 
-    await iniciarDatos(inicioSemana.value);
-    modalCrearCuadrante.value = true;
-  } else Swal.fire("Oops...", "Datos iniciales incorrectos", "error");
+  await iniciarDatos(inicioSemana.value);
+  modalCrearCuadrante.value = true;
 }
 
 async function iniciarDatos(fecha: DateTime) {
   try {
     if (trabajadorSelected.value) {
-      const auxCuadrantes = await getCuadranteEmpleado(fecha, trabajadorSelected.value);
-      arrayCuadrantes.value = auxCuadrantes;
-      turnoSeleccionado.value = null;
+      cargando.value = true;
+      const auxCuadrantes = await Cuadrante.getCuadranteIndividual(fecha, trabajadorSelected.value);
+      cargando.value = false;
+      if (auxCuadrantes && auxCuadrantes.length > 0) {
+        arrayCuadrantes.value = auxCuadrantes;
+        turnoSeleccionado.value = null;
+      }
     }
+
+    if (props.selectedTienda) getPlantillasTurno(props.selectedTienda.id);
   } catch (err) {
     cargando.value = false;
     console.log(err);
@@ -400,18 +423,17 @@ async function guardarFinal() {
       idTrabajador: trabajadorSelected.value,
       arraySemanalHoras: sendRequestCuadrantes,
       totalHoras: totalHoras.value,
-      idTiendaDefault: idTiendaDefault.value,
+      idTiendaDefault: userStore.getIdTienda,
       fecha: inicioSemana.value.toISO(),
       uid: uidParaConsultar,
-      semana: semanaActual,
-      year: yearActual,
+      semana: props.selectedDate.weekNumber,
+      year: props.selectedDate.year,
     });
 
     if (resGuardar.data.ok) {
-      if (!getCuadrantes) {
-        throw new Error("No se encontró la inyección 'getCuadrantes'");
-      }
-      getCuadrantes();
+      if (!reloadCuadrante) throw new Error("No se encontró la inyección 'reloadCuadrante'");
+
+      reloadCuadrante();
       modalCrearCuadrante.value = false;
 
       Swal.fire({
@@ -431,78 +453,59 @@ async function guardarFinal() {
   }
 }
 
+async function getPlantillasTurno(idTienda: number) {
+  try {
+    const resPlantillas = await axiosInstance.get("plantilla-turno", {
+      params: { idTienda },
+    });
+
+    plantillasTurno.value = resPlantillas.data.map((plantilla: any) => {
+      return {
+        id: plantilla.id,
+        nombre: plantilla.nombre,
+      };
+    });
+
+    console.log("Plantillas de turno cargadas:", plantillasTurno.value);
+  } catch (err) {
+    console.log(err);
+    Swal.fire("Oops...", "Ha habido un error al cargar las plantillas", "error");
+  }
+}
+
 async function getTrabajadores() {
   try {
     trabajadores.value = [];
-    const uidGuardado = localStorage.getItem("uidCoordinadora");
-    const uidParaConsultar = uidGuardado || currentUser.value.uid;
 
-    const resEquipo = await axiosInstance.get("trabajadores/getSubordinados", {
-      params: { uid: uidParaConsultar },
+    const idResponsable = tiendaStore.getTienda(props.selectedTienda!.id)?.coordinatorId;
+    const resEquipo = await axiosInstance.get("trabajadores/getSubordinadosById", {
+      params: { idResponsable: idResponsable },
     });
 
-    if (resEquipo.data.ok) {
-      trabajadores.value = resEquipo.data.data.map((trabajador: TTrabajador) => {
-        return {
-          text: trabajador.nombreApellidos,
-          value: trabajador.id,
-        };
-      });
+    trabajadores.value = resEquipo.data.map((trabajador: TTrabajador) => {
+      return {
+        text: trabajador.nombreApellidos,
+        value: trabajador.id,
+      };
+    });
 
-      if (
-        currentUser.value.llevaEquipo &&
-        currentUser.value.idTienda &&
-        !trabajadores.value.some((t) => t.value === currentUser.value.idSql)
-      ) {
-        if (currentUser.value.displayName && currentUser.value.idSql)
-          trabajadores.value.push({
-            text: currentUser.value.displayName,
-            value: currentUser.value.idSql,
-          });
-      }
-    } else throw Error("No se ha podido obtener la lista de tu equipo de trabajo");
+    if (
+      currentUser.value.llevaEquipo &&
+      currentUser.value.idTienda &&
+      !trabajadores.value.some((t) => t.value === currentUser.value.idSql)
+    ) {
+      if (currentUser.value.displayName && currentUser.value.idSql)
+        trabajadores.value.push({
+          text: currentUser.value.displayName,
+          value: currentUser.value.idSql,
+        });
+    }
   } catch (err) {
     console.log(err);
     Swal.fire("Oops...", "Ha habido un error", "error");
   }
 }
 
-async function getCuadranteEmpleado(fecha: DateTime, idTrabajador: number) {
-  cargando.value = true;
-  // Recuperar UID de Coordinadora desde localStorage si existe
-  const uidGuardado = localStorage.getItem("uidCoordinadora");
-  const uidParaConsultar = uidGuardado || currentUser.value.uid;
-
-  try {
-    const resCuadrantes = await axiosInstance.get("cuadrantes/individual", {
-      params: {
-        fecha: fecha.toJSDate().toISOString(),
-        idTrabajador,
-        uid: uidParaConsultar,
-      },
-    });
-
-    cargando.value = false;
-
-    return resCuadrantes.data.map((turno: TCuadranteBackend) => ({
-      ...turno,
-      inicio: DateTime.fromJSDate(new Date(turno.inicio)),
-      final: DateTime.fromJSDate(new Date(turno.final)),
-    }));
-  } catch (error) {
-    console.log(error);
-    // Type guard for Axios error
-    if (
-      typeof error === "object" &&
-      error !== null &&
-      "response" in error &&
-      (error as any).response &&
-      (error as any).response.status === 401
-    ) {
-      Swal.fire("Oops...", "No tienes permisos para ver este cuadrante", "error");
-    } else Swal.fire("Oops...", "Ha habido un error", "error");
-  }
-}
 function updateTurno(updatedTurno: any) {
   const index = buscarIndexFromTurno(updatedTurno._id);
   arrayCuadrantes.value[index] = updatedTurno;
@@ -552,7 +555,12 @@ async function borrarTurno({ idTurno }: any) {
     arrayCuadrantes.value[index].final = arrayCuadrantes.value[index].inicio.startOf("day");
     arrayCuadrantes.value[index].idTienda = null;
     arrayCuadrantes.value[index].ausencia = null;
+    arrayCuadrantes.value[index].nuevo = false;
   }
+}
+
+function administrarPlantillasTurno() {
+  plantillasModal.value?.abrirModal();
 }
 
 watch(trabajadorSelected, () => {
@@ -788,8 +796,12 @@ onMounted(async () => {
   width: 35%;
 }
 
+.col-personalizado {
+  width: 12%;
+}
+
 .col-tienda {
-  width: 30%;
+  width: 20%;
 }
 
 .col-horas {
@@ -957,8 +969,12 @@ onMounted(async () => {
     width: 18%;
   }
 
+  .col-personalizado {
+    width: 12%;
+  }
+
   .col-tienda {
-    width: 32%;
+    width: 20%;
   }
 
   .col-horario {

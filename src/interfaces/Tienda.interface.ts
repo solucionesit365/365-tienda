@@ -3,4 +3,5 @@ export interface TTienda {
   nombre: string;
   direccion: string | null;
   idExterno: number | null;
+  coordinatorId: number | null;
 }

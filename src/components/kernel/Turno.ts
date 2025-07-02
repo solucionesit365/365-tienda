@@ -3,9 +3,9 @@ import { axiosInstance } from "../axios/axios";
 import Swal from "sweetalert2";
 import { DateTime } from "luxon";
 
-export class Cuadrante {
+export class Turno {
   static async getCuadrantes(fechaISO: string, idTienda: number) {
-    const resTurnos = await axiosInstance.get("cuadrantes", {
+    const resTurnos = await axiosInstance.get("turno/semana-individual", {
       params: {
         fecha: fechaISO,
         idTienda: idTienda,

@@ -7,22 +7,23 @@ function getDayOfWeek(dateStr: string) {
 
 export function estructurarTurnos(arrayTurnos: TCuadranteBackend[]) {
   // Agrupa los turnos por trabajador
-  const groupedByWorker = arrayTurnos.reduce((acc: any, turno) => {
-    if (!acc[turno.idTrabajador]) {
-      acc[turno.idTrabajador] = [];
-    }
-    acc[turno.idTrabajador].push(turno);
-    return acc;
-  }, {});
+  const groupedByWorker: Record<TCuadranteBackend["idTrabajador"], TCuadranteBackend[]> =
+    arrayTurnos.reduce((acc: any, turno) => {
+      if (!acc[turno.idTrabajador]) {
+        acc[turno.idTrabajador] = [];
+      }
+      acc[turno.idTrabajador].push(turno);
+      return acc;
+    }, {});
 
   // Estructura los turnos por días de la semana
-  const structuredByWeek = Object.values(groupedByWorker).map((workerTurnos: any) => {
+  const structuredByWeek = Object.values(groupedByWorker).map((workerTurnos) => {
     const weekTurnos = Array(7)
       .fill(null)
       .map((_, dayIndex) => {
         const day = (dayIndex + 1) as WeekdayNumbers;
         // Busca los turnos para este día
-        const foundTurnos = workerTurnos.filter((turno: any) => getDayOfWeek(turno.inicio) === day);
+        const foundTurnos = workerTurnos.filter((turno) => getDayOfWeek(turno.inicio) === day);
         if (foundTurnos.length) return foundTurnos;
 
         // Si no existen turnos para el día, crea un turno "vacío"

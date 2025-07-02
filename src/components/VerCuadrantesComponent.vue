@@ -32,7 +32,9 @@
             v-if="hasPermission('CrearCuadrante')"
             color="warning"
             size="lg"
-            @click="modalCopiarSemanasRef.abrirModal(currentUser.idTienda, punteroFecha.weekNumber)"
+            @click="
+              modalCopiarSemanasRef?.abrirModal(currentUser.idTienda!, punteroFecha.weekNumber)
+            "
           >
             <i class="fas fa-copy me-1"></i> Copiar
           </BsButton>
@@ -163,8 +165,7 @@
                         <span
                           class="badge"
                           :class="
-                            turnoDia.idTienda !==
-                            (turno.idTiendaOrigen || tiendaSeleccionada || currentUser.idTienda)
+                            turnoDia.idTienda !== (tiendaSeleccionada || currentUser.idTienda)
                               ? 'bg-danger'
                               : 'bg-success'
                           "
@@ -293,24 +294,38 @@ import * as XLSX from "xlsx";
 import router from "@/router";
 import { useUserStore } from "@/stores/user";
 import BsButtonGroup from "./365/BsButtonGroup.vue";
+import { Tienda } from "@/components/kernel/Tienda";
+import type { TTienda } from "@/interfaces/Tienda.interface";
+import { Cuadrante } from "./kernel/Cuadrante";
+import type { TCuadranteBackend } from "@/interfaces/Cuadrante.interface";
 
 const userStore = useUserStore();
 const punteroFecha = ref(DateTime.now().startOf("week").setLocale("es"));
-const arrayTiendas: Ref<any[]> = ref([]);
-const arrayTiendasFiltradas: Ref<any[]> = ref([]);
-const arrayTurnos: Ref<any[]> = ref([]);
-const modalCopiarSemanasRef: Ref<any> = ref(null);
+const arrayTiendas: Ref<TTienda[]> = ref([]);
+const arrayTiendasFiltradas: Ref<TTienda[]> = ref([]);
+const arrayTurnos: Ref<
+  {
+    idTrabajador: any;
+    nombre: any;
+    turnos: any[];
+  }[]
+> = ref([]);
+const modalCopiarSemanasRef = ref<InstanceType<typeof ModalCopiarSemanas> | null>(null);
 const currentUser = computed(() => userStore.user);
 const user = computed(() => userStore.user);
 const loadingCuadrantes = ref(false);
-const modalCrearCuadrante2Ref: Ref<any> = ref(null);
-const semanaBuscar: Ref<any> = ref();
-const tiendaSeleccionada = ref();
+const modalCrearCuadrante2Ref = ref<InstanceType<typeof ModalCrearCuadrante2Component> | null>(
+  null,
+);
+const semanaBuscar: Ref<string> = ref("todas");
+const tiendaSeleccionada: Ref<string> = ref("");
 const tipoUsuario = computed(() => {
   return getTipoUsuario({ idTienda: user.value.idTienda!, llevaEquipo: user.value.llevaEquipo });
 });
 const objSemana: Ref<any[]> = ref([]);
-const resCuadrantes2: Ref<any[]> = ref([]);
+const resCuadrantes2: Ref<
+  Record<TCuadranteBackend["idTienda"], { nombreTienda: string; totalHoras: number }>
+> = ref([]);
 const nombreExcel: Ref<any> = ref(null);
 const nombreExcelModal = ref(false);
 const codigoEmpleado = ref("");
@@ -365,17 +380,23 @@ function sumarSemana() {
 }
 
 function abrirModalCrearCuadrante() {
-  modalCrearCuadrante2Ref.value.abrirModal(
-    punteroFecha.value.toJSDate(),
-    arrayTiendas.value,
-    user.value.idTienda,
-  );
-  codigoEmpleadoModal.value = false;
+  try {
+    if (!user.value.idTienda) throw new Error("El trabajador actual no tiene una tienda asignada");
+    modalCrearCuadrante2Ref.value?.abrirModal(
+      punteroFecha.value.toJSDate(),
+      arrayTiendas.value,
+      user.value.idTienda,
+    );
+    codigoEmpleadoModal.value = false;
+  } catch (error) {
+    console.log(error);
+    Swal.fire("Oops...", "Ha habido un problema, inténtalo más tarde", "error");
+  }
 }
 
 function getNombreTienda(idTienda: number) {
   for (let i = 0; i < arrayTiendas.value.length; i += 1) {
-    if (arrayTiendas.value[i].value === idTienda) return arrayTiendas.value[i].text;
+    if (arrayTiendas.value[i].id === idTienda) return arrayTiendas.value[i].nombre;
   }
   return "¿?";
 }
@@ -481,42 +502,35 @@ function filtrarCuadrantesSemanaActual(cuadrantes: any, fechaSeleccionada: any) 
 }
 
 async function getTiendas() {
-  try {
-    const resTiendas = await axiosInstance.get("tiendas");
+  const resTiendas = await Tienda.getTiendas();
 
-    let tiendasFiltradas;
-    if (tipoUsuario.value === "SUPERVISORA") {
-      if (getRole("Super_Admin", "RRHH_ADMIN", "Analisis_Datos", "Procesos")) {
-        tiendasFiltradas = resTiendas.data;
-        arrayTiendasFiltradas.value = resTiendas.data;
-      } else {
-        const equipo = await getEquipoDe(currentUser.value.uid!);
-        const idsTiendasDelEquipo = equipo.map((miembro: any) => miembro.idTienda);
+  if (!resTiendas || resTiendas.length == 0) return;
 
-        tiendasFiltradas = resTiendas.data.filter((tienda: any) =>
-          idsTiendasDelEquipo.includes(tienda.id),
-        );
+  let tiendasFiltradas: TTienda[] = [];
 
-        arrayTiendasFiltradas.value = tiendasFiltradas;
-      }
+  if (tipoUsuario.value === "SUPERVISORA") {
+    if (getRole("Super_Admin", "RRHH_ADMIN", "Analisis_Datos", "Procesos")) {
+      tiendasFiltradas = resTiendas;
+      arrayTiendasFiltradas.value = resTiendas;
     } else {
-      tiendasFiltradas = resTiendas.data;
-      arrayTiendasFiltradas.value = resTiendas.data;
-    }
+      const equipo = await getEquipoDe(currentUser.value.uid!);
+      const idsTiendasDelEquipo = equipo.map((miembro: any) => miembro.idTienda);
 
-    arrayTiendas.value = tiendasFiltradas.map((tienda: any) => ({
-      text: tienda.nombre,
-      value: tienda.id,
-      idTienda: tienda.id,
-    }));
-  } catch (err) {
-    console.log(err);
-    Swal.fire("Oops...", "Ha habido un problema...", "error");
+      tiendasFiltradas = resTiendas.filter((tienda) => idsTiendasDelEquipo.includes(tienda.id));
+
+      arrayTiendasFiltradas.value = tiendasFiltradas;
+    }
+  } else {
+    tiendasFiltradas = resTiendas;
+    arrayTiendasFiltradas.value = resTiendas;
   }
+
+  arrayTiendas.value = tiendasFiltradas;
 }
 
 async function getTurnos() {
   loadingCuadrantes.value = true;
+
   try {
     const resTurnos = await axiosInstance.get("cuadrantes", {
       params: {
@@ -617,36 +631,33 @@ function getRole(...validRoles: any) {
 async function getInformeTiendas() {
   try {
     loadingCuadrantes.value = true;
-    const resCuadrantes = await axiosInstance.get("cuadrantes/getTiendasUnaSemana", {
-      params: {
-        fecha: punteroFecha.value.toISO(),
-      },
-    });
-    if (resCuadrantes.data.ok) {
-      resCuadrantes2.value = resCuadrantes.data.data.reduce((acc: any, item: any) => {
-        const nombreTienda = getNombreTienda(item.idTienda);
-        if (/^(t--|m--)/i.test(nombreTienda)) {
-          if (acc[item.idTienda]) {
-            acc[item.idTienda].totalHoras += item.totalHoras;
-          } else {
-            acc[item.idTienda] = {
-              nombreTienda: nombreTienda,
-              totalHoras: item.totalHoras,
-            };
-          }
-        }
-        return acc;
-      }, {});
+    const resCuadrantes = await Cuadrante.getCuadrantesTiendaSemanal(punteroFecha.value.toISO());
 
-      loadingCuadrantes.value = false;
-      ordenarCuadrante(resCuadrantes.data.data);
-      pintarSemana(resCuadrantes.data.data);
-    } else {
-      loadingCuadrantes.value = false;
-    }
+    if (!resCuadrantes) throw new Error("No se han encontrado cuadrantes para esta semana");
+
+    resCuadrantes2.value = resCuadrantes.reduce((acc: any, item: any) => {
+      const nombreTienda = getNombreTienda(item.idTienda);
+      if (/^(t--|m--)/i.test(nombreTienda)) {
+        if (acc[item.idTienda]) {
+          acc[item.idTienda].totalHoras += item.totalHoras;
+        } else {
+          acc[item.idTienda] = {
+            nombreTienda: nombreTienda,
+            totalHoras: item.totalHoras,
+          };
+        }
+      }
+      return acc;
+    }, {});
+
+    loadingCuadrantes.value = false;
+    ordenarCuadrante(resCuadrantes);
+    pintarSemana(resCuadrantes);
   } catch (err) {
     console.log(err);
     Swal.fire("Oops...", "Ha habido un problema...", "error");
+  } finally {
+    loadingCuadrantes.value = false;
   }
 }
 

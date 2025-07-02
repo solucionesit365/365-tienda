@@ -80,7 +80,7 @@
             v-model="autorizoLlamada"
           />
           <label class="form-check-label" for="checkChecked">
-            Autorizo a que me contacten vía teléfonica o por whatsapp
+            Autorizo a que me contacten mediante vía teléfonica o por whatsapp
           </label>
         </div>
       </div>

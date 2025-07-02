@@ -6,7 +6,7 @@
       </div>
     </div>
   </div>
-  <div v-if="!hayResultados" class="text-center">
+  <div v-if="!hayResultados" class="div">
     <figure class="figure">
       <img
         src="@/assets/img/nodata.png"

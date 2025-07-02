@@ -4,15 +4,15 @@
     class="text-decoration-none"
     v-if="hasPermission('NuevaFormacion')"
   >
-    <button class="btn colorIconGreen rounded-8 ms-4"><i class="fas fa-plus" /> Nuevo</button>
+    <button class="btn colorIconGreen rounded-8 mt-3"><i class="fas fa-plus" /> Nuevo</button>
   </router-link>
   <router-link
     to="/datosFormacion"
     class="text-decoration-none"
     v-if="hasPermission('VerDatosFormacion')"
   >
-    <button class="btn colorIconGreen rounded-8 ms-3">
-      <i class="fas fa-file me-1" /> Datos Formación
+    <button class="btn colorIconGreen rounded-8 ms-3 mt-3">
+      <i class="fas fa-file" /> Datos Formación
     </button>
   </router-link>
   <div class="card mt-2">
@@ -171,8 +171,7 @@
         <div v-else-if="loading" class="col-12 text-center">
           <MDBSpinner style="width: 5rem; height: 5rem" />
         </div>
-        <template v-else>
-          <!-- <h5>En este apartado conocerás como es el grupo 365 Obrador</h5> -->
+        <!-- <template v-else>
           <hr />
           <div class="row">
             <template v-for="(video, index) in videos" :key="index">
@@ -207,7 +206,6 @@
                     </div>
                   </div>
                 </div>
-                <!-- Modal para mostrar el video -->
                 <div class="modal" tabindex="-1" v-if="esModalAbierto" style="display: block">
                   <div class="modal-dialog modal-lg modal-dialog-centered">
                     <div class="modal-content">
@@ -239,7 +237,6 @@
                   </div>
                 </div>
 
-                <!-- Modal para editar el video -->
                 <div
                   class="modal"
                   tabindex="-1"
@@ -251,7 +248,6 @@
                 >
                   <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
-                      <!-- Encabezado con degradado naranja-negro -->
                       <div class="modal-header">
                         <h5 class="modal-title" id="modalEditarEventoTitle">Editar Video</h5>
                         <button
@@ -261,7 +257,6 @@
                         ></button>
                       </div>
 
-                      <!-- Cuerpo del modal -->
                       <div
                         class="modal"
                         :class="{ show: modalEditar }"
@@ -345,7 +340,7 @@
               </div>
             </template>
           </div>
-        </template>
+        </template> -->
       </div>
     </div>
   </div>
@@ -632,17 +627,6 @@ onMounted(() => {
   border: none !important;
 }
 
-.card {
-  border: 1px solid #f1f1f1;
-  border-radius: 1rem;
-  transition: box-shadow 0.3s ease;
-}
-
-.card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-}
-
 .custom-btn {
   background-color: #e66c5a;
   border: none;
@@ -827,5 +811,12 @@ onMounted(() => {
     padding-left: 0.3rem;
     padding-right: 0.3rem;
   }
+}
+
+.card {
+  padding: 0.5em 0.5em;
+  border-radius: 1em;
+  border: 1em;
+  box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
 }
 </style>

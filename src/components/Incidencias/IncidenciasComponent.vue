@@ -12,7 +12,7 @@
             }"
             @click="verMisIncidencias = true"
           >
-            Mis Incidencias
+            MIS INCIDENCIAS
           </button>
         </div>
         <div class="col">
@@ -25,7 +25,7 @@
             }"
             @click="verMisIncidencias = false"
           >
-            Abrir Incidencia
+            ABRIR INCIDENCIA
           </button>
         </div>
       </div>

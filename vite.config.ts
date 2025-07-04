@@ -3,10 +3,43 @@ import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import vueDevTools from "vite-plugin-vue-devtools";
+import { VitePWA } from "vite-plugin-pwa";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue(), vueDevTools()],
+  plugins: [
+    vue(),
+    vueDevTools(),
+    VitePWA({
+      registerType: "autoUpdate",
+      includeAssets: [
+        "favicon.ico",
+        "robots.txt",
+        "logo.png, android-launchericon-192-192.png, android-launchericon-512-512.png ",
+      ],
+      manifest: {
+        name: "365 GDT",
+        short_name: "365 GDT",
+        description: "App para gestionar tu tablet 365",
+        theme_color: "#e66c5a",
+        background_color: "#ffffff",
+        display: "standalone",
+        start_url: "/",
+        icons: [
+          {
+            src: "/android-launchericon-192-192.png",
+            sizes: "192x192",
+            type: "image/png",
+          },
+          {
+            src: "/android-launchericon-512-512.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
+        ],
+      },
+    }),
+  ],
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),

@@ -1,7 +1,6 @@
 <template>
-  <div class="card">
-    <div class="card-header">
-      <h6 class="fs-5">
+  <div>
+      <h6 class="fs-5 mt-3">
         <i @click="restarSemana()" class="fas fa-angles-left"></i>
         SEMANA
         {{ semanaActual.weekNumber }}
@@ -15,7 +14,7 @@
       </div>
     </div>
     <template v-else>
-      <div class="card-body">
+      <div>
         <div class="table-responsive">
           <table class="table table-bordered table-hover table-striped align-middle resumen-table">
             <thead class="fw-bold">
@@ -123,7 +122,6 @@
         </div>
       </div>
     </template>
-  </div>
 </template>
 
 <script setup lang="ts">

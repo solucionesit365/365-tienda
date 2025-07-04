@@ -70,23 +70,9 @@
           removeBtn="Eliminar"
         />
       </div>
-      <div class="mt-2">
-        <div class="form-check">
-          <input
-            class="form-check-input"
-            type="checkbox"
-            value=""
-            id="checkChecked"
-            v-model="autorizoLlamada"
-          />
-          <label class="form-check-label" for="checkChecked">
-            Autorizo a que me contacten mediante vía teléfonica o por whatsapp
-          </label>
-        </div>
-      </div>
       <div class="col-xl-12 col-sm-12 col-12 text-center mt-4 mb-4">
         <button
-          class="btn btn-lg text-light mb-8 rounded-8 w-50"
+          class="btn btn-lg text-light mb-8 rounded-8 w-30"
           style="background: #5ebea3"
           @click="enviar()"
           :class="{ disable: guardando }"
@@ -309,7 +295,7 @@ input[type="checkbox"].form-check-input {
   color: #b0b0b0;
 }
 
-.border{
+.border {
   background: none !important;
 }
 

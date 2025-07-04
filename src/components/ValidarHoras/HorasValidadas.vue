@@ -1,7 +1,7 @@
 <template>
-  <div class="card mb-1 card-transparent">
-    <div class="card-header">
-      <h6 class="fs-5">
+  <div>
+    <div>
+      <h6 class="fs-5 mt-3">
         <i @click="restarSemana()" class="fas fa-angles-left"></i>
         SEMANA
         {{ semanaActual.weekNumber }}
@@ -72,7 +72,7 @@
         <div class="card-footer">
           <div class="row">
             <div class="col-5">
-              <BsButton outline id="button-addon1" :ripple="{ color: 'dark' }">
+              <BsButton class="me-2" >
                 {{ item.horasFichaje + item.horasExtra + item.horasCoordinacion }}
               </BsButton>
               <span v-if="item.comentario.entrada">{{ item.comentario.entrada }}</span>

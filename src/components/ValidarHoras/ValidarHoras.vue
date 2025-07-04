@@ -59,7 +59,7 @@
               <div
                 v-for="(item, index) in datos"
                 v-bind:key="index"
-                class="col-12 col-sm-12 col-xl-4 col-md-4 mb-2"
+                class="col-12 col-sm-12 col-xl-4 col-md-4 mt-4"
               >
                 <div v-if="!item.validado" class="card border border-danger">
                   <div class="card-header">
@@ -131,13 +131,13 @@
                   <div class="card-footer">
                     <div class="row">
                       <div class="col-6">
-                        <BsButton
+                        <BsButton class="me-2"
                           :class="{
                             textDanger: item.horasFichaje > item.horasCuadrante,
                             textNormal: item.horasFichaje <= item.horasCuadrante,
                           }"
                           @click="modificarHorasModal(item)"
-                          color="info"
+                          color="white"
                         >
                           <span>
                             {{ item.horasFichaje + item.horasExtra + item.horasCoordinacion }}

@@ -28,7 +28,7 @@
         >Buscar</MDBBtn
       >
     </div> -->
-   <div class="card mt-2">
+  <div class="card mt-2">
     <div class="card-body cardDocs">
       <div class="row mb-3">
         <div class="col">
@@ -103,10 +103,7 @@
                   style="width: 80%"
                 />
                 <figcaption class="figure-caption text-center">
-                  <h4>
-                    No hay ninguna nota informativa para la semana
-                    {{ punteroFecha.weekNumber }}
-                  </h4>
+                  No hay ninguna nota informativa para esta semana
                 </figcaption>
               </figure>
             </div>
@@ -148,6 +145,23 @@
                   </figure>
                 </div>
               </div>
+            </div>
+          </div>
+        </template>
+        <template v-else>
+          <div class="row justify-content-center">
+            <div class="col-xl-6 col-xs-12 col-12 col-lg-6 text-center">
+              <figure class="figure">
+                <img
+                  src="@/assets/img/nodata.png"
+                  class="rounded mx-auto d-block mt-3 img-fluid"
+                  alt="..."
+                  style="width: 80%"
+                />
+                <figcaption class="figure-caption text-center">
+                  No hay ninguna nota informativa para esta semana
+                </figcaption>
+              </figure>
             </div>
           </div>
         </template>

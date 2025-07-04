@@ -38,16 +38,6 @@
               <button
                 type="button"
                 class="btn w-100"
-                :class="graficosView ? 'colorActive' : 'colorInactive'"
-                @click="moveMenu('graficos')"
-              >
-                GRÁFICOS
-              </button>
-            </div>
-            <div class="col">
-              <button
-                type="button"
-                class="btn w-100"
                 :class="datosView ? 'colorActive' : 'colorInactive'"
                 @click="moveMenu('datos')"
               >

@@ -1,11 +1,10 @@
 <template>
   <div v-if="loading" class="row text-center mt-2">
     <div>
-      <div class="spinner-border" role="status">
-        <span class="visually-hidden">Loading...</span>
+      <BsSpinner class="spinner" :style="{ width: '3rem', height: '3rem' }" role="status" />
+        <p class="loading-text">Cargando...</p>
       </div>
     </div>
-  </div>
   <div v-if="!hayResultados" class="d-flex justify-content-center align-items-center flex-column">
     <figure class="figure">
       <img
@@ -111,6 +110,7 @@ import { useUserStore } from "@/stores/user";
 import { DateTime } from "luxon";
 import ModalAbrirExcel from "./ModalAbrirExcel.vue";
 import ModalEncargos from "./ModalEncargos.vue";
+import BsSpinner from "./365/BsSpinner.vue";
 
 const userStore = useUserStore();
 const hayResultados = ref(true);
@@ -276,5 +276,15 @@ onMounted(() => {
   box-shadow: 0 0 0 0.2rem #d7d9e7 !important;
   border-color: #d7d9e7 !important;
   outline: none !important;
+}
+
+.spinner {
+  color: #e66c5a; /* azul Bootstrap por defecto */
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  font-size: 1.2rem;
+  color: #555;
 }
 </style>

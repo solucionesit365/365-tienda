@@ -368,6 +368,13 @@ function getToday(): string {
   color: #777 !important;
 }
 
+.card {
+  padding: 0.5em 0.5em;
+  border-radius: 1em;
+  border: 1em;
+  box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
+}
+
 .accordion-button {
   font-weight: bold;
 }

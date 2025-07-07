@@ -131,13 +131,14 @@
                   <div class="card-footer">
                     <div class="row">
                       <div class="col-6">
-                        <BsButton class="me-2"
+                        <BsButton
+                          class="me-2"
                           :class="{
                             textDanger: item.horasFichaje > item.horasCuadrante,
                             textNormal: item.horasFichaje <= item.horasCuadrante,
                           }"
                           @click="modificarHorasModal(item)"
-                          color="white"
+                          color="light"
                         >
                           <span>
                             {{ item.horasFichaje + item.horasExtra + item.horasCoordinacion }}
@@ -167,9 +168,12 @@
                   </h5>
                   <p class="card-text" v-if="!loading">Estás al día, buen trabajo!</p>
                   <div v-else class="d-flex justify-content-center">
-                    <div class="spinner-border" role="status" style="width: 5rem; height: 5rem">
-                      <span class="visually-hidden">Cargando...</span>
-                    </div>
+                    <BsSpinner
+                      class="spinner"
+                      :style="{ width: '3rem', height: '3rem' }"
+                      role="status"
+                    />
+                    <p class="loading-text">Cargando...</p>
                   </div>
                 </div>
               </div>
@@ -177,9 +181,8 @@
           </div>
           <div v-else class="row text-center mt-3">
             <div class="d-flex justify-content-center">
-              <div class="spinner-border" role="status" style="width: 5rem; height: 5rem">
-                <span class="visually-hidden">Cargando...</span>
-              </div>
+              <BsSpinner class="spinner" :style="{ width: '3rem', height: '3rem' }" role="status" />
+              <p class="loading-text">Cargando...</p>
             </div>
           </div>
         </template>
@@ -338,6 +341,7 @@ import ResumenHoras from "../ValidarHoras/ResumenHoras.vue";
 import router from "@/router";
 import { hasPermission } from "@/components/rolesPermisos";
 import { useUserStore } from "@/stores/user";
+import BsSpinner from "../365/BsSpinner.vue";
 
 const userStore = useUserStore();
 const currentUser = userStore.user;
@@ -1059,6 +1063,16 @@ onMounted(async () => {
   border-radius: 1em;
   border: 1em;
   box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
+}
+
+.spinner {
+  color: #e66c5a; /* azul Bootstrap por defecto */
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  font-size: 1.2rem;
+  color: #555;
 }
 
 .colorActive {

@@ -18,9 +18,10 @@
             </figure>
           </div>
         </template>
-        <div v-else-if="loading" class="spinner-border" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
+         <div v-if="loading" class="wrap mt-4 text-center">
+            <BsSpinner class="spinner" :style="{ width: '3rem', height: '3rem' }" role="status" />
+            <p class="loading-text">Cargando...</p>
+          </div>
         <template v-else>
           <h5>En este apartado conocerás como es el grupo 365 Obrador</h5>
           <hr />
@@ -166,6 +167,7 @@ import { onMounted, ref } from "vue";
 import Swal from "sweetalert2";
 import { axiosInstance } from "@/components/axios/axios";
 import { hasPermission } from "@/components/rolesPermisos";
+import BsSpinner from "@/components/365/BsSpinner.vue";
 
 const hayVideo = ref(false);
 const videos: any = ref([]);
@@ -303,9 +305,7 @@ function cerrarModal() {
       urlVideo: "",
     };
   }
-
 }
-
 
 onMounted(() => {
   mostrarVideo();
@@ -314,14 +314,16 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.spinner-border[role="status"] {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 2rem auto;
-  width: 3rem;
-  height: 3rem;
+.spinner {
+  color: #e66c5a; /* azul Bootstrap por defecto */
+  margin-bottom: 1rem;
 }
+
+.loading-text {
+  font-size: 1.2rem;
+  color: #555;
+}
+
 
 .modal.d-block {
   display: block;

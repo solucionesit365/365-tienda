@@ -47,6 +47,10 @@
           </div>
           <div v-if="datosView == true">
             <template v-if="datosPDF.length > 0">
+              <div v-if="loading" class="wrap mt-4 text-center">
+            <BsSpinner class="spinner" :style="{ width: '3rem', height: '3rem' }" role="status" />
+            <p class="loading-text">Cargando...</p>
+          </div>
               <div v-for="pdf in datosPDF" :key="pdf._id" class="card mt-3">
                 <div class="card-header">
                   <h5>Reporte KPI:</h5>
@@ -129,6 +133,7 @@ interface PdfData {
 }
 
 const datosPDF = ref<PdfData[]>([]);
+const loading = ref(false);
 const currentUser = computed(() => useStore.user);
 console.log(currentUser.value);
 function restarSemana() {
@@ -160,8 +165,8 @@ function moveMenu(menu: any) {
       break;
   }
 }
-
 async function getPDF() {
+  loading.value = true;
   try {
     await axiosInstance
       .get("kpi-tiendas/getKPIS", {
@@ -181,8 +186,11 @@ async function getPDF() {
       });
   } catch (error) {
     console.log(error);
+  } finally {
+    loading.value = false;
   }
 }
+
 
 async function mostrarPDF() {
   for (let i = 0; i < datosPDF.value.length; i++) {

@@ -37,12 +37,9 @@
           </button>
         </div>
       </div>
-      <div v-if="loading" class="row text-center mt-2">
-        <div>
-          <div class="spinner-border" role="status" style="width: 5rem; height: 5rem">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-        </div>
+      <div v-if="loading" class="wrap mt-4 text-center">
+        <BsSpinner class="spinner" :style="{ width: '3rem', height: '3rem' }" role="status" />
+        <p class="loading-text">Cargando...</p>
       </div>
       <template v-else>
         <div class="row mt-2">
@@ -367,6 +364,7 @@ import Swal from "sweetalert2";
 import { hasPermission } from "@/components/rolesPermisos";
 import { useUserStore } from "@/stores/user";
 import BsSelect from "./365/BsSelect.vue";
+import BsSpinner from "./365/BsSpinner.vue";
 
 const userStore = useUserStore();
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -1031,6 +1029,16 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+.spinner {
+  color: #e66c5a; /* azul Bootstrap por defecto */
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  font-size: 1.2rem;
+  color: #555;
+}
+
 .modal-header {
   border-bottom: 1px solid #e0e0e0;
   background: linear-gradient(90deg, #e66c5a 0%, #333 100%);

@@ -119,6 +119,7 @@ import { ref, onMounted, computed } from "vue";
 import { obtenerUrlImagen } from "@/components/firebase/storage";
 import { axiosInstance } from "@/components/axios/axios";
 import { useUserStore } from "@/stores/user";
+import BsSpinner from "./365/BsSpinner.vue";
 
 const useStore = useUserStore();
 const punteroFecha = ref(DateTime.now().startOf("week").setLocale("es"));
@@ -241,6 +242,16 @@ onMounted(() => {
 .colorInactive {
   background-color: #d7d9e7 !important;
   color: #777 !important;
+}
+
+.spinner {
+  color: #e66c5a; /* azul Bootstrap por defecto */
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  font-size: 1.2rem;
+  color: #555;
 }
 
 .accordion-button {

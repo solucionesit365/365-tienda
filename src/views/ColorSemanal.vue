@@ -3,7 +3,7 @@
     <div class="card-body cardDocs">
       <div>
         <div class="color-container">
-          <div v-if="isLoading" class="loading-spinner">
+          <div v-if="isLoading" class="wrap mt-4 text-center">
             <BsSpinner class="spinner" :style="{ width: '3rem', height: '3rem' }" role="status" />
             <p class="loading-text">Cargando...</p>
           </div>

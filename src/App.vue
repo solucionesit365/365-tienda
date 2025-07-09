@@ -4,6 +4,7 @@
     <div class="container-fluid contenido-con-scroll">
       <BackButton />
       <RouterView />
+      <FooterComponent :class="{ 'd-none': hideFooter }" />
     </div>
   </template>
   <template v-else>
@@ -22,11 +23,13 @@ import { onMounted, ref, watch } from "vue";
 import { axiosInstance } from "./components/axios/axios";
 import LoaderComponent from "./components/LoaderComponent.vue";
 import NavComponent from "./components/NavComponent.vue";
+import FooterComponent from "./components/FooterComponent.vue";
 
 const auth = getAuth(app);
 const userStore = useUserStore();
 const router = useRouter();
 const loading = ref(true);
+const hideFooter = ref(false);
 
 function antiLag() {
   if (userStore.isLogeado && userStore.getUid) return false;

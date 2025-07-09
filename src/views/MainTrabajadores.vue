@@ -6,7 +6,7 @@
     </span>
   </h3>
 
-  <span style="color: #243746">Bienvenido al portal 365</span>
+  <span style="color: #243746">Gestión de la tienda 365</span>
 
   <!-- Diseño Home para escritorio y tabletas -->
   <div class="d-none d-sm-none d-md-block mb-8">
@@ -285,13 +285,19 @@
             <div class="col-12 col-xl-6 col-md-6">
               <h4 class="text-center mt-3">
                 Ingresa tu código de empleado
-                <span
-                  class="tooltip-icon"
-                  title="Puedes encontrar tu código de empleado en tu apartado principal."
-                  style="color: #007bff; cursor: pointer; margin-left: 5px"
+                <div
+                  class="tooltip-wrapper"
+                  @touchstart.prevent="mostrar = true"
+                  @mouseleave="mostrar = false"
+                  @mouseenter="mostrar = true"
                 >
-                  <i class="fas fa-info-circle"></i>
-                </span>
+                  <span class="tooltip-icon">
+                    <i class="fas fa-info-circle"></i>
+                  </span>
+                  <div class="tooltip-content" v-if="mostrar">
+                    Puedes encontrar tu código de empleado en tu apartado principal.
+                  </div>
+                </div>
               </h4>
               <div class="input-group mt-4">
                 <input id="inputCodigo" type="text" class="form-control" v-model="codigoEmpleado" />
@@ -345,6 +351,7 @@ const codigoEmpleadoModalRef = ref(null);
 const codigoEmpleadoModalInstance = ref<Modal | null>(null);
 const reposicionModalInstance = ref<Modal | null>(null);
 const router = useRouter();
+const mostrar = ref(false);
 
 defineEmits(["update:user", "toggleFooter"]);
 
@@ -446,7 +453,14 @@ async function validarCodigoEmpleado() {
             document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
 
             // Redirigir después de cerrar el modal
-            Swal.fire("Acceso concedido", "Redirigiendo...", "success").then(() => {
+            Swal.fire({
+              icon: "success",
+              title: "Acceso concedido",
+              text: "Redirigiendo...",
+              showConfirmButton: false,
+              timer: 1500,
+              timerProgressBar: true,
+            }).then(() => {
               if (accionPendiente.value === "Validar horas") {
                 router.push("/validar-horas");
               } else if (accionPendiente.value === "vacaciones") {
@@ -508,8 +522,8 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-h3{
-  font-family:Georgia, 'Times New Roman', Times, serif;
+h3 {
+  font-family: Georgia, "Times New Roman", Times, serif;
 }
 /* CSS para aplicar en tu archivo de estilos */
 .background-element {
@@ -554,5 +568,33 @@ h3{
   .background-element {
     height: 500px !important; /* Altura fija para escritorio, ajusta según tus necesidades */
   }
+}
+.tooltip-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-icon {
+  color: #007bff;
+  cursor: pointer;
+  margin-left: 5px;
+  font-size: 1.1rem;
+}
+
+.tooltip-content {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #343a40;
+
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  z-index: 10;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
 }
 </style>

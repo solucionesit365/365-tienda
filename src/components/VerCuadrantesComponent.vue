@@ -235,7 +235,7 @@
 
       <!-- Loading state -->
       <div v-else class="loading-container">
-        <BsSpinner :style="{ width: '3rem', height: '3rem' }" />
+        <BsSpinner class="spinner" :style="{ width: '3rem', height: '3rem' }" role="status" />
         <p class="loading-text">Cargando cuadrantes...</p>
       </div>
 
@@ -754,7 +754,14 @@ async function validarCodigoEmpleado() {
         uidCoordinadora.value = usuario.uid;
         localStorage.setItem("uidCoordinadora", usuario.uid);
 
-        Swal.fire("Acceso concedido", "Redirigiendo...", "success").then(() => {
+        Swal.fire({
+          icon: "success",
+          title: "Acceso concedido",
+          text: "Redirigiendo...",
+          showConfirmButton: false,
+          timer: 1500,
+          timerProgressBar: true,
+        }).then(() => {
           if (accionPendiente.value === "Crear cuadrantes") {
             abrirModalCrearCuadrante();
           }
@@ -1128,9 +1135,14 @@ onMounted(() => {
   gap: 1rem;
 }
 
+.spinner {
+  color: #e66c5a; /* azul Bootstrap por defecto */
+  margin-bottom: 1rem;
+}
+
 .loading-text {
-  color: #6c757d;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
+  color: #555;
 }
 
 .empty-state {

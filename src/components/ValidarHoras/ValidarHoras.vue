@@ -131,13 +131,14 @@
                   <div class="card-footer">
                     <div class="row">
                       <div class="col-6">
-                        <BsButton class="me-2"
+                        <BsButton
+                          class="me-2"
                           :class="{
                             textDanger: item.horasFichaje > item.horasCuadrante,
                             textNormal: item.horasFichaje <= item.horasCuadrante,
                           }"
                           @click="modificarHorasModal(item)"
-                          color="white"
+                          color="light"
                         >
                           <span>
                             {{ item.horasFichaje + item.horasExtra + item.horasCoordinacion }}
@@ -563,6 +564,7 @@ async function getHorasValidar() {
                 comentario: null,
                 respSuper: "",
                 estadoValidado: "PENDIENTE",
+                marcaTemporal: null,
               },
             };
           }
@@ -685,6 +687,7 @@ async function getHorasValidar() {
             idTienda: fichajes.idtienda,
             enviado: fichajes.enviado,
             horasfichajeMostrar: horasfichajeMostrar,
+            creacion: DateTime.now().setLocale("es").toFormat("dd/MM/yyyy - HH:mm:ss"),
           };
         });
       });
@@ -1192,7 +1195,6 @@ button {
   max-width: 650px;
   width: 95vw;
   border-radius: 1rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
   background: transparent;
   display: flex;
   flex-direction: column;

@@ -87,7 +87,7 @@ interface CalendarDay {
 
 const props = defineProps({
   modelValue: {
-    type: Object as () => DateTime | null,
+    type: Object as () => DateTime | string | null,
     default: null,
   },
   placeholder: {
@@ -153,31 +153,22 @@ const formattedDate = computed(() => {
   return selectedDate.value.toFormat(props.format);
 });
 
-const MIN_WIDTH_DESKTOP = 280;
+const MIN_WIDTH_DESKTOP = 320;
 const MARGIN = 16; // píxeles de margen en móvil
 
 const updateDropdownPosition = () => {
   if (!inputRef.value || !dropdownRef.value) return;
+
   const rect = inputRef.value.getBoundingClientRect();
   const vw = window.innerWidth;
-  const isMobile = vw <= 576;
 
-  let width: number;
-  let left: number;
+  const width = MIN_WIDTH_DESKTOP;
+  let left = rect.left;
 
-  if (isMobile) {
-    // en móvil: ancho casi total, con margen
-    width = vw - MARGIN * 2;
-    left = MARGIN;
-  } else {
-    // en escritorio: ancho = max(inputWidth, MIN_WIDTH)
-    width = Math.max(rect.width, MIN_WIDTH_DESKTOP);
-    left = rect.left;
-    // ajustamos para que no se salga por la derecha
-    if (left + width > vw - MARGIN) {
-      left = vw - MARGIN - width;
-      if (left < MARGIN) left = MARGIN;
-    }
+  // Ajuste si se sale de la pantalla
+  if (left + width > vw - MARGIN) {
+    left = vw - MARGIN - width;
+    if (left < MARGIN) left = MARGIN;
   }
 
   dropdownStyle.value = {
@@ -185,7 +176,6 @@ const updateDropdownPosition = () => {
     top: `${rect.bottom + 4}px`,
     left: `${left}px`,
     width: `${width}px`,
-    minWidth: "0px", // anula cualquier min-width CSS
     maxHeight: "80vh",
     overflowY: "auto",
     zIndex: "2000",
@@ -272,29 +262,40 @@ const openCalendar = () => {
   showCalendar.value = true;
 };
 
+const emitSelectedDate = (date: DateTime | null) => {
+  if (date === null) {
+    emit("update:modelValue", modelType.value === "string" ? "" : null);
+  } else {
+    emit("update:modelValue", modelType.value === "string" ? date.toFormat(props.format) : date);
+  }
+};
+
+// selectDate
 const selectDate = (day: CalendarDay) => {
   if (!day.currentMonth) {
     currentMonth.value = day.month;
     currentYear.value = day.year;
   }
-
-  selectedDate.value = DateTime.local(day.year, day.month + 1, day.day);
-  emit("update:modelValue", selectedDate.value);
+  const newDate = DateTime.local(day.year, day.month + 1, day.day);
+  selectedDate.value = newDate;
+  emitSelectedDate(newDate);
   showCalendar.value = false;
 };
 
+// selectToday
 const selectToday = () => {
   const today = DateTime.now().startOf("day");
   selectedDate.value = today;
   currentMonth.value = today.month - 1;
   currentYear.value = today.year;
-  emit("update:modelValue", selectedDate.value);
+  emitSelectedDate(today);
   showCalendar.value = false;
 };
 
+// clearDate
 const clearDate = () => {
   selectedDate.value = null;
-  emit("update:modelValue", null);
+  emitSelectedDate(null);
   showCalendar.value = false;
 };
 
@@ -321,13 +322,26 @@ const handleClickOutside = (event: MouseEvent) => {
   showCalendar.value = false;
 };
 
+const modelType = ref<"datetime" | "string">("datetime");
+
 watch(
   () => props.modelValue,
   (newValue) => {
-    if (newValue && DateTime.isDateTime(newValue)) {
+    if (typeof newValue === "string") {
+      const parsed = DateTime.fromFormat(newValue, props.format);
+      if (parsed.isValid) {
+        selectedDate.value = parsed;
+        currentMonth.value = parsed.month - 1;
+        currentYear.value = parsed.year;
+        modelType.value = "string";
+      } else {
+        selectedDate.value = null;
+      }
+    } else if (newValue && DateTime.isDateTime(newValue)) {
       selectedDate.value = newValue;
       currentMonth.value = newValue.month - 1;
       currentYear.value = newValue.year;
+      modelType.value = "datetime";
     } else {
       selectedDate.value = null;
     }

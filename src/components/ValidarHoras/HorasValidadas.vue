@@ -72,7 +72,7 @@
         <div class="card-footer">
           <div class="row">
             <div class="col-5">
-              <BsButton class="me-2" >
+              <BsButton class="me-2">
                 {{ item.horasFichaje + item.horasExtra + item.horasCoordinacion }}
               </BsButton>
               <span v-if="item.comentario.entrada">{{ item.comentario.entrada }}</span>
@@ -195,7 +195,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <BsButton color="secondary" @click="modalPagarHoras = false">Descartar</BsButton>
+          <BsButton color="danger" @click="modalPagarHoras = false">Descartar</BsButton>
           <BsButton color="primary" @click="enviarPropuesta()">Proponer</BsButton>
         </div>
       </div>
@@ -405,6 +405,9 @@ function verSolicitud(item: any) {
 
 async function enviarPropuesta() {
   tarjetaPagar.value.aPagar = true;
+  tarjetaPagar.value.horasPagar.marcaTemporalCreacionPropuesta = DateTime.now()
+    .setLocale("es")
+    .toFormat("dd/MM/yyyy - HH:mm:ss");
   if (!tarjetaPagar.value.horasPagar.comentario) {
     Swal.fire("Oops...", "Falta el comentario, es obligatorio", "error");
   } else {
@@ -519,7 +522,6 @@ onMounted(async () => {
   max-width: 650px;
   width: 95vw;
   border-radius: 1rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
   background: transparent;
   display: flex;
   flex-direction: column;

@@ -80,7 +80,6 @@ async function updateEncargo() {
       .then((response: any) => {
         if (response) {
           Swal.fire("Perfecto", "Encargo entregado", "success");
-          console.log(response);
           modalEncargos.value = false;
         } else {
           Swal.fire("Error", "No se ha podido entregar el encargo", "error");

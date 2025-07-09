@@ -6,9 +6,10 @@ import { createPinia } from "pinia";
 import App from "./App.vue";
 import router from "./router";
 import { registerSW } from "virtual:pwa-register";
+import packageInfo from "../package.json";
 
 const app = createApp(App);
-
+app.config.globalProperties.$appVersion = packageInfo.version;
 app.use(createPinia());
 app.use(router);
 app.mount("#app");

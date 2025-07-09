@@ -32,12 +32,15 @@
         <form @submit.prevent="guardarEncargo">
           <div class="row g-2 mb-3">
             <div class="col-md-6">
-              <select v-model="selecionarTienda" class="form-select" style="outline: none" required>
-                <option value="" disabled selected>Selecciona una tienda</option>
-                <option v-for="tienda in tiendas" :key="tienda.value" :value="tienda.value">
-                  {{ tienda.text }}
-                </option>
-              </select>
+              <BsSelect
+                v-model:selected="selecionarTienda"
+                :options="tiendas"
+                value-key="value"
+                text-key="text"
+                placeholder="Selecciona una tienda"
+                filter
+                :preselect="false"
+              />
             </div>
             <div class="col-md-6">
               <input
@@ -51,13 +54,7 @@
           </div>
           <div class="row g-2 mb-3">
             <div class="col-md-6">
-              <input
-                type="date"
-                class="form-control"
-                v-model="encargo.fechaEntrega"
-                :min="getToday()"
-                required
-              />
+              <BsDatepicker v-model="encargo.fechaEntrega" input-toggle />
             </div>
             <div class="col-md-6">
               <select class="form-select" v-model="encargo.rangoRecogida" required>
@@ -148,11 +145,14 @@ import { ref, onMounted } from "vue";
 import Swal from "sweetalert2";
 import { axiosInstance } from "@/components/axios/axios";
 import EncargosList from "./EncargosList.vue";
+import BsDatepicker from "./365/BsDatepicker.vue";
+import BsSelect from "./365/BsSelect.vue";
+// import { DateTime } from "luxon";
 
 const verMisEncargos = ref(true);
 const encargoListRef = ref(null);
 const tiendas = ref<{ value: string; text: string }[]>([]);
-const selecionarTienda = ref("");
+const selecionarTienda = ref<string | { value: string; text: string }>("");
 
 const encargo = ref<{
   idTienda: string;
@@ -165,7 +165,10 @@ const encargo = ref<{
   rangoRecogida: string;
   productos: { nombreProducto: string; cantidad: number }[];
 }>({
-  idTienda: selecionarTienda.value,
+  idTienda:
+    typeof selecionarTienda.value === "object" && selecionarTienda.value !== null
+      ? selecionarTienda.value.value
+      : selecionarTienda.value,
   nombre: "",
   fechaEntrega: null,
   horaEntrega: null,
@@ -248,12 +251,37 @@ const guardarEncargo = async () => {
     fallo.value = true;
     Swal.fire("Error", "Debes seleccionar una tienda", "error");
   }
-  encargo.value.idTienda = selecionarTienda.value;
+  encargo.value.idTienda =
+    typeof selecionarTienda.value === "object" && selecionarTienda.value !== null
+      ? selecionarTienda.value.value
+      : selecionarTienda.value;
 
   /*if (encargo.value.telefono === "") {
         fallo.value = true;
         Swal.fire("Error", "Debes introducir el telefono del cliente", "error");
       }*/
+
+  // if (
+  //   encargo.value.fechaEntrega &&
+  //   typeof encargo.value.fechaEntrega === "object" &&
+  //   "toISO" in encargo.value.fechaEntrega &&
+  //   typeof (encargo.value.fechaEntrega as { toISO: () => string; toISODate: () => string })
+  //     .toISO === "function"
+  // ) {
+  //   // Solo la fecha (sin hora)
+  //   encargo.value.fechaEntrega = (
+  //     encargo.value.fechaEntrega as { toISODate: () => string }
+  //   ).toISODate();
+  //   // O si quieres con hora -> .toISO()
+  // }
+
+  if (
+    encargo.value.fechaEntrega &&
+    typeof encargo.value.fechaEntrega === "object" &&
+    "toFormat" in encargo.value.fechaEntrega
+  ) {
+    encargo.value.fechaEntrega = (encargo.value.fechaEntrega as any).toFormat("dd/MM/yyyy");
+  }
 
   if (!fallo.value) {
     encargo.value.productos = productos.value
@@ -271,10 +299,12 @@ const guardarEncargo = async () => {
           Swal.fire(
             "Perfecto",
             `Encargo creado. Se recogerá el ${encargo.value.fechaEntrega} de ${encargo.value.rangoRecogida}`,
-            "success",
           );
           encargo.value = {
-            idTienda: selecionarTienda.value,
+            idTienda:
+              typeof selecionarTienda.value === "object" && selecionarTienda.value !== null
+                ? selecionarTienda.value.value
+                : selecionarTienda.value,
             nombre: "",
             fechaEntrega: null,
             horaEntrega: null,
@@ -337,14 +367,6 @@ function getTiendas() {
 onMounted(() => {
   getTiendas();
 });
-
-function getToday(): string {
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, "0");
-  const dd = String(today.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
 </script>
 
 <style scoped>

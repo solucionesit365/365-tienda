@@ -374,6 +374,9 @@ async function enviarPropuesta(estadoValidado: any) {
       if (result.isConfirmed) {
         modalRevisarSoli.value = false;
         tarjetaRevision.value.horasPagar.estadoValidado = "APROBADAS";
+        tarjetaRevision.value.horasPagar.marcaTemporalAprobadaSuper = DateTime.now()
+          .setLocale("es")
+          .toFormat("dd/MM/yyyy - HH:mm:ss");
         guardarCambios().then(() => {
           getFichajesPagar();
         });
@@ -392,6 +395,9 @@ async function enviarPropuesta(estadoValidado: any) {
 
     if (text) {
       tarjetaRevision.value.horasPagar.estadoValidado = "RECHAZADAS";
+      tarjetaRevision.value.horasPagar.marcaTemporalRechazadaSuper = DateTime.now()
+        .setLocale("es")
+        .toFormat("dd/MM/yyyy - HH:mm:ss");
       tarjetaRevision.value.horasPagar.respSuper = text;
       guardarCambios().then(() => {
         getFichajesPagar();

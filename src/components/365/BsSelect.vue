@@ -18,7 +18,7 @@
         <span class="selected-text">
           {{ displayText }}
         </span>
-        <i class="bi bi-chevron-down ms-2"></i>
+        <!-- <i class="bi bi-chevron-down ms-2"></i> -->
       </div>
 
       <!-- Dropdown Menu -->
@@ -189,8 +189,17 @@ const displayText = computed(() => {
     }
     return `${selectedCount} ${props.optionsSelectedLabel}`;
   } else {
-    // For single select, show the text of the selected object
     if (internalSelected.value) {
+      // Si es string o number (por value), buscar el objeto en las opciones
+      if (
+        typeof internalSelected.value === "string" ||
+        typeof internalSelected.value === "number"
+      ) {
+        const matched = props.options.find((opt) => getOptionValue(opt) === internalSelected.value);
+        return matched ? getOptionText(matched) : internalSelected.value;
+      }
+
+      // Si es objeto completo
       return getOptionText(internalSelected.value);
     }
     return props.placeholder;
@@ -256,9 +265,11 @@ const emitUpdate = (value: any) => {
 
 const selectOption = (option: Record<string, any>) => {
   if (!props.multi) {
-    // Store the complete object
     internalSelected.value = option;
-    emitUpdate(option);
+
+    const emittedValue = props.valueKey && props.valueKey !== "" ? option[props.valueKey] : option;
+
+    emitUpdate(emittedValue);
     closeDropdown();
   }
 };

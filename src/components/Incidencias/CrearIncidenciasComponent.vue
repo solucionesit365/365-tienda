@@ -72,8 +72,7 @@
       </div>
       <div class="col-xl-12 col-sm-12 col-12 text-center mt-4 mb-4">
         <button
-          class="btn btn-lg text-light mb-8 rounded-8 w-30"
-          style="background: #5ebea3"
+          class="btn btn-success w-30"
           @click="enviar()"
           :class="{ disable: guardando }"
         >

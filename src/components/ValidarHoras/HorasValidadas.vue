@@ -12,11 +12,8 @@
         {{ añoActual.year }}
         <i @click="sumarAño()" class="fas fa-angles-right"></i>
         <BsButton
-          class="ms-4 buttonConsultar"
-          outline
-          id="button-addon1"
+          class="ms-4 text-white btn-primary"
           :disabled="loading"
-          :ripple="{ color: 'dark' }"
           @click="consultarFichajes()"
         >
           CONSULTAR
@@ -495,13 +492,7 @@ onMounted(async () => {
   padding: 0.5rem 1.2rem;
   border: 2px solid;
 }
-.buttonConsultar {
-  color: #14a44d;
-  font-size: 0.8rem;
-}
-.buttonConsultar:hover {
-  background-color: transparent;
-}
+
 .modal {
   background: rgba(0, 0, 0, 0.35);
   display: none;

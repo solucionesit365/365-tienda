@@ -1,11 +1,4 @@
 <template>
-  <router-link
-    v-if="llevaEquipo || hasPermission('ModoTienda')"
-    to="/pedir-vacaciones"
-    class="text-decoration-none"
-  >
-    <BsButton color="success" class="ms-4"><i class="fas fa-plus" /> Nueva </BsButton>
-  </router-link>
   <div class="justify-content-center mt-2">
     <div class="col-xl-12 col-sm-12 col-12">
       <div class="card">
@@ -39,16 +32,29 @@
           <div class="card-content">
             <div class="card-body">
               <div class="row custom-row">
-                <div class="d-flex flex-wrap gap-2 align-items-center mb-3 px-3">
+                <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+                  <router-link
+                    v-if="llevaEquipo || hasPermission('ModoTienda')"
+                    to="/pedir-vacaciones"
+                    class="text-decoration-none"
+                  >
+                    <BsButton color="success" class="me-2"
+                      ><i class="fas fa-plus" /> Nueva
+                    </BsButton>
+                  </router-link>
+
                   <BsButton
+                    class="me-1"
                     :class="vacacionesYear ? 'colorActiveAño' : 'colorInactiveAño'"
                     @click="chucha2(currentYear)"
                   >
                     {{ currentYear }}
                   </BsButton>
+
                   <BsButton
+                    class="me-3"
                     :class="!vacacionesYear ? 'colorActiveAño' : 'colorInactiveAño'"
-                    @click="chucha2(Number(currentYear) - 1)"
+                    @click="chucha2(parseInt(currentYear) - 1)"
                   >
                     {{ Number(currentYear) - 1 }}
                   </BsButton>
@@ -212,9 +218,13 @@
                 </figure>
               </div>
               <div v-if="loading" class="wrap mt-4 text-center">
-            <BsSpinner class="spinner" :style="{ width: '3rem', height: '3rem' }" role="status" />
-            <p class="loading-text">Cargando...</p>
-          </div>
+                <BsSpinner
+                  class="spinner"
+                  :style="{ width: '3rem', height: '3rem' }"
+                  role="status"
+                />
+                <p class="loading-text">Cargando...</p>
+              </div>
             </div>
           </div>
         </template>
@@ -832,15 +842,17 @@ onMounted(() => {
   border-radius: 0.3rem;
 }
 .colorActiveAño {
-  background-color: #30cae6;
-  color: black;
-  padding: 0.6rem;
+  background-color: #0d6efd; /* azul Bootstrap */
+  color: white;
+  border: 1px solid #0d6efd;
 }
 
 .colorInactiveAño {
-  background-color: #d7d9e7;
-  color: rgb(119, 119, 119);
+  background-color: white;
+  color: #0d6efd;
+  border: 1px solid #0d6efd;
 }
+
 .card {
   padding: 0.5em 0.5em;
   border-radius: 1em;

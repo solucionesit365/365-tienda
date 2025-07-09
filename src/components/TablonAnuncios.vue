@@ -333,7 +333,7 @@
               />
             </div>
             <div class="text-end">
-              <button type="button" class="btn btn-secondary me-2" @click="modalCandidato = false">
+              <button type="button" class="btn btn-danger me-2" @click="modalCandidato = false">
                 Descartar
               </button>
               <button type="submit" class="btn btn-success">Enviar</button>

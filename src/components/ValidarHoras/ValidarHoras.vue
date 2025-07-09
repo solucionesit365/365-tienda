@@ -167,7 +167,7 @@
                     <i class="fab fa-angellist fs-1"></i>
                   </h5>
                   <p class="card-text" v-if="!loading">Estás al día, buen trabajo!</p>
-                  <div v-else class="d-flex justify-content-center">
+                  <div v-if="loading" class="wrap mt-4 text-center">
                     <BsSpinner
                       class="spinner"
                       :style="{ width: '3rem', height: '3rem' }"
@@ -180,7 +180,7 @@
             </template>
           </div>
           <div v-else class="row text-center mt-3">
-            <div class="d-flex justify-content-center">
+            <div v-if="loading" class="wrap mt-4 text-center">
               <BsSpinner class="spinner" :style="{ width: '3rem', height: '3rem' }" role="status" />
               <p class="loading-text">Cargando...</p>
             </div>

@@ -47,6 +47,10 @@
           </div>
           <div v-if="datosView == true">
             <template v-if="datosPDF.length > 0">
+              <div v-if="loading" class="wrap mt-4 text-center">
+            <BsSpinner class="spinner" :style="{ width: '3rem', height: '3rem' }" role="status" />
+            <p class="loading-text">Cargando...</p>
+          </div>
               <div v-for="pdf in datosPDF" :key="pdf._id" class="card mt-3">
                 <div class="card-header">
                   <h5>Reporte KPI:</h5>
@@ -115,6 +119,7 @@ import { ref, onMounted, computed } from "vue";
 import { obtenerUrlImagen } from "@/components/firebase/storage";
 import { axiosInstance } from "@/components/axios/axios";
 import { useUserStore } from "@/stores/user";
+import BsSpinner from "./365/BsSpinner.vue";
 
 const useStore = useUserStore();
 const punteroFecha = ref(DateTime.now().startOf("week").setLocale("es"));
@@ -129,6 +134,7 @@ interface PdfData {
 }
 
 const datosPDF = ref<PdfData[]>([]);
+const loading = ref(false);
 const currentUser = computed(() => useStore.user);
 console.log(currentUser.value);
 function restarSemana() {
@@ -160,8 +166,8 @@ function moveMenu(menu: any) {
       break;
   }
 }
-
 async function getPDF() {
+  loading.value = true;
   try {
     await axiosInstance
       .get("kpi-tiendas/getKPIS", {
@@ -181,8 +187,11 @@ async function getPDF() {
       });
   } catch (error) {
     console.log(error);
+  } finally {
+    loading.value = false;
   }
 }
+
 
 async function mostrarPDF() {
   for (let i = 0; i < datosPDF.value.length; i++) {
@@ -233,6 +242,16 @@ onMounted(() => {
 .colorInactive {
   background-color: #d7d9e7 !important;
   color: #777 !important;
+}
+
+.spinner {
+  color: #e66c5a; /* azul Bootstrap por defecto */
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  font-size: 1.2rem;
+  color: #555;
 }
 
 .accordion-button {

@@ -190,10 +190,8 @@
             </figure>
           </div>
           <div v-if="loading" class="wrap mt-4 text-center">
-            <div class="loading">
-              <div class="bounceball" />
-              <div class="text">Cargando Información</div>
-            </div>
+            <BsSpinner class="spinner" :style="{ width: '3rem', height: '3rem' }" role="status" />
+            <p class="loading-text">Cargando...</p>
           </div>
         </div>
       </template>
@@ -315,6 +313,7 @@ import { ref, onMounted, computed } from "vue";
 import { useUserStore } from "@/stores/user";
 import { hasPermission } from "@/components/rolesPermisos";
 import { DateTime } from "luxon";
+import BsSpinner from "@/components/365/BsSpinner.vue";
 
 const detallesIncidenciaModal = ref(false);
 const store = useUserStore();
@@ -1030,6 +1029,16 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 1rem;
   justify-content: flex-end;
+}
+
+.spinner {
+  color: #e66c5a; /* azul Bootstrap por defecto */
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  font-size: 1.2rem;
+  color: #555;
 }
 
 @media (max-width: 900px) {

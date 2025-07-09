@@ -211,12 +211,10 @@
                   </figcaption>
                 </figure>
               </div>
-              <div v-if="loading" class="wrap text-center">
-                <div class="loading">
-                  <div class="bounceball" />
-                  <div class="text">Cargando Información</div>
-                </div>
-              </div>
+              <div v-if="loading" class="wrap mt-4 text-center">
+            <BsSpinner class="spinner" :style="{ width: '3rem', height: '3rem' }" role="status" />
+            <p class="loading-text">Cargando...</p>
+          </div>
             </div>
           </div>
         </template>
@@ -272,6 +270,7 @@ import { DateTime } from "luxon";
 import BsSelect from "@/components/365/BsSelect.vue";
 import BsInput from "@/components/365/BsInput.vue";
 import BsTable from "@/components/365/BsTable.vue";
+import BsSpinner from "../365/BsSpinner.vue";
 
 const userStore = useUserStore();
 const search3 = ref("");
@@ -812,6 +811,16 @@ onMounted(() => {
   font-weight: bold;
   border: none;
   border-radius: 0.3rem;
+}
+
+.spinner {
+  color: #e66c5a; /* azul Bootstrap por defecto */
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  font-size: 1.2rem;
+  color: #555;
 }
 
 .colorInactive {

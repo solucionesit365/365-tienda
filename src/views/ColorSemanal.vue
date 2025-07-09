@@ -1,56 +1,60 @@
 <template>
-    <div class="card mt-2">
+  <div class="card mt-2">
     <div class="card-body cardDocs">
-  <div>
-    <div class="color-container">
-      <div v-if="isLoading" class="loading-spinner">
-        <i class="fas fa-spinner fa-spin text-primary fa-2x"></i>
-      </div>
-      <div v-else>
-        <div class="color-row mb-4">
-          <div v-if="colorIn" class="color-display me-4">
-            <p class="color-label">Color que ENTRA:</p>
-            <div class="color-box" :style="{ backgroundColor: getColorHex(colorIn) }"></div>
-            <p class="color-name">{{ translateColor(colorIn) }}</p>
+      <div>
+        <div class="color-container">
+          <div v-if="isLoading" class="wrap mt-4 text-center">
+            <BsSpinner class="spinner" :style="{ width: '3rem', height: '3rem' }" role="status" />
+            <p class="loading-text">Cargando...</p>
           </div>
-          <div v-if="colorOut" class="color-display">
-            <p class="color-label">Color a ELIMINAR:</p>
-            <div class="color-box" :style="{ backgroundColor: getColorHex(colorOut) }"></div>
-            <p class="color-name">{{ translateColor(colorOut) }}</p>
-          </div>
-        </div>
+          <div v-else>
+            <div class="color-row mb-4">
+              <div v-if="colorIn" class="color-display me-4">
+                <p class="color-label">Color que ENTRA:</p>
+                <div class="color-box" :style="{ backgroundColor: getColorHex(colorIn) }"></div>
+                <p class="color-name">{{ translateColor(colorIn) }}</p>
+              </div>
+              <div v-if="colorOut" class="color-display">
+                <p class="color-label">Color a ELIMINAR:</p>
+                <div class="color-box" :style="{ backgroundColor: getColorHex(colorOut) }"></div>
+                <p class="color-name">{{ translateColor(colorOut) }}</p>
+              </div>
+            </div>
 
-        <p class="mt-3 text-center">
-          Última actualización:
-          <span class="fw-bold">semana {{ updatedAt }}</span>
-        </p>
+            <p class="mt-3 text-center">
+              Última actualización:
+              <span class="fw-bold">semana {{ updatedAt }}</span>
+            </p>
 
-        <div v-if="isResponsible" class="color-selection">
-          <p class="color-label text-center mb-3">Selecciona el nuevo color que entrará esta semana</p>
-          <div class="color-options-row">
-            <div
-              v-for="(color, index) in availableColors"
-              :key="color"
-              class="color-option-wrapper"
-            >
-              <div
-                class="color-option"
-                :style="{ backgroundColor: getColorHex(color) }"
-                @click="confirmColorChange(color)"
-                :title="translateColor(color)"
-              ></div>
-              <div v-if="index < availableColors.length - 1" class="color-connector"></div>
+            <div v-if="isResponsible" class="color-selection">
+              <p class="color-label text-center mb-3">
+                Selecciona el nuevo color que entrará esta semana
+              </p>
+              <div class="color-options-row">
+                <div
+                  v-for="(color, index) in availableColors"
+                  :key="color"
+                  class="color-option-wrapper"
+                >
+                  <div
+                    class="color-option"
+                    :style="{ backgroundColor: getColorHex(color) }"
+                    @click="confirmColorChange(color)"
+                    :title="translateColor(color)"
+                  ></div>
+                  <div v-if="index < availableColors.length - 1" class="color-connector"></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import BsSpinner from "@/components/365/BsSpinner.vue";
 import { axiosInstance } from "@/components/axios/axios";
 import { hasPermission } from "@/components/rolesPermisos";
 import { DateTime } from "luxon";
@@ -168,6 +172,16 @@ onMounted(() => {
   min-height: 80vh;
 }
 
+.spinner {
+  color: #e66c5a; /* azul Bootstrap por defecto */
+  margin-bottom: 1rem;
+}
+
+.loading-text {
+  font-size: 1.2rem;
+  color: #555;
+}
+
 .card {
   padding: 0.5em 0.5em;
   border-radius: 1em;
@@ -196,7 +210,7 @@ onMounted(() => {
   border-radius: 1.2em;
   border: 2px solid #e0e0e0;
   margin-bottom: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
 }
 
 .color-name {
@@ -238,8 +252,10 @@ onMounted(() => {
   cursor: pointer;
   border: 3px solid #333;
   border-radius: 0.7em;
-  transition: transform 0.2s, border-color 0.2s;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition:
+    transform 0.2s,
+    border-color 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .color-option:hover {
@@ -266,14 +282,6 @@ onMounted(() => {
   height: 6px;
   border-right: 2px solid #333;
   border-top: 2px solid #333;
-}
-
-.loading-spinner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 200px;
-  width: 100%;
 }
 
 @media (max-width: 700px) {

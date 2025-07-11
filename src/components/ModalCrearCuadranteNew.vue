@@ -118,7 +118,11 @@
 
                   <div class="col">
                     <div class="horario-wrapper">
-                      <BsSelect :options="plantillasTurno" value-key="id" text-key="nombre" />
+                      <BsSelect
+                        :options="plantillasTurnoTextoCompuesto"
+                        value-key="id"
+                        text-key="nombre"
+                      />
                       <!-- {{ formatearHora(turno.inicio) }} a {{ formatearHora(turno.final) }} -->
                     </div>
                     <div
@@ -211,6 +215,13 @@ import ModalSetTurno from "./ModalSetTurno.vue";
 import BsSelect from "./365/BsSelect.vue";
 // import BsModalHeader from "./365/BsModalHeader.vue";
 
+interface TPlantilla {
+  id: string;
+  nombre: string;
+  inicio: string;
+  final: string;
+}
+
 const props = defineProps<{
   selectedDate: DateTime;
   selectedTienda: TTienda | null;
@@ -233,8 +244,14 @@ const currentUser = computed(() => userStore.user);
 const arrayTurnosTrabajador: Ref<TTurnoFrontend[]> = ref([]);
 const cargando = ref(false);
 const turnoSeleccionado: Ref<TTurnoFrontend | null> = ref(null);
-const plantillasTurno = ref<{ id: string; nombre: string; inicio: string; final: string }[]>([]);
+const plantillasTurno = ref<TPlantilla[]>([]);
 const loadingDobleTurno = ref(false);
+const plantillasTurnoTextoCompuesto = computed(() => {
+  return plantillasTurno.value.map((plantilla: TPlantilla) => ({
+    nombre: `${plantilla.nombre} (${plantilla.inicio} - ${plantilla.final})`,
+    id: plantilla.id,
+  }));
+});
 const reloadCuadrante = inject<() => TCuadranteFrontend[]>("reloadCuadrante");
 
 // Computed
@@ -537,8 +554,6 @@ async function getPlantillasTurno(idTienda: number) {
       inicio: "00:00",
       final: "00:00",
     });
-
-    console.log("Plantillas de turno cargadas:", plantillasTurno.value);
   } catch (err) {
     console.log(err);
     Swal.fire("Oops...", "Ha habido un error al cargar las plantillas", "error");

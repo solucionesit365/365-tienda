@@ -12,6 +12,8 @@
         <aside class="sidebar-info">
           <div class="sidebar-header">
             <h5 class="titulo">Cuadrante Semanal</h5>
+            <br />
+            <h6>{{ props.selectedTienda?.nombre }}</h6>
             <div class="semana-info">
               Semana {{ props.selectedDate.weekNumber }} - {{ props.selectedDate.year }}
             </div>
@@ -21,7 +23,11 @@
             <label class="selector-label">Trabajador</label>
             <select class="form-select" v-model="trabajadorSelected">
               <option :value="null" disabled>Selecciona un trabajador</option>
-              <option v-for="(item, index) in trabajadores" v-bind:key="index" :value="item.value">
+              <option
+                v-for="(item, index) in equipoCoordinadora"
+                v-bind:key="index"
+                :value="item.value"
+              >
                 {{ item.text }}
               </option>
             </select>
@@ -98,14 +104,14 @@
 
               <div class="tabla-body">
                 <div
-                  v-for="turno in arrayCuadrantesOrdenados"
-                  :key="turno._id"
+                  v-for="(turno, index) in arrayCuadrantesOrdenados"
+                  :key="index"
                   class="tabla-row"
                   :class="{
-                    'row-ausencia': turno.ausencia,
-                    'row-seleccionada': turnoSeleccionado && turnoSeleccionado._id === turno._id,
+                    'row-seleccionada': turnoSeleccionado && turnoSeleccionado.id === turno.id,
                   }"
                   @click="seleccionarTurno(turno)"
+                  @dblclick="setTurnoModal(turno, index)"
                 >
                   <div class="col">
                     <div class="dia-info">
@@ -116,12 +122,13 @@
 
                   <div class="col">
                     <div class="horario-wrapper">
+                      <BsSelect :options="plantillasTurno" text-key="nombre" value-key="id" />
                       <input
                         type="time"
                         class="time-input"
                         :value="formatearHora(turno.inicio)"
                         @change="actualizarHora(turno, 'inicio', $event)"
-                        :disabled="turno.ausencia"
+                        :disabled="turno.id === 'CAMBIAR ESTO POR EL DISABLED CORRESPONDIENTE'"
                       />
                       <span class="horario-separador">-</span>
                       <input
@@ -129,11 +136,15 @@
                         class="time-input"
                         :value="formatearHora(turno.final)"
                         @change="actualizarHora(turno, 'final', $event)"
-                        :disabled="turno.ausencia"
+                        :disabled="turno.id === 'CAMBIAR ESTO POR EL DISABLED CORRESPONDIENTE'"
                       />
                     </div>
-                    <div v-if="turno.ausencia" class="ausencia-badge">
-                      {{ turno.ausencia.tipo }}
+                    <div
+                      v-if="turno.id === 'CAMBIAR ESTO POR EL DISABLED CORRESPONDIENTE'"
+                      class="ausencia-badge"
+                    >
+                      <!-- {{ turno.ausencia.tipo }} -->
+                      Aquí el tipo de ausencia
                     </div>
                   </div>
 
@@ -143,7 +154,7 @@
 
                   <div class="col">
                     <select
-                      :value="turno.idTienda"
+                      :value="turno.tiendaId"
                       @change="
                         actualizarTiendaTurno(
                           turno,
@@ -193,6 +204,66 @@
     :idTienda="props.selectedTienda?.id!"
     @plantillas-updated="getPlantillasTurno(props.selectedTienda!.id)"
   />
+
+  <BsModal class="dark" id="modalSetTurno" tabindex="-2" v-model="modalSetTurno">
+    <BsModalHeader>Establecer turno</BsModalHeader>
+    <!-- Header -->
+    <template #header>
+      <h5 class="modal-title">Configurar Turno</h5>
+      <button type="button" class="btn-close" @click="modalSetTurno = false" />
+    </template>
+
+    <!-- Body -->
+    <div class="modal-body">
+      <!-- Switch para turno personalizado -->
+      <div class="form-check form-switch mb-3">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          id="switchCustomTurno"
+          v-model="customTurno"
+        />
+        <label class="form-check-label" for="switchCustomTurno"> Turno personalizado </label>
+      </div>
+
+      <!-- Selección de plantilla -->
+      <div v-if="!customTurno" class="mb-3">
+        <label class="form-label">Plantilla de Turno</label>
+        <BsSelect
+          :options="plantillasTurno"
+          text-key="nombre"
+          value-key="id"
+          v-model="selectedPlantillaId"
+        />
+      </div>
+
+      <!-- Inputs de hora para turno personalizado -->
+      <div v-else class="d-flex gap-3">
+        <div class="flex-fill">
+          <label class="form-label">Hora Inicio</label>
+          <input type="time" class="time-input" v-model="localInicio" />
+        </div>
+        <div class="flex-fill">
+          <label class="form-label">Hora Fin</label>
+          <input type="time" class="time-input" v-model="localFinal" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <template #footer>
+      <BsButton color="secondary" @click="modalSetTurno = false"> Cancelar </BsButton>
+      <BsButton
+        color="primary"
+        :disabled="
+          (!customTurno && !selectedPlantillaId) || (customTurno && (!localInicio || !localFinal))
+        "
+        @click="applyTurno"
+      >
+        Guardar
+      </BsButton>
+    </template>
+  </BsModal>
 </template>
 
 <script setup lang="ts">
@@ -213,13 +284,19 @@ import type { TTrabajador } from "@/interfaces/Trabajador.interface";
 import { useTiendaStore } from "@/stores/tienda";
 import type { TTienda } from "@/interfaces/Tienda.interface";
 import PlantillasTurnoModal from "@/components/ModalPlantillasTurno.vue";
-// import BsCheckBox from "./365/BsCheckBox.vue";
-import { Cuadrante } from "./kernel/Cuadrante";
+import { Turno } from "./kernel/Turno";
+import type { TTurnoFrontend } from "@/interfaces/Turno.interface";
+import BsSelect from "./365/BsSelect.vue";
+import BsModalHeader from "./365/BsModalHeader.vue";
 
 const props = defineProps<{
   selectedDate: DateTime;
   selectedTienda: TTienda | null;
 }>();
+const customTurno = ref(false);
+const selectedPlantillaId = ref<string | null>(null);
+const localInicio = ref<string>("");
+const localFinal = ref<string>("");
 const userStore = useUserStore();
 const tiendaStore = useTiendaStore();
 const plantillasModal = ref<InstanceType<typeof PlantillasTurnoModal> | null>(null);
@@ -227,10 +304,11 @@ const arrayTiendas = computed(() => tiendaStore.tiendas);
 const trabajadorSelected = ref(null);
 const inicioSemana: Ref<DateTime | null> = ref(null);
 const modalCrearCuadrante = ref(false);
+const modalSetTurno = ref(false);
 const guardando = ref(false);
-const trabajadores: Ref<{ text: string; value: number }[]> = ref([]);
+const equipoCoordinadora: Ref<{ text: string; value: number }[]> = ref([]);
 const currentUser = computed(() => userStore.user);
-const arrayCuadrantes: Ref<TCuadranteFrontend[]> = ref([]);
+const arrayCuadrantes: Ref<TTurnoFrontend[]> = ref([]);
 const cargando = ref(false);
 const turnoSeleccionado: Ref<any> = ref(null);
 const plantillasTurno = ref<{ id: string; nombre: string }[]>([]);
@@ -240,7 +318,6 @@ const reloadCuadrante = inject<() => TCuadranteFrontend[]>("reloadCuadrante");
 const totalHoras = computed(() => {
   let total = 0;
   for (let i = 0; i < arrayCuadrantes.value.length; i += 1) {
-    if (arrayCuadrantes.value[i].ausencia) continue;
     total += arrayCuadrantes.value[i].final.diff(arrayCuadrantes.value[i].inicio, "hours").hours;
   }
   return total;
@@ -255,10 +332,10 @@ const arrayCuadrantesOrdenados = computed(() => {
 const horasPorDia = computed(() => {
   const horas: Record<string, number> = {};
   arrayCuadrantes.value.forEach((turno) => {
-    if (!turno.ausencia) {
+    if (turno.borrable) {
       const dia = turno.inicio.toFormat("EEE", { locale: "es" });
-      const horasTurno = turno.final.diff(turno.inicio, "hours").hours;
-      horas[dia] = (horas[dia] || 0) + horasTurno;
+      const hrs = turno.final.diff(turno.inicio, "hours").hours;
+      horas[dia] = (horas[dia] || 0) + hrs;
     }
   });
   return horas;
@@ -297,11 +374,7 @@ function actualizarHora(turno: any, tipo: "inicio" | "final", event: Event) {
 }
 
 function seleccionarTurno(turno: any) {
-  if (turnoSeleccionado.value && turnoSeleccionado.value._id === turno._id) {
-    turnoSeleccionado.value = null;
-  } else {
-    turnoSeleccionado.value = turno;
-  }
+  turnoSeleccionado.value = turno;
 }
 
 function esTurnoBorrable(turno: any): boolean {
@@ -338,9 +411,9 @@ function añadirDobleTurno() {
 }
 
 function actualizarTiendaTurno(turno: any, nuevaIdTienda: number) {
-  const index = buscarIndexFromTurno(turno._id);
+  const index = buscarIndexFromTurno(turno.id);
   if (index !== -1) {
-    arrayCuadrantes.value[index].idTienda = nuevaIdTienda;
+    arrayCuadrantes.value[index].tiendaId = nuevaIdTienda;
     arrayCuadrantes.value = [...arrayCuadrantes.value];
   }
 }
@@ -360,7 +433,7 @@ async function eliminarTurnoSeleccionado() {
   });
 
   if (confirmResult.isConfirmed) {
-    await borrarTurno({ idTurno: turnoSeleccionado.value._id });
+    await borrarTurno({ idTurno: turnoSeleccionado.value.id });
     turnoSeleccionado.value = null;
   }
 }
@@ -378,23 +451,52 @@ async function abrirModal(fechaBetween: DateTime) {
   modalCrearCuadrante.value = true;
 }
 
+// Se ejecuta al cambiar el trabajadorSelected
 async function iniciarDatos(fecha: DateTime) {
   try {
-    if (trabajadorSelected.value) {
-      cargando.value = true;
-      const auxCuadrantes = await Cuadrante.getCuadranteIndividual(fecha, trabajadorSelected.value);
-      cargando.value = false;
-      if (auxCuadrantes && auxCuadrantes.length > 0) {
-        arrayCuadrantes.value = auxCuadrantes;
-        turnoSeleccionado.value = null;
-      }
-    }
+    cargando.value = true;
 
-    if (props.selectedTienda) getPlantillasTurno(props.selectedTienda.id);
+    // 1) Traigo los turnos reales (puede venir [] si no hay datos)
+    const turnosTrabajador: TTurnoFrontend[] = trabajadorSelected.value
+      ? await Turno.getTurnosIndividuales(fecha, trabajadorSelected.value)
+      : [];
+
+    // 2) Calculo los 7 días de lunes a domingo
+    const inicioSemana = fecha.startOf("week");
+    const diasSemana = Array.from({ length: 7 }, (_, i) => inicioSemana.plus({ days: i }));
+
+    // 3) Mapeo los turnos reales por día (key = milis del inicio de día)
+    const mapaTurnos = new Map<number, TTurnoFrontend>(
+      turnosTrabajador.map((t) => [t.inicio.startOf("day").toMillis(), t]),
+    );
+
+    // 4) Construyo arrayCuadrantes: turnos reales o placeholders
+    arrayCuadrantes.value = diasSemana.map((dia) => {
+      const key = dia.startOf("day").toMillis();
+      const real = mapaTurnos.get(key);
+      if (real) return real;
+
+      // placeholder para días sin turno
+      return {
+        id: `placeholder-${key}`,
+        inicio: dia,
+        final: dia, // mismo día sin horas
+        tiendaId: null,
+        borrable: false, // así los distinguirás
+      } as TTurnoFrontend;
+    });
+
+    turnoSeleccionado.value = null;
   } catch (err) {
+    console.error(err);
+    Swal.fire("Oops...", "Ha habido un error cargando los turnos", "error");
+  } finally {
     cargando.value = false;
-    console.log(err);
-    Swal.fire("Oops...", "Ha habido un error", "error");
+  }
+
+  // cargar plantillas tras montar el array
+  if (props.selectedTienda) {
+    await getPlantillasTurno(props.selectedTienda.id);
   }
 }
 
@@ -406,13 +508,10 @@ async function guardarFinal() {
 
     const sendRequestCuadrantes = arrayCuadrantes.value.map((turno) => {
       return {
-        bloqueado: turno.ausencia?.completa ? true : false,
         horaEntrada: turno.inicio.toISO(),
         horaSalida: turno.final.toISO(),
-        idPlan: turno.idPlan,
-        idTienda: turno.idTienda,
-        idCuadrante: turno._id,
-        ausencia: turno.ausencia,
+        idTienda: turno.tiendaId,
+        idTurno: turno.id,
         borrable: turno.borrable,
       };
     });
@@ -473,16 +572,18 @@ async function getPlantillasTurno(idTienda: number) {
   }
 }
 
-async function getTrabajadores() {
+// Necesitamos cargar la lista del equipo en el select
+async function getEquipoCoordinadoraDeLaTienda() {
   try {
-    trabajadores.value = [];
+    equipoCoordinadora.value = [];
 
-    const idResponsable = tiendaStore.getTienda(props.selectedTienda!.id)?.coordinatorId;
-    const resEquipo = await axiosInstance.get("trabajadores/getSubordinadosById", {
-      params: { idResponsable: idResponsable },
+    if (!props.selectedTienda || !props.selectedTienda.id) throw new Error();
+
+    const resEquipo = await axiosInstance.get("get-equipo-coordinadora-por-tienda", {
+      params: { idTienda: props.selectedTienda.id },
     });
 
-    trabajadores.value = resEquipo.data.map((trabajador: TTrabajador) => {
+    equipoCoordinadora.value = resEquipo.data.map((trabajador: TTrabajador) => {
       return {
         text: trabajador.nombreApellidos,
         value: trabajador.id,
@@ -492,10 +593,10 @@ async function getTrabajadores() {
     if (
       currentUser.value.llevaEquipo &&
       currentUser.value.idTienda &&
-      !trabajadores.value.some((t) => t.value === currentUser.value.idSql)
+      !equipoCoordinadora.value.some((t) => t.value === currentUser.value.idSql)
     ) {
       if (currentUser.value.displayName && currentUser.value.idSql)
-        trabajadores.value.push({
+        equipoCoordinadora.value.push({
           text: currentUser.value.displayName,
           value: currentUser.value.idSql,
         });
@@ -507,14 +608,14 @@ async function getTrabajadores() {
 }
 
 function updateTurno(updatedTurno: any) {
-  const index = buscarIndexFromTurno(updatedTurno._id);
+  const index = buscarIndexFromTurno(updatedTurno.id);
   arrayCuadrantes.value[index] = updatedTurno;
   arrayCuadrantes.value = [...arrayCuadrantes.value];
 }
 
 async function handleAddCuadrante({ dia, idTienda, ausencia }: any) {
   const nuevoCuadrante: any = {
-    _id: (await axiosInstance.get("cuadrantes/getNewId")).data,
+    id: (await axiosInstance.get("cuadrantes/getNewId")).data,
     inicio: dia,
     final: dia.plus({ minute: 1 }),
     idTienda,
@@ -533,16 +634,16 @@ async function handleAddCuadrante({ dia, idTienda, ausencia }: any) {
   }
 }
 
-function buscarIndexFromTurno(idTurno: any) {
-  return arrayCuadrantes.value.findIndex((element) => element._id === idTurno);
+function buscarIndexFromTurno(idTurno: string) {
+  return arrayCuadrantes.value.findIndex((element) => element.id === idTurno);
 }
 
-async function borrarTurno({ idTurno }: any) {
+async function borrarTurno({ idTurno }: { idTurno: string }) {
   const index = buscarIndexFromTurno(idTurno);
 
   if (arrayCuadrantes.value[index]?.borrable) {
     const resBorrado = await axiosInstance.post("cuadrantes/borrarTurno", {
-      idTurno: arrayCuadrantes.value[index]._id,
+      idTurno: arrayCuadrantes.value[index].id,
     });
 
     if (resBorrado.data.ok) {
@@ -550,17 +651,49 @@ async function borrarTurno({ idTurno }: any) {
       Swal.fire("Borrado", "El turno ha sido borrado.", "success");
     } else Swal.fire("Oops...", "No se ha podido borrar este turno", "error");
   } else {
-    arrayCuadrantes.value[index]._id = 1;
+    arrayCuadrantes.value[index].id = null;
     arrayCuadrantes.value[index].inicio = arrayCuadrantes.value[index].inicio.startOf("day");
     arrayCuadrantes.value[index].final = arrayCuadrantes.value[index].inicio.startOf("day");
-    arrayCuadrantes.value[index].idTienda = null;
-    arrayCuadrantes.value[index].ausencia = null;
-    arrayCuadrantes.value[index].nuevo = false;
+    arrayCuadrantes.value[index].tiendaId = null;
   }
 }
 
 function administrarPlantillasTurno() {
   plantillasModal.value?.abrirModal();
+}
+
+function setTurnoModal(turno: TTurnoFrontend, index: number) {
+  console.log(index);
+  turnoSeleccionado.value = turno;
+  // Inicializar el modal:
+  customTurno.value = false;
+  selectedPlantillaId.value = null;
+  localInicio.value = formatearHora(turno.inicio);
+  localFinal.value = formatearHora(turno.final);
+  modalSetTurno.value = true;
+}
+function applyTurno() {
+  if (!turnoSeleccionado.value) return;
+
+  if (customTurno.value) {
+    // Parsear y aplicar horas personalizadas
+    const [hI, mI] = localInicio.value.split(":").map(Number);
+    const [hF, mF] = localFinal.value.split(":").map(Number);
+    turnoSeleccionado.value.inicio = turnoSeleccionado.value.inicio.set({ hour: hI, minute: mI });
+    turnoSeleccionado.value.final = turnoSeleccionado.value.inicio.set({ hour: hF, minute: mF });
+  } else {
+    // Aplicar plantilla elegida (aquí asumo que las plantillas traen horas)
+    const plantilla = plantillasTurno.value.find((p) => p.id === selectedPlantillaId.value);
+    if (plantilla && (plantilla as any).horaInicio && (plantilla as any).horaFin) {
+      const { horaInicio, horaFin } = plantilla as any;
+      turnoSeleccionado.value.inicio = turnoSeleccionado.value.inicio.set(horaInicio);
+      turnoSeleccionado.value.final = turnoSeleccionado.value.inicio.set(horaFin);
+    }
+  }
+
+  // Actualizar y cerrar modal
+  updateTurno(turnoSeleccionado.value);
+  modalSetTurno.value = false;
 }
 
 watch(trabajadorSelected, () => {
@@ -575,7 +708,7 @@ defineExpose({
 });
 
 onMounted(async () => {
-  await getTrabajadores();
+  await getEquipoCoordinadoraDeLaTienda();
 });
 </script>
 
@@ -984,5 +1117,10 @@ onMounted(async () => {
   .col-horas {
     width: 15%;
   }
+}
+
+.row-placeholder {
+  background: #f8f9fa;
+  opacity: 0.7;
 }
 </style>

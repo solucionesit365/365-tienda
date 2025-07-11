@@ -1,13 +1,4 @@
 <template>
-  <h3 class="mt-4">
-    Hola, {{ currentUser.displayName }}
-    <span v-if="currentUser.roles.some((role) => role.name === 'Coordinadora_A')">
-      , {{ currentUser.idSql }}
-    </span>
-  </h3>
-
-  <span style="color: #243746">Bienvenido al portal 365</span>
-
   <!-- Diseño Home para escritorio y tabletas -->
   <div class="d-none d-sm-none d-md-block mb-8">
     <div class="row row-cols-2 justify-content-center mt-4">
@@ -17,7 +8,7 @@
         color="#3381bd"
         titulo="Cuadrantes"
         icono="fas fa-clock"
-        link="/cuadrantes-tienda"
+        link="/cuadrantes"
       />
       <ItemMenuDesktop
         v-if="hasPermission('ModoTienda')"
@@ -110,12 +101,7 @@
   <div class="d-block d-sm-block d-md-none mb-8">
     <div class="row row-cols-3 justify-content-center mt-4">
       <ItemMenuMobile color="#EF5350" titulo="Cultura" icono="fas fa-atlas" link="/videoCultura" />
-      <ItemMenuMobile
-        color="#3381bd"
-        titulo="Cuadrantes"
-        icono="fas fa-clock"
-        link="/cuadrantes-tienda"
-      />
+      <ItemMenuMobile color="#3381bd" titulo="Cuadrantes" icono="fas fa-clock" link="/cuadrantes" />
 
       <ItemMenuMobile
         v-if="hasPermission('ModoTienda')"
@@ -508,8 +494,8 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
-h3{
-  font-family:Georgia, 'Times New Roman', Times, serif;
+h3 {
+  font-family: Georgia, "Times New Roman", Times, serif;
 }
 /* CSS para aplicar en tu archivo de estilos */
 .background-element {

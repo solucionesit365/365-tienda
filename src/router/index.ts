@@ -13,6 +13,14 @@ const router = createRouter({
       component: () => import("../views/MainTrabajadores.vue"),
     },
     {
+      path: "/admin",
+      name: "Admin Tool",
+      meta: {
+        requiresAuth: false,
+      },
+      component: () => import("../views/AdminTool.vue"),
+    },
+    {
       path: "/login",
       name: "Login",
       component: () => import("../views/LoginView.vue"),

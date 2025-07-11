@@ -2,7 +2,7 @@
   <template v-if="!loading">
     <NavComponent v-if="userStore.user.logeado" />
     <div class="container-fluid contenido-con-scroll">
-      <BackButton />
+      <BackButton v-if="userStore.user.logeado" />
       <RouterView />
       <FooterComponent :class="{ 'd-none': hideFooter }" />
     </div>

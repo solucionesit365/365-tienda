@@ -84,7 +84,7 @@
 
 <script setup lang="ts">
 import Swal from "sweetalert2";
-import { defineProps, defineEmits, ref, watch } from "vue";
+import { ref, watch } from "vue";
 
 interface Plantilla {
   id: string;

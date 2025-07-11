@@ -34,9 +34,9 @@
               ¿Olvidaste tu contraseña?
             </router-link>
           </div>
-          <div class="d-grid">
-            <BsButton class="btn btn-login text-uppercase fw-bold" @click="entrarConEmail()">
-              Entrar
+          <div class="d-flex justify-content-center">
+            <BsButton class="btn fw-bold" @click="entrarConEmail()">
+              ENTRAR
             </BsButton>
           </div>
         </div>
@@ -78,6 +78,11 @@ function entrarConEmail() {
   padding: 0.5em 0.5em;
   border-radius: 1em;
   border: 1em;
-  box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 17px rgba(255, 203, 203, 0.2);
+}
+
+.btn{
+  background: #e66c5a;
+  border-color: #e66c5a;
 }
 </style>

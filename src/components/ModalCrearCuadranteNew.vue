@@ -97,14 +97,13 @@
               <div class="tabla-header">
                 <div class="col">Día</div>
                 <div class="col">Horario</div>
-                <div class="col">Nuevo</div>
                 <div class="col">Tienda</div>
                 <div class="col">Horas</div>
               </div>
 
               <div class="tabla-body">
                 <div
-                  v-for="(turno, index) in arrayCuadrantesOrdenados"
+                  v-for="(turno, index) in arrayTurnosTrabajadorOrdenados"
                   :key="index"
                   class="tabla-row"
                   :class="{
@@ -122,22 +121,7 @@
 
                   <div class="col">
                     <div class="horario-wrapper">
-                      <BsSelect :options="plantillasTurno" text-key="nombre" value-key="id" />
-                      <input
-                        type="time"
-                        class="time-input"
-                        :value="formatearHora(turno.inicio)"
-                        @change="actualizarHora(turno, 'inicio', $event)"
-                        :disabled="turno.id === 'CAMBIAR ESTO POR EL DISABLED CORRESPONDIENTE'"
-                      />
-                      <span class="horario-separador">-</span>
-                      <input
-                        type="time"
-                        class="time-input"
-                        :value="formatearHora(turno.final)"
-                        @change="actualizarHora(turno, 'final', $event)"
-                        :disabled="turno.id === 'CAMBIAR ESTO POR EL DISABLED CORRESPONDIENTE'"
-                      />
+                      {{ formatearHora(turno.inicio) }} a {{ formatearHora(turno.final) }}
                     </div>
                     <div
                       v-if="turno.id === 'CAMBIAR ESTO POR EL DISABLED CORRESPONDIENTE'"
@@ -146,10 +130,6 @@
                       <!-- {{ turno.ausencia.tipo }} -->
                       Aquí el tipo de ausencia
                     </div>
-                  </div>
-
-                  <div class="col">
-                    <!-- <BsCheckBox v-model="false" /> -->
                   </div>
 
                   <div class="col">
@@ -205,65 +185,13 @@
     @plantillas-updated="getPlantillasTurno(props.selectedTienda!.id)"
   />
 
-  <BsModal class="dark" id="modalSetTurno" tabindex="-2" v-model="modalSetTurno">
-    <BsModalHeader>Establecer turno</BsModalHeader>
-    <!-- Header -->
-    <template #header>
-      <h5 class="modal-title">Configurar Turno</h5>
-      <button type="button" class="btn-close" @click="modalSetTurno = false" />
-    </template>
-
-    <!-- Body -->
-    <div class="modal-body">
-      <!-- Switch para turno personalizado -->
-      <div class="form-check form-switch mb-3">
-        <input
-          class="form-check-input"
-          type="checkbox"
-          id="switchCustomTurno"
-          v-model="customTurno"
-        />
-        <label class="form-check-label" for="switchCustomTurno"> Turno personalizado </label>
-      </div>
-
-      <!-- Selección de plantilla -->
-      <div v-if="!customTurno" class="mb-3">
-        <label class="form-label">Plantilla de Turno</label>
-        <BsSelect
-          :options="plantillasTurno"
-          text-key="nombre"
-          value-key="id"
-          v-model="selectedPlantillaId"
-        />
-      </div>
-
-      <!-- Inputs de hora para turno personalizado -->
-      <div v-else class="d-flex gap-3">
-        <div class="flex-fill">
-          <label class="form-label">Hora Inicio</label>
-          <input type="time" class="time-input" v-model="localInicio" />
-        </div>
-        <div class="flex-fill">
-          <label class="form-label">Hora Fin</label>
-          <input type="time" class="time-input" v-model="localFinal" />
-        </div>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <template #footer>
-      <BsButton color="secondary" @click="modalSetTurno = false"> Cancelar </BsButton>
-      <BsButton
-        color="primary"
-        :disabled="
-          (!customTurno && !selectedPlantillaId) || (customTurno && (!localInicio || !localFinal))
-        "
-        @click="applyTurno"
-      >
-        Guardar
-      </BsButton>
-    </template>
-  </BsModal>
+  <ModalSetTurno
+    v-model="modalSetTurno"
+    :plantillas-turno="plantillasTurno"
+    initial-inicio="09:00"
+    initial-fin="17:00"
+    @apply="onApplyModalSetTurno"
+  />
 </template>
 
 <script setup lang="ts">
@@ -286,8 +214,8 @@ import type { TTienda } from "@/interfaces/Tienda.interface";
 import PlantillasTurnoModal from "@/components/ModalPlantillasTurno.vue";
 import { Turno } from "./kernel/Turno";
 import type { TTurnoFrontend } from "@/interfaces/Turno.interface";
-import BsSelect from "./365/BsSelect.vue";
-import BsModalHeader from "./365/BsModalHeader.vue";
+import ModalSetTurno from "./ModalSetTurno.vue";
+// import BsModalHeader from "./365/BsModalHeader.vue";
 
 const props = defineProps<{
   selectedDate: DateTime;
@@ -308,30 +236,33 @@ const modalSetTurno = ref(false);
 const guardando = ref(false);
 const equipoCoordinadora: Ref<{ text: string; value: number }[]> = ref([]);
 const currentUser = computed(() => userStore.user);
-const arrayCuadrantes: Ref<TTurnoFrontend[]> = ref([]);
+const arrayTurnosTrabajador: Ref<TTurnoFrontend[]> = ref([]);
 const cargando = ref(false);
-const turnoSeleccionado: Ref<any> = ref(null);
-const plantillasTurno = ref<{ id: string; nombre: string }[]>([]);
+const turnoSeleccionado: Ref<TTurnoFrontend | null> = ref(null);
+const plantillasTurno = ref<{ id: string; nombre: string; inicio: string; final: string }[]>([]);
 const reloadCuadrante = inject<() => TCuadranteFrontend[]>("reloadCuadrante");
 
 // Computed
 const totalHoras = computed(() => {
   let total = 0;
-  for (let i = 0; i < arrayCuadrantes.value.length; i += 1) {
-    total += arrayCuadrantes.value[i].final.diff(arrayCuadrantes.value[i].inicio, "hours").hours;
+  for (let i = 0; i < arrayTurnosTrabajador.value.length; i += 1) {
+    total += arrayTurnosTrabajador.value[i].final.diff(
+      arrayTurnosTrabajador.value[i].inicio,
+      "hours",
+    ).hours;
   }
   return total;
 });
 
-const arrayCuadrantesOrdenados = computed(() => {
-  return [...arrayCuadrantes.value].sort((a, b) => {
+const arrayTurnosTrabajadorOrdenados = computed(() => {
+  return [...arrayTurnosTrabajador.value].sort((a, b) => {
     return a.inicio.toMillis() - b.inicio.toMillis();
   });
 });
 
 const horasPorDia = computed(() => {
   const horas: Record<string, number> = {};
-  arrayCuadrantes.value.forEach((turno) => {
+  arrayTurnosTrabajador.value.forEach((turno) => {
     if (turno.borrable) {
       const dia = turno.inicio.toFormat("EEE", { locale: "es" });
       const hrs = turno.final.diff(turno.inicio, "hours").hours;
@@ -363,15 +294,15 @@ function calcularHorasTurno(turno: any) {
 }
 
 // Funciones de actualización
-function actualizarHora(turno: any, tipo: "inicio" | "final", event: Event) {
-  const input = event.target as HTMLInputElement;
-  const [horas, minutos] = input.value.split(":").map(Number);
+// function actualizarHora(turno: any, tipo: "inicio" | "final", event: Event) {
+//   const input = event.target as HTMLInputElement;
+//   const [horas, minutos] = input.value.split(":").map(Number);
 
-  const nuevaFecha = turno[tipo].set({ hour: horas, minute: minutos });
-  turno[tipo] = nuevaFecha;
+//   const nuevaFecha = turno[tipo].set({ hour: horas, minute: minutos });
+//   turno[tipo] = nuevaFecha;
 
-  updateTurno(turno);
-}
+//   updateTurno(turno);
+// }
 
 function seleccionarTurno(turno: any) {
   turnoSeleccionado.value = turno;
@@ -387,7 +318,7 @@ function añadirDobleTurno() {
   const diaSeleccionado = turnoSeleccionado.value.inicio.startOf("day");
 
   // Buscar si ya existe un segundo turno ese día
-  const turnosDelDia = arrayCuadrantes.value.filter(
+  const turnosDelDia = arrayTurnosTrabajador.value.filter(
     (t) => t.inicio.startOf("day").toMillis() === diaSeleccionado.toMillis(),
   );
 
@@ -413,8 +344,8 @@ function añadirDobleTurno() {
 function actualizarTiendaTurno(turno: any, nuevaIdTienda: number) {
   const index = buscarIndexFromTurno(turno.id);
   if (index !== -1) {
-    arrayCuadrantes.value[index].tiendaId = nuevaIdTienda;
-    arrayCuadrantes.value = [...arrayCuadrantes.value];
+    arrayTurnosTrabajador.value[index].tiendaId = nuevaIdTienda;
+    arrayTurnosTrabajador.value = [...arrayTurnosTrabajador.value];
   }
 }
 
@@ -433,7 +364,7 @@ async function eliminarTurnoSeleccionado() {
   });
 
   if (confirmResult.isConfirmed) {
-    await borrarTurno({ idTurno: turnoSeleccionado.value.id });
+    await borrarTurno({ idTurno: turnoSeleccionado.value.id! });
     turnoSeleccionado.value = null;
   }
 }
@@ -470,8 +401,8 @@ async function iniciarDatos(fecha: DateTime) {
       turnosTrabajador.map((t) => [t.inicio.startOf("day").toMillis(), t]),
     );
 
-    // 4) Construyo arrayCuadrantes: turnos reales o placeholders
-    arrayCuadrantes.value = diasSemana.map((dia) => {
+    // 4) Construyo arrayTurnosTrabajador: turnos reales o placeholders
+    arrayTurnosTrabajador.value = diasSemana.map((dia) => {
       const key = dia.startOf("day").toMillis();
       const real = mapaTurnos.get(key);
       if (real) return real;
@@ -506,7 +437,7 @@ async function guardarFinal() {
     const uidGuardado = localStorage.getItem("uidCoordinadora");
     const uidParaConsultar = uidGuardado || currentUser.value.uid;
 
-    const sendRequestCuadrantes = arrayCuadrantes.value.map((turno) => {
+    const sendRequestCuadrantes = arrayTurnosTrabajador.value.map((turno) => {
       return {
         horaEntrada: turno.inicio.toISO(),
         horaSalida: turno.final.toISO(),
@@ -562,6 +493,8 @@ async function getPlantillasTurno(idTienda: number) {
       return {
         id: plantilla.id,
         nombre: plantilla.nombre,
+        inicio: plantilla.inicio,
+        final: plantilla.final,
       };
     });
 
@@ -607,12 +540,6 @@ async function getEquipoCoordinadoraDeLaTienda() {
   }
 }
 
-function updateTurno(updatedTurno: any) {
-  const index = buscarIndexFromTurno(updatedTurno.id);
-  arrayCuadrantes.value[index] = updatedTurno;
-  arrayCuadrantes.value = [...arrayCuadrantes.value];
-}
-
 async function handleAddCuadrante({ dia, idTienda, ausencia }: any) {
   const nuevoCuadrante: any = {
     id: (await axiosInstance.get("cuadrantes/getNewId")).data,
@@ -623,38 +550,40 @@ async function handleAddCuadrante({ dia, idTienda, ausencia }: any) {
     borrable: true,
   };
 
-  const posicionInsertar = arrayCuadrantes.value.findIndex(
+  const posicionInsertar = arrayTurnosTrabajador.value.findIndex(
     (cuadrante) => cuadrante.inicio > nuevoCuadrante.inicio,
   );
 
   if (posicionInsertar === -1) {
-    arrayCuadrantes.value.push(nuevoCuadrante);
+    arrayTurnosTrabajador.value.push(nuevoCuadrante);
   } else {
-    arrayCuadrantes.value.splice(posicionInsertar, 0, nuevoCuadrante);
+    arrayTurnosTrabajador.value.splice(posicionInsertar, 0, nuevoCuadrante);
   }
 }
 
 function buscarIndexFromTurno(idTurno: string) {
-  return arrayCuadrantes.value.findIndex((element) => element.id === idTurno);
+  return arrayTurnosTrabajador.value.findIndex((element) => element.id === idTurno);
 }
 
 async function borrarTurno({ idTurno }: { idTurno: string }) {
   const index = buscarIndexFromTurno(idTurno);
 
-  if (arrayCuadrantes.value[index]?.borrable) {
+  if (arrayTurnosTrabajador.value[index]?.borrable) {
     const resBorrado = await axiosInstance.post("cuadrantes/borrarTurno", {
-      idTurno: arrayCuadrantes.value[index].id,
+      idTurno: arrayTurnosTrabajador.value[index].id,
     });
 
     if (resBorrado.data.ok) {
-      arrayCuadrantes.value.splice(index, 1);
+      arrayTurnosTrabajador.value.splice(index, 1);
       Swal.fire("Borrado", "El turno ha sido borrado.", "success");
     } else Swal.fire("Oops...", "No se ha podido borrar este turno", "error");
   } else {
-    arrayCuadrantes.value[index].id = null;
-    arrayCuadrantes.value[index].inicio = arrayCuadrantes.value[index].inicio.startOf("day");
-    arrayCuadrantes.value[index].final = arrayCuadrantes.value[index].inicio.startOf("day");
-    arrayCuadrantes.value[index].tiendaId = null;
+    arrayTurnosTrabajador.value[index].id = null;
+    arrayTurnosTrabajador.value[index].inicio =
+      arrayTurnosTrabajador.value[index].inicio.startOf("day");
+    arrayTurnosTrabajador.value[index].final =
+      arrayTurnosTrabajador.value[index].inicio.startOf("day");
+    arrayTurnosTrabajador.value[index].tiendaId = null;
   }
 }
 
@@ -672,27 +601,29 @@ function setTurnoModal(turno: TTurnoFrontend, index: number) {
   localFinal.value = formatearHora(turno.final);
   modalSetTurno.value = true;
 }
-function applyTurno() {
-  if (!turnoSeleccionado.value) return;
 
-  if (customTurno.value) {
-    // Parsear y aplicar horas personalizadas
-    const [hI, mI] = localInicio.value.split(":").map(Number);
-    const [hF, mF] = localFinal.value.split(":").map(Number);
-    turnoSeleccionado.value.inicio = turnoSeleccionado.value.inicio.set({ hour: hI, minute: mI });
-    turnoSeleccionado.value.final = turnoSeleccionado.value.inicio.set({ hour: hF, minute: mF });
-  } else {
-    // Aplicar plantilla elegida (aquí asumo que las plantillas traen horas)
-    const plantilla = plantillasTurno.value.find((p) => p.id === selectedPlantillaId.value);
-    if (plantilla && (plantilla as any).horaInicio && (plantilla as any).horaFin) {
-      const { horaInicio, horaFin } = plantilla as any;
-      turnoSeleccionado.value.inicio = turnoSeleccionado.value.inicio.set(horaInicio);
-      turnoSeleccionado.value.final = turnoSeleccionado.value.inicio.set(horaFin);
-    }
-  }
+function modificarHorasTurno(idTurno: string, horaInicioHHmm: string, horaFinalHHmm: string) {
+  const indexTurno = buscarIndexFromTurno(idTurno);
 
-  // Actualizar y cerrar modal
-  updateTurno(turnoSeleccionado.value);
+  // Cambio el inicio
+  const [horasInicio, minutosInicio] = horaInicioHHmm.split(":").map(Number);
+  arrayTurnosTrabajador.value[indexTurno].inicio = arrayTurnosTrabajador.value[
+    indexTurno
+  ].inicio.set({ hour: horasInicio, minute: minutosInicio });
+
+  // Cambio el final
+  const [horasFinal, minutosFinal] = horaFinalHHmm.split(":").map(Number);
+  arrayTurnosTrabajador.value[indexTurno].final = arrayTurnosTrabajador.value[indexTurno].final.set(
+    { hour: horasFinal, minute: minutosFinal },
+  );
+}
+
+function onApplyModalSetTurno(dataEvent: { inicio: string; final: string }) {
+  if (!turnoSeleccionado.value || !turnoSeleccionado.value.id)
+    throw new Error("Primero selecciona un turno");
+
+  // Necesitamos cambiar lo seleccionado en el objeto real de turnos
+  modificarHorasTurno(turnoSeleccionado.value.id, dataEvent.inicio, dataEvent.final);
   modalSetTurno.value = false;
 }
 

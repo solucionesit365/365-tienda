@@ -29,11 +29,11 @@
             </div>
           </form>
 
-          <div class="form-check mb-3 text-center text-muted">
+          <!-- <div class="form-check mb-3 text-center text-muted">
             <router-link to="/restablecer" class="text-dark text-decoration-none">
               ¿Olvidaste tu contraseña?
             </router-link>
-          </div>
+          </div> -->
           <div class="d-flex justify-content-center">
             <BsButton class="btn fw-bold" @click="entrarConEmail()">
               ENTRAR

@@ -284,6 +284,16 @@ async function createPlantilla() {
     });
   }
 
+  // 2. Validación horas iguales
+  if (newPlantilla.value.inicio === newPlantilla.value.final) {
+    return Swal.fire({
+      title: "Horario inválido",
+      text: "La hora de inicio y fin no pueden ser iguales",
+      icon: "warning",
+      confirmButtonColor: "#3b82f6",
+    });
+  }
+
   creating.value = true;
   try {
     console.log({
@@ -349,7 +359,10 @@ async function deletePlantilla(id: number) {
   if (!isConfirmed) return;
 
   try {
-    await axiosInstance.delete(`plantilla-turno/${id}`);
+    await axiosInstance.post("plantilla-turno/delete", {
+      idPlantilla: id,
+    });
+
     Swal.fire({
       title: "Eliminado",
       text: "Plantilla eliminada correctamente",

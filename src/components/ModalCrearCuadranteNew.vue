@@ -57,6 +57,18 @@
               <i class="bi bi-plus-circle me-2"></i>
               Añadir doble turno
             </BsButton>
+            <BsButton
+              color="primary"
+              class="w-100 mb-2"
+              :loading="loadingDobleTurno"
+              :disabled="!trabajadorSelected || !turnoSeleccionado"
+              @click="introducirManualmente()"
+            >
+              <i class="bi bi-plus-circle me-2"></i>
+
+              <span v-if="estadoBotonEsCustom">Introducir desde plantilla</span>
+              <span v-else>Introducir manualmente</span>
+            </BsButton>
 
             <BsButton
               color="success"
@@ -79,7 +91,7 @@
               Eliminar Turno
             </BsButton>
 
-            <BsButton color="secondary" class="w-100" @click="modalCrearCuadrante = false">
+            <BsButton color="danger" class="w-100" @click="handleCancelar()">
               <i class="bi bi-x-circle me-2"></i>
               Cancelar
             </BsButton>
@@ -107,7 +119,6 @@
                     'row-seleccionada': turnoSeleccionado && turnoSeleccionado.id === turno.id,
                   }"
                   @click="seleccionarTurno(turno)"
-                  @dblclick="setTurnoModal(turno, index)"
                 >
                   <div class="col">
                     <div class="dia-info">
@@ -118,12 +129,16 @@
 
                   <div class="col">
                     <div class="horario-wrapper">
+                      <span v-if="isCustomTurno(turno.inicio, turno.final)"
+                        >{{ formatearHora(turno.inicio) }} a {{ formatearHora(turno.final) }}</span
+                      >
                       <BsSelect
+                        v-else
                         :options="plantillasTurnoTextoCompuesto"
                         value-key="id"
                         text-key="nombre"
+                        @change="onChangePlantilla"
                       />
-                      <!-- {{ formatearHora(turno.inicio) }} a {{ formatearHora(turno.final) }} -->
                     </div>
                     <div
                       v-if="turno.id === 'CAMBIAR ESTO POR EL DISABLED CORRESPONDIENTE'"
@@ -148,7 +163,7 @@
                   </div>
 
                   <div class="col">
-                    <span class="horas-turno"> {{ calcularHorasTurno(turno) }}h </span>
+                    <span class="horas-turno"> {{ calcularHorasTurno(turno) }} </span>
                   </div>
                 </div>
               </div>
@@ -192,7 +207,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, inject, type Ref } from "vue";
+import { ref, computed, watch, inject, type Ref, type ComputedRef } from "vue";
 import Swal from "sweetalert2";
 import { DateTime } from "luxon";
 import { axiosInstance } from "@/components/axios/axios";
@@ -215,7 +230,7 @@ import ModalSetTurno from "./ModalSetTurno.vue";
 import BsSelect from "./365/BsSelect.vue";
 // import BsModalHeader from "./365/BsModalHeader.vue";
 
-interface TPlantilla {
+export interface TPlantilla {
   id: string;
   nombre: string;
   inicio: string;
@@ -226,10 +241,6 @@ const props = defineProps<{
   selectedDate: DateTime;
   selectedTienda: TTienda | null;
 }>();
-const customTurno = ref(false);
-const selectedPlantillaId = ref<string | null>(null);
-const localInicio = ref<string>("");
-const localFinal = ref<string>("");
 const userStore = useUserStore();
 const tiendaStore = useTiendaStore();
 const plantillasModal = ref<InstanceType<typeof PlantillasTurnoModal> | null>(null);
@@ -246,10 +257,12 @@ const cargando = ref(false);
 const turnoSeleccionado: Ref<TTurnoFrontend | null> = ref(null);
 const plantillasTurno = ref<TPlantilla[]>([]);
 const loadingDobleTurno = ref(false);
-const plantillasTurnoTextoCompuesto = computed(() => {
+const plantillasTurnoTextoCompuesto: ComputedRef<TPlantilla[]> = computed(() => {
   return plantillasTurno.value.map((plantilla: TPlantilla) => ({
     nombre: `${plantilla.nombre} (${plantilla.inicio} - ${plantilla.final})`,
     id: plantilla.id,
+    inicio: plantilla.inicio,
+    final: plantilla.final,
   }));
 });
 const reloadCuadrante = inject<() => TCuadranteFrontend[]>("reloadCuadrante");
@@ -272,14 +285,63 @@ const arrayTurnosTrabajadorOrdenados = computed(() => {
   });
 });
 
+function isCustomTurno(inicio: DateTime, final: DateTime) {
+  // Prioridad máxima para estos casos, son los iniciales
+  if (inicio.toFormat("HH:mm") === "00:00" && final.toFormat("HH:mm") === "00:00") {
+    return false;
+  }
+
+  for (let i = 0; i < plantillasTurno.value.length; i++) {
+    const plantilla = plantillasTurno.value[i];
+    if (
+      plantilla.inicio === inicio.toFormat("HH:mm") &&
+      plantilla.final === final.toFormat("HH:mm")
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function onChangePlantilla(newValue: TPlantilla) {
+  if (!turnoSeleccionado.value) return;
+
+  const index = buscarIndexFromTurno(turnoSeleccionado.value.id!);
+  // Cambia solo la hora y minutos, manteniendo el día original
+  const [horaInicio, minutoInicio] = newValue.inicio.split(":").map(Number);
+  arrayTurnosTrabajador.value[index].inicio = arrayTurnosTrabajador.value[index].inicio.set({
+    hour: horaInicio,
+    minute: minutoInicio,
+  });
+
+  const [horaFinal, minutoFinal] = newValue.final.split(":").map(Number);
+  arrayTurnosTrabajador.value[index].final = arrayTurnosTrabajador.value[index].final.set({
+    hour: horaFinal,
+    minute: minutoFinal,
+  });
+
+  // Actualiza el array para reactividad
+  arrayTurnosTrabajador.value = [...arrayTurnosTrabajador.value];
+
+  // Actualiza turnoSeleccionado también
+  turnoSeleccionado.value = { ...arrayTurnosTrabajador.value[index] };
+}
+
+const estadoBotonEsCustom = computed(() => {
+  if (turnoSeleccionado.value) {
+    return isCustomTurno(turnoSeleccionado.value.inicio, turnoSeleccionado.value.final);
+  }
+
+  return false;
+});
+
 const horasPorDia = computed(() => {
   const horas: Record<string, number> = {};
   arrayTurnosTrabajador.value.forEach((turno) => {
-    if (turno.borrable) {
-      const dia = turno.inicio.toFormat("EEE", { locale: "es" });
-      const hrs = turno.final.diff(turno.inicio, "hours").hours;
-      horas[dia] = (horas[dia] || 0) + hrs;
-    }
+    const dia = turno.inicio.toFormat("EEE", { locale: "es" });
+    const hrs = turno.final.diff(turno.inicio, "hours").hours;
+    horas[dia] = (horas[dia] || 0) + hrs;
   });
   return horas;
 });
@@ -296,17 +358,16 @@ function formatearFecha(fecha: DateTime) {
   return fecha.toFormat("dd/MM");
 }
 
-function formatearHora(fecha: DateTime) {
-  return fecha.toFormat("HH:mm");
-}
-
 function getTiendaOption(tiendaId: number | null) {
   return tiendaId != null ? (arrayTiendas.value.find((t) => t.id === tiendaId) ?? null) : null;
 }
 
-function calcularHorasTurno(turno: any) {
-  if (turno.ausencia) return 0;
-  return turno.final.diff(turno.inicio, "hours").hours.toFixed(1);
+function calcularHorasTurno(turno: TTurnoFrontend) {
+  // if (turno.ausencia) return "0 h 0 min";
+  const diff = turno.final.diff(turno.inicio, "minutes").minutes;
+  const horas = Math.floor(diff / 60);
+  const minutos = Math.round(diff % 60);
+  return `${horas} h ${minutos} min`;
 }
 
 // Funciones de actualización
@@ -322,6 +383,10 @@ function calcularHorasTurno(turno: any) {
 
 function seleccionarTurno(turno: any) {
   turnoSeleccionado.value = turno;
+}
+
+function formatearHora(fecha: DateTime) {
+  return fecha.toFormat("HH:mm");
 }
 
 function esTurnoBorrable(turno: any): boolean {
@@ -379,6 +444,20 @@ function addDobleTurno() {
   }
 
   loadingDobleTurno.value = false;
+}
+
+async function handleCancelar() {
+  const result = await Swal.fire({
+    title: "¿Cerrar ventana?",
+    text: "Perderás el progreso no guardado. ¿Estás seguro?",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí, cerrar",
+    cancelButtonText: "Cancelar",
+  });
+  if (result.isConfirmed) {
+    modalCrearCuadrante.value = false;
+  }
 }
 
 function actualizarTiendaTurno(turno: TTurnoFrontend, nuevaIdTienda: number) {
@@ -547,13 +626,6 @@ async function getPlantillasTurno(idTienda: number) {
         final: plantilla.final,
       };
     });
-
-    plantillasTurno.value.push({
-      id: "NUEVA",
-      nombre: "NUEVA",
-      inicio: "00:00",
-      final: "00:00",
-    });
   } catch (err) {
     console.log(err);
     Swal.fire("Oops...", "Ha habido un error al cargar las plantillas", "error");
@@ -633,14 +705,7 @@ function administrarPlantillasTurno() {
   plantillasModal.value?.abrirModal();
 }
 
-function setTurnoModal(turno: TTurnoFrontend, index: number) {
-  console.log(index);
-  turnoSeleccionado.value = turno;
-  // Inicializar el modal:
-  customTurno.value = false;
-  selectedPlantillaId.value = null;
-  localInicio.value = formatearHora(turno.inicio);
-  localFinal.value = formatearHora(turno.final);
+function setTurnoModal() {
   modalSetTurno.value = true;
 }
 
@@ -658,6 +723,7 @@ function modificarHorasTurno(idTurno: string, horaInicioHHmm: string, horaFinalH
   arrayTurnosTrabajador.value[indexTurno].final = arrayTurnosTrabajador.value[indexTurno].final.set(
     { hour: horasFinal, minute: minutosFinal },
   );
+  turnoSeleccionado.value = { ...arrayTurnosTrabajador.value[indexTurno] };
 }
 
 function onApplyModalSetTurno(dataEvent: { inicio: string; final: string }) {
@@ -667,6 +733,41 @@ function onApplyModalSetTurno(dataEvent: { inicio: string; final: string }) {
   // Necesitamos cambiar lo seleccionado en el objeto real de turnos
   modificarHorasTurno(turnoSeleccionado.value.id, dataEvent.inicio, dataEvent.final);
   modalSetTurno.value = false;
+}
+
+function introducirManualmente() {
+  if (!turnoSeleccionado.value) return;
+
+  if (estadoBotonEsCustom.value) {
+    setTurnoSeleccionado("00:00", "00:00");
+  } else setTurnoModal();
+}
+
+function setTurnoSeleccionado(inicio: string, final: string) {
+  if (!turnoSeleccionado.value || !turnoSeleccionado.value.id) return;
+
+  const index = buscarIndexFromTurno(turnoSeleccionado.value.id);
+  if (index === -1) return;
+
+  // Cambia la hora de inicio
+  const [horaInicio, minutoInicio] = inicio.split(":").map(Number);
+  arrayTurnosTrabajador.value[index].inicio = arrayTurnosTrabajador.value[index].inicio.set({
+    hour: horaInicio,
+    minute: minutoInicio,
+  });
+
+  // Cambia la hora de finalización
+  const [horaFinal, minutoFinal] = final.split(":").map(Number);
+  arrayTurnosTrabajador.value[index].final = arrayTurnosTrabajador.value[index].final.set({
+    hour: horaFinal,
+    minute: minutoFinal,
+  });
+
+  // Actualiza el array para reactividad
+  arrayTurnosTrabajador.value = [...arrayTurnosTrabajador.value];
+
+  // Actualiza turnoSeleccionado también
+  turnoSeleccionado.value = { ...arrayTurnosTrabajador.value[index] };
 }
 
 watch(trabajadorSelected, () => {

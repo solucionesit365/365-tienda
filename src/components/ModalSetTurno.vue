@@ -26,27 +26,7 @@
 
           <!-- body -->
           <div class="modal-body">
-            <div class="form-check form-switch mb-4">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                id="switchCustom"
-                v-model="customTurno"
-              />
-              <label class="form-check-label" for="switchCustom"> Turno personalizado </label>
-            </div>
-
-            <div v-if="!customTurno" class="mb-4">
-              <label for="selectPlantilla" class="form-label"> Plantilla de Turno </label>
-              <select id="selectPlantilla" class="form-select" v-model="selectedPlantillaId">
-                <option disabled value="">Selecciona una plantilla</option>
-                <option v-for="p in plantillasTurno" :key="p.id" :value="p.id">
-                  {{ p.nombre }}
-                </option>
-              </select>
-            </div>
-
-            <div v-else class="row g-3">
+            <div class="row g-3">
               <div class="col">
                 <label for="inputInicio" class="form-label">Hora Inicio</label>
                 <input id="inputInicio" type="time" class="form-control" v-model="localInicio" />
@@ -61,17 +41,7 @@
           <!-- footer -->
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="close">Cancelar</button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              :disabled="
-                (!customTurno && !selectedPlantillaId) ||
-                (customTurno && (!localInicio || !localFinal))
-              "
-              @click="apply"
-            >
-              Guardar
-            </button>
+            <button type="button" class="btn btn-primary" @click="apply">Guardar</button>
           </div>
         </div>
       </div>
@@ -83,7 +53,6 @@
 </template>
 
 <script setup lang="ts">
-import Swal from "sweetalert2";
 import { ref, watch } from "vue";
 
 interface Plantilla {
@@ -111,27 +80,15 @@ const emit = defineEmits<{
   (e: "apply", payload: { inicio: string; final: string }): void;
 }>();
 
-// estado interno
-const customTurno = ref(false);
 const selectedPlantillaId = ref("");
 const localInicio = ref(props.initialInicio);
 const localFinal = ref(props.initialFin);
-
-function getPlantillaById(idPlantilla: string) {
-  const plantilla = props.plantillasTurno.find((p) => p.id === idPlantilla);
-
-  if (plantilla) return plantilla;
-
-  Swal.fire("Oops...", "Ha habido un error", "error");
-  throw new Error("No se ha podido hacer find de la plantilla");
-}
 
 // al abrir, reseteamos
 watch(
   () => props.modelValue,
   (open) => {
     if (open) {
-      customTurno.value = false;
       selectedPlantillaId.value = "";
       localInicio.value = props.initialInicio;
       localFinal.value = props.initialFin;
@@ -144,14 +101,8 @@ function close() {
 }
 
 function apply() {
-  if (customTurno.value) {
-    emit("apply", { inicio: localInicio.value, final: localFinal.value });
-  } else {
-    emit("apply", {
-      inicio: getPlantillaById(selectedPlantillaId.value).inicio,
-      final: getPlantillaById(selectedPlantillaId.value)?.final,
-    });
-  }
+  emit("apply", { inicio: localInicio.value, final: localFinal.value });
+
   close();
 }
 </script>

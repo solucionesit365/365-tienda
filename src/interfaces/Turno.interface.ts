@@ -1,5 +1,6 @@
 // import type { DateTime } from "luxon";
 
+// import type { TPlantilla } from "@/components/ModalCrearCuadranteNew.vue";
 import type { DateTime } from "luxon";
 
 // export interface TTurnoFrontend {
@@ -18,6 +19,7 @@ export interface TTurnoFrontend {
   tiendaId: number | null;
   idTrabajador: number;
   borrable: boolean;
+  // plantillaSelected?: TPlantilla;
 }
 
 export interface TTurnoBackend {

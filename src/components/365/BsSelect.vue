@@ -195,7 +195,7 @@ import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 interface Props {
   options?: Record<string, any>[];
   selected?: any;
-  modelValue?: any; // Add modelValue for v-model support
+  modelValue?: any;
   filter?: boolean;
   selectAll?: boolean;
   placeholder?: string;
@@ -223,150 +223,143 @@ const props = withDefaults(defineProps<Props>(), {
   valueKey: "value",
 });
 
+// Layout y clases
 const useInputGroup = computed(
   () => props.labelPosition === "left" || props.labelPosition === "right",
 );
-
 const inputGroupSizeClass = computed(() => {
-  switch (props.size) {
-    case "sm":
-      return "input-group-sm";
-    case "lg":
-      return "input-group-lg";
-    default:
-      return "";
-  }
+  if (props.size === "sm") return "input-group-sm";
+  if (props.size === "lg") return "input-group-lg";
+  return "";
 });
-
 const sizeClass = computed(() => {
-  switch (props.size) {
-    case "sm":
-      return "form-select-sm";
-    case "lg":
-      return "form-select-lg";
-    default:
-      return ""; // 'md' no añade nada
-  }
+  if (props.size === "sm") return "form-select-sm";
+  if (props.size === "lg") return "form-select-lg";
+  return "";
 });
-
 const controlSizeClass = computed(() => {
-  switch (props.size) {
-    case "sm":
-      return "form-control-sm";
-    case "lg":
-      return "form-control-lg";
-    default:
-      return "";
-  }
+  if (props.size === "sm") return "form-control-sm";
+  if (props.size === "lg") return "form-control-lg";
+  return "";
 });
-
 const wrapperClass = computed(() => "d-flex flex-column");
 const labelClass = computed(() => "form-label mb-1");
 
 // Emits
 const emit = defineEmits<{
   "update:selected": [value: any];
-  "update:modelValue": [value: any]; // Add for v-model support
+  "update:modelValue": [value: any];
+  change: [newValue: any];
 }>();
 
-// Refs
+// Refs y estado
 const isOpen = ref(false);
 const searchQuery = ref("");
 const dropdownRef = ref<HTMLElement>();
 const searchInput = ref<HTMLInputElement>();
-
-// Generate unique ID for form elements
 const uid = Math.random().toString(36).substring(2, 9);
-
-// Internal selected state - now stores complete objects
 const internalSelected = ref<any>(props.multi ? [] : null);
 
-// Watch for external selected changes (support both v-model and :selected)
+// Soporte v-model
 const externalValue = computed(() =>
   props.modelValue !== undefined ? props.modelValue : props.selected,
 );
-
 watch(
   externalValue,
-  (newVal) => {
-    internalSelected.value = newVal;
+  (val) => {
+    internalSelected.value = val;
   },
   { immediate: true, deep: true },
 );
 
-// Computed
+// Filtrado y visualización
 const filteredOptions = computed(() => {
-  if (!props.filter || !searchQuery.value) {
-    return props.options || [];
-  }
-
-  const query = searchQuery.value.toLowerCase();
-  return (props.options || []).filter((option) => {
-    const text = getOptionText(option).toLowerCase();
-    return text.includes(query);
-  });
+  if (!props.filter || !searchQuery.value) return props.options!;
+  const q = searchQuery.value.toLowerCase();
+  return props.options!.filter((opt) => String(opt[props.textKey]!).toLowerCase().includes(q));
 });
-
 const displayText = computed(() => {
   if (props.multi) {
-    const selectedCount = Array.isArray(internalSelected.value) ? internalSelected.value.length : 0;
-    if (selectedCount === 0) {
-      return props.placeholder;
-    }
-    return `${selectedCount} ${props.optionsSelectedLabel}`;
-  } else {
-    // For single select, show the text of the selected object
-    if (internalSelected.value) {
-      return getOptionText(internalSelected.value);
-    }
-    return props.placeholder;
+    const cnt = Array.isArray(internalSelected.value) ? internalSelected.value.length : 0;
+    return cnt === 0 ? props.placeholder : `${cnt} ${props.optionsSelectedLabel}`;
   }
+  return internalSelected.value
+    ? String(internalSelected.value[props.textKey]!)
+    : props.placeholder;
 });
-
 const isAllSelected = computed(() => {
   if (!props.multi || !Array.isArray(internalSelected.value)) return false;
-  if (filteredOptions.value.length === 0) return false;
-
-  // Check if all filtered options are in the selected array
-  return filteredOptions.value.every((option) =>
-    internalSelected.value.some(
-      (selected: any) => getOptionValue(selected) === getOptionValue(option),
-    ),
+  if (!filteredOptions.value.length) return false;
+  return filteredOptions.value.every((opt) =>
+    internalSelected.value.some((sel: any) => sel[props.valueKey] === opt[props.valueKey]),
   );
 });
 
-// Methods
-const getOptionText = (option: Record<string, any>): string => {
-  if (!option || typeof option !== "object") return "";
-  return String(option[props.textKey] || "");
-};
-
-const getOptionValue = (option: Record<string, any>): any => {
-  if (!option || typeof option !== "object") return null;
-  return option[props.valueKey];
-};
-
-const isOptionSelected = (option: Record<string, any>): boolean => {
+// Helpers
+const getOptionText = (opt: Record<string, any>) => String(opt[props.textKey]!);
+const getOptionValue = (opt: Record<string, any>) => opt[props.valueKey];
+const isOptionSelected = (opt: Record<string, any>) => {
   if (props.multi) {
     return (
       Array.isArray(internalSelected.value) &&
-      internalSelected.value.some(
-        (selected: any) => getOptionValue(selected) === getOptionValue(option),
-      )
+      internalSelected.value.some((sel: any) => sel[props.valueKey] === opt[props.valueKey])
     );
   }
-  // For single select, compare by value
-  return (
-    internalSelected.value && getOptionValue(internalSelected.value) === getOptionValue(option)
-  );
+  return internalSelected.value && internalSelected.value[props.valueKey] === opt[props.valueKey];
+};
+
+// Emitters
+const emitUpdate = (val: any) => {
+  emit("update:selected", val);
+  emit("update:modelValue", val);
+  emit("change", val);
+};
+
+// Métodos principales
+const handleSearch = () => {
+  // No hace falta nada: el v-model de searchQuery + filteredOptions reactivo
+};
+
+const selectOption = (opt: Record<string, any>) => {
+  if (!props.multi) {
+    internalSelected.value = opt;
+    emitUpdate(opt);
+    closeDropdown();
+  }
+};
+
+const toggleOption = (opt: Record<string, any>) => {
+  if (!props.multi) return;
+  const arr = Array.isArray(internalSelected.value) ? [...internalSelected.value] : [];
+  const idx = arr.findIndex((sel) => sel[props.valueKey] === opt[props.valueKey]);
+  if (idx >= 0) arr.splice(idx, 1);
+  else arr.push(opt);
+  internalSelected.value = arr;
+  emitUpdate(arr);
+};
+
+const toggleSelectAll = () => {
+  if (!props.multi) return;
+  if (isAllSelected.value) {
+    const vals = new Set(filteredOptions.value.map((o) => o[props.valueKey]));
+    internalSelected.value = internalSelected.value.filter(
+      (sel: any) => !vals.has(sel[props.valueKey]),
+    );
+  } else {
+    const curr = Array.isArray(internalSelected.value) ? [...internalSelected.value] : [];
+    const existing = new Set(curr.map((sel: any) => sel[props.valueKey]));
+    filteredOptions.value.forEach((o) => {
+      if (!existing.has(o[props.valueKey])) curr.push(o);
+    });
+    internalSelected.value = curr;
+  }
+  emitUpdate(internalSelected.value);
 };
 
 const toggleDropdown = () => {
   isOpen.value = !isOpen.value;
   if (isOpen.value && props.filter) {
-    setTimeout(() => {
-      searchInput.value?.focus();
-    }, 100);
+    setTimeout(() => searchInput.value?.focus(), 100);
   }
 };
 
@@ -375,211 +368,102 @@ const closeDropdown = () => {
   searchQuery.value = "";
 };
 
-const emitUpdate = (value: any) => {
-  emit("update:selected", value);
-  emit("update:modelValue", value);
-};
-
-const selectOption = (option: Record<string, any>) => {
-  if (!props.multi) {
-    // Store the complete object
-    internalSelected.value = option;
-    emitUpdate(option);
+const handleClickOutside = (e: MouseEvent) => {
+  if (dropdownRef.value?.contains(e.target as Node) === false) {
     closeDropdown();
   }
 };
-
-const toggleOption = (option: Record<string, any>) => {
-  if (!props.multi) return;
-
-  const currentSelected = Array.isArray(internalSelected.value) ? [...internalSelected.value] : [];
-
-  // Find if the option is already selected by comparing values
-  const index = currentSelected.findIndex(
-    (selected: any) => getOptionValue(selected) === getOptionValue(option),
-  );
-
-  if (index > -1) {
-    // Remove the object
-    currentSelected.splice(index, 1);
-  } else {
-    // Add the complete object
-    currentSelected.push(option);
-  }
-
-  internalSelected.value = currentSelected;
-  emitUpdate(currentSelected);
-};
-
-const toggleSelectAll = () => {
-  if (!props.multi) return;
-
-  if (isAllSelected.value) {
-    // Remove all filtered options from selection
-    const filteredValues = new Set(filteredOptions.value.map((opt) => getOptionValue(opt)));
-    const currentSelected = Array.isArray(internalSelected.value)
-      ? internalSelected.value.filter(
-          (selected: any) => !filteredValues.has(getOptionValue(selected)),
-        )
-      : [];
-    internalSelected.value = currentSelected;
-  } else {
-    // Add all filtered options to selection
-    const currentSelected = Array.isArray(internalSelected.value)
-      ? [...internalSelected.value]
-      : [];
-
-    // Create a Set of already selected values for efficient lookup
-    const selectedValues = new Set(
-      currentSelected.map((selected: any) => getOptionValue(selected)),
-    );
-
-    // Add only options that aren't already selected
-    filteredOptions.value.forEach((option) => {
-      if (!selectedValues.has(getOptionValue(option))) {
-        currentSelected.push(option);
-      }
-    });
-
-    internalSelected.value = currentSelected;
-  }
-
-  emitUpdate(internalSelected.value);
-};
-
-const handleSearch = () => {
-  // Search is handled reactively through computed property
-};
-
-// Click outside handler
-const handleClickOutside = (event: MouseEvent) => {
-  if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) {
-    closeDropdown();
-  }
-};
-
-// Lifecycle
-onMounted(() => {
-  document.addEventListener("click", handleClickOutside);
-});
-
-onUnmounted(() => {
-  document.removeEventListener("click", handleClickOutside);
-});
+onMounted(() => document.addEventListener("click", handleClickOutside));
+onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 </script>
 
 <style scoped>
 .bs-select-wrapper {
   position: relative;
 }
-
 .dropdown {
   position: relative;
 }
-
 .form-select {
   cursor: pointer;
   user-select: none;
 }
-
 .form-select.show {
   border-color: #86b7fe;
   outline: 0;
   box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
-
 .dropdown-menu {
   position: absolute;
   top: 100%;
   left: 0;
   z-index: 1000;
   display: none;
-  min-width: 100%;
+  width: 100%;
   padding: 0.5rem 0;
   margin: 0.125rem 0 0;
   font-size: 1rem;
   color: #212529;
-  text-align: left;
-  list-style: none;
-  background-color: #fff;
-  background-clip: padding-box;
+  background: #fff;
   border: 1px solid rgba(0, 0, 0, 0.15);
   border-radius: 0.25rem;
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
-
 .dropdown-menu.show {
   display: block;
 }
-
 .dropdown-item {
   display: block;
   width: 100%;
   padding: 0.25rem 1rem;
-  clear: both;
-  font-weight: 400;
-  color: #212529;
-  text-align: inherit;
-  text-decoration: none;
-  white-space: nowrap;
-  background-color: transparent;
-  border: 0;
+  background: transparent;
+  border: none;
   cursor: pointer;
 }
-
 .dropdown-item:hover,
 .dropdown-item:focus {
-  color: #1e2125;
   background-color: #e9ecef;
 }
-
 .dropdown-item.active {
   color: #fff;
   background-color: #0d6efd;
 }
-
 .dropdown-item-text {
-  display: block;
   padding: 0.25rem 1rem;
   color: #6c757d;
 }
-
 .form-check {
   margin-bottom: 0;
 }
-
 .form-check-label {
   cursor: pointer;
   margin-bottom: 0;
 }
-
 .selected-text {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .bi-chevron-down {
   transition: transform 0.2s;
 }
-
 .show .bi-chevron-down {
   transform: rotate(180deg);
 }
-
+.dropdown-options {
+  max-height: 300px;
+  overflow-y: auto;
+}
 .dropdown-options::-webkit-scrollbar {
   width: 8px;
 }
-
 .dropdown-options::-webkit-scrollbar-track {
   background: #f1f1f1;
 }
-
 .dropdown-options::-webkit-scrollbar-thumb {
   background: #888;
   border-radius: 4px;
 }
-
 .dropdown-options::-webkit-scrollbar-thumb:hover {
   background: #555;
 }

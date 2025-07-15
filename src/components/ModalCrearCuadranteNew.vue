@@ -547,25 +547,35 @@ async function iniciarDatos(fecha: DateTime) {
     const inicioSemana = fecha.startOf("week");
     const diasSemana = Array.from({ length: 7 }, (_, i) => inicioSemana.plus({ days: i }));
 
-    // 3) Mapeo los turnos reales por día (key = milis del inicio de día)
-    const mapaTurnos = new Map<number, TTurnoFrontend>(
-      turnosTrabajador.map((t) => [t.inicio.startOf("day").toMillis(), t]),
-    );
+    // 3) Agrupo los turnos reales por día (key = milis del inicio de día)
+    const turnosPorDia = new Map<number, TTurnoFrontend[]>();
+    turnosTrabajador.forEach((turno) => {
+      const key = turno.inicio.startOf("day").toMillis();
+      if (!turnosPorDia.has(key)) {
+        turnosPorDia.set(key, []);
+      }
+      turnosPorDia.get(key)!.push(turno);
+    });
 
     // 4) Construyo arrayTurnosTrabajador: turnos reales o placeholders
-    arrayTurnosTrabajador.value = diasSemana.map((dia) => {
+    arrayTurnosTrabajador.value = [];
+    diasSemana.forEach((dia) => {
       const key = dia.startOf("day").toMillis();
-      const real = mapaTurnos.get(key);
-      if (real) return real;
+      const turnosDelDia = turnosPorDia.get(key);
 
-      // placeholder para días sin turno
-      return {
-        id: `tmp-${key}`,
-        inicio: dia,
-        final: dia, // mismo día sin horas
-        tiendaId: props.selectedTienda?.id,
-        borrable: false, // así los distinguirás
-      } as TTurnoFrontend;
+      if (turnosDelDia && turnosDelDia.length > 0) {
+        // Agregar todos los turnos de este día
+        arrayTurnosTrabajador.value.push(...turnosDelDia);
+      } else {
+        // placeholder para días sin turno
+        arrayTurnosTrabajador.value.push({
+          id: `tmp-${key}`,
+          inicio: dia,
+          final: dia, // mismo día sin horas
+          tiendaId: props.selectedTienda?.id,
+          borrable: false, // así los distinguirás
+        } as TTurnoFrontend);
+      }
     });
 
     turnoSeleccionado.value = null;

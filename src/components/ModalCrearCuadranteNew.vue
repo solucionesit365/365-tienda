@@ -31,13 +31,15 @@
 
           <div class="resumen-horas">
             <div class="horas-card">
-              <div class="horas-titulo">Total Horas</div>
-              <div class="horas-valor">{{ totalHoras.toFixed(2) }}</div>
+              <div class="horas-titulo">Total horas</div>
+              <!-- Antes: {{ totalHoras.toFixed(2) }} -->
+              <div class="horas-valor">{{ formatHoras(totalHoras) }}</div>
             </div>
             <div class="horas-desglose" v-if="trabajadorSelected">
               <div class="desglose-item" v-for="(horas, dia) in horasPorDia" :key="dia">
                 <span class="dia-nombre">{{ dia }}</span>
-                <span class="dia-horas">{{ horas.toFixed(1) }}h</span>
+                <!-- Antes: {{ horas.toFixed(1) }}h -->
+                <span class="dia-horas">{{ formatHoras(horas) }}</span>
               </div>
             </div>
           </div>
@@ -284,6 +286,12 @@ const arrayTurnosTrabajadorOrdenados = computed(() => {
     return a.inicio.toMillis() - b.inicio.toMillis();
   });
 });
+
+function formatHoras(hoursDecimal: number): string {
+  const h = Math.floor(hoursDecimal);
+  const m = Math.round((hoursDecimal - h) * 60);
+  return `${h} h ${m} min`;
+}
 
 function isCustomTurno(inicio: DateTime, final: DateTime) {
   // Prioridad máxima para estos casos, son los iniciales

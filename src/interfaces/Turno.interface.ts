@@ -13,7 +13,7 @@ import type { DateTime } from "luxon";
 // }
 
 export interface TTurnoFrontend {
-  id: string | null;
+  id: string;
   inicio: DateTime; // ISO string
   final: DateTime; // ISO string
   tiendaId: number | null;

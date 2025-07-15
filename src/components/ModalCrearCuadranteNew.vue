@@ -114,8 +114,8 @@
 
               <div class="tabla-body">
                 <div
-                  v-for="(turno, index) in arrayTurnosTrabajadorOrdenados"
-                  :key="index"
+                  v-for="turno in arrayTurnosTrabajadorOrdenados"
+                  :key="turno.id"
                   class="tabla-row"
                   :class="{
                     'row-seleccionada': turnoSeleccionado && turnoSeleccionado.id === turno.id,
@@ -312,28 +312,18 @@ function isCustomTurno(inicio: DateTime, final: DateTime) {
   return true;
 }
 
-function onChangePlantilla(newValue: TPlantilla) {
+function onChangePlantilla(newPlantilla: TPlantilla) {
   if (!turnoSeleccionado.value) return;
 
-  const index = buscarIndexFromTurno(turnoSeleccionado.value.id!);
-  // Cambia solo la hora y minutos, manteniendo el día original
-  const [horaInicio, minutoInicio] = newValue.inicio.split(":").map(Number);
-  arrayTurnosTrabajador.value[index].inicio = arrayTurnosTrabajador.value[index].inicio.set({
-    hour: horaInicio,
-    minute: minutoInicio,
-  });
+  const [hIni, mIni] = newPlantilla.inicio.split(":").map(Number);
+  const [hFin, mFin] = newPlantilla.final.split(":").map(Number);
 
-  const [horaFinal, minutoFinal] = newValue.final.split(":").map(Number);
-  arrayTurnosTrabajador.value[index].final = arrayTurnosTrabajador.value[index].final.set({
-    hour: horaFinal,
-    minute: minutoFinal,
-  });
+  // muta el mismo objeto
+  turnoSeleccionado.value.inicio = turnoSeleccionado.value.inicio.set({ hour: hIni, minute: mIni });
+  turnoSeleccionado.value.final = turnoSeleccionado.value.final.set({ hour: hFin, minute: mFin });
 
-  // Actualiza el array para reactividad
+  // y vuelve a asignar el array para que Vue lo detecte
   arrayTurnosTrabajador.value = [...arrayTurnosTrabajador.value];
-
-  // Actualiza turnoSeleccionado también
-  turnoSeleccionado.value = { ...arrayTurnosTrabajador.value[index] };
 }
 
 const estadoBotonEsCustom = computed(() => {
@@ -404,15 +394,16 @@ function esTurnoBorrable(turno: any): boolean {
 function addDobleTurno() {
   loadingDobleTurno.value = true;
 
+  // Si no hay turno activo o fecha de inicio, abortamos
   if (!turnoSeleccionado.value || !inicioSemana.value) {
     loadingDobleTurno.value = false;
     return;
   }
 
-  // Día “a la carta” en el que queremos añadir el segundo turno
+  // Obtenemos el día en cuestión (00:00 del día)
   const diaSeleccionado = turnoSeleccionado.value.inicio.startOf("day");
 
-  // Obtener todos los turnos de ese día
+  // Comprobamos cuántos turnos ya hay ese día
   const turnosDelDia = arrayTurnosTrabajador.value.filter(
     (t) => t.inicio.startOf("day").toMillis() === diaSeleccionado.toMillis(),
   );
@@ -427,13 +418,10 @@ function addDobleTurno() {
     return;
   }
 
-  // Decidir hora de inicio: si ya hay uno, a las 16h; si no, a las 9h
-  const horaInicio = turnosDelDia.length === 1 ? 16 : 9;
-  const inicio = diaSeleccionado.set({ hour: horaInicio, minute: 0 });
-  // Mini–placeholder de duración 1 minuto (igual que en handleAddCuadrante)
-  const final = inicio.plus({ minute: 1 });
+  // ---- Aquí la clave: creamos el placeholder a las 00:00–00:00 ----
+  const inicio = diaSeleccionado;
+  const final = diaSeleccionado;
 
-  // Construir el objeto directamente
   const nuevoTurno: TTurnoFrontend = {
     id: `tmp-${Date.now()}`, // ID único provisional
     inicio,
@@ -443,7 +431,7 @@ function addDobleTurno() {
     borrable: true,
   } as any;
 
-  // Insertarlo en la posición ordenada
+  // Lo insertamos en la posición mantenida ordenada
   const idx = arrayTurnosTrabajador.value.findIndex((t) => t.inicio > nuevoTurno.inicio);
   if (idx === -1) {
     arrayTurnosTrabajador.value.push(nuevoTurno);
@@ -451,6 +439,11 @@ function addDobleTurno() {
     arrayTurnosTrabajador.value.splice(idx, 0, nuevoTurno);
   }
 
+  // ---- Seleccionamos automáticamente el nuevo turno ----
+  turnoSeleccionado.value = nuevoTurno;
+
+  // Forzamos la reactividad para que Vue actualice la tabla
+  arrayTurnosTrabajador.value = [...arrayTurnosTrabajador.value];
   loadingDobleTurno.value = false;
 }
 
@@ -700,7 +693,7 @@ async function borrarTurno({ idTurno }: { idTurno: string }) {
       Swal.fire("Borrado", "El turno ha sido borrado.", "success");
     } else Swal.fire("Oops...", "No se ha podido borrar este turno", "error");
   } else {
-    arrayTurnosTrabajador.value[index].id = null;
+    arrayTurnosTrabajador.value[index].id = `tmp-${Date.now()}`;
     arrayTurnosTrabajador.value[index].inicio =
       arrayTurnosTrabajador.value[index].inicio.startOf("day");
     arrayTurnosTrabajador.value[index].final =

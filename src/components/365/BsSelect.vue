@@ -400,6 +400,7 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
   z-index: 1000;
   display: none;
   width: 100%;
+  min-width: max-content;
   padding: 0.5rem 0;
   margin: 0.125rem 0 0;
   font-size: 1rem;
@@ -415,10 +416,12 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 .dropdown-item {
   display: block;
   width: 100%;
+  min-width: max-content;
   padding: 0.25rem 1rem;
   background: transparent;
   border: none;
   cursor: pointer;
+  white-space: nowrap;
 }
 .dropdown-item:hover,
 .dropdown-item:focus {
@@ -440,9 +443,31 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
   margin-bottom: 0;
 }
 .selected-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-x: auto;
+  overflow-y: hidden;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+}
+
+.selected-text::-webkit-scrollbar {
+  height: 6px;
+}
+
+.selected-text::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.selected-text::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.selected-text::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 .bi-chevron-down {
   transition: transform 0.2s;
@@ -453,9 +478,11 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 .dropdown-options {
   max-height: 300px;
   overflow-y: auto;
+  overflow-x: auto;
 }
 .dropdown-options::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 .dropdown-options::-webkit-scrollbar-track {
   background: #f1f1f1;
@@ -466,5 +493,8 @@ onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 }
 .dropdown-options::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+.dropdown-options::-webkit-scrollbar-corner {
+  background: #f1f1f1;
 }
 </style>

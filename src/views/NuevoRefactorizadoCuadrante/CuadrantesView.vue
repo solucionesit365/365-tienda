@@ -26,7 +26,7 @@
             size="lg"
             @click="abrirConfiguradorCuadranteSemanal()"
           >
-            <i class="fas fa-plus me-1"></i> Turno
+            <i class="fas fa-pencil me-1"></i> Gestión cuadrante
           </BsButton>
           <BsButton v-if="hasPermission('CrearCuadrante')" color="warning" size="lg">
             <i class="fas fa-copy me-1"></i> Copiar
@@ -132,7 +132,7 @@ async function reloadCuadrante() {
         idTienda: selectedTienda.value.id,
       },
     });
-    console.log("Turnos recargados:", turnosEquipoCompleto.data);
+
     return turnosEquipoCompleto.data;
   } catch (error) {
     console.error("Error al recargar el cuadrante:", error);

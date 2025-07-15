@@ -19,16 +19,6 @@
             </div>
           </div>
 
-          <div class="selector-trabajador">
-            <label class="selector-label">Trabajador</label>
-            <BsSelect
-              v-model="trabajadorSelected"
-              :options="equipoCoordinadora"
-              text-key="nombreApellidos"
-              value-key="id"
-            />
-          </div>
-
           <div class="resumen-horas">
             <div class="horas-card">
               <div class="horas-titulo">Total horas</div>
@@ -102,6 +92,19 @@
 
         <!-- Área principal con la tabla -->
         <main class="main-content">
+          <!-- Selector de trabajador siempre visible -->
+          <div class="selector-trabajador-main">
+            <label class="selector-label">Seleccionar trabajador/a</label>
+            <BsSelect
+              v-model="trabajadorSelected"
+              :options="equipoCoordinadora"
+              text-key="nombreApellidos"
+              value-key="id"
+              size="lg"
+              placeholder="Seleccione un trabajador para ver sus turnos"
+            />
+          </div>
+
           <div v-if="!cargando" class="tabla-wrapper">
             <!-- Vista de tabla cuando hay trabajador seleccionado -->
             <div v-if="trabajadorSelected" class="tabla-cuadrante">
@@ -137,6 +140,7 @@
                       <BsSelect
                         v-else
                         :options="plantillasTurnoTextoCompuesto"
+                        :model-value="getPlantillaSeleccionada(turno)"
                         value-key="id"
                         text-key="nombre"
                         @change="onChangePlantilla"
@@ -209,7 +213,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, inject, type Ref, type ComputedRef } from "vue";
+import { ref, computed, watch, inject, onUnmounted, type Ref, type ComputedRef } from "vue";
 import Swal from "sweetalert2";
 import { DateTime } from "luxon";
 import { axiosInstance } from "@/components/axios/axios";
@@ -360,6 +364,17 @@ function getTiendaOption(tiendaId: number | null) {
   return tiendaId != null ? (arrayTiendas.value.find((t) => t.id === tiendaId) ?? null) : null;
 }
 
+function getPlantillaSeleccionada(turno: TTurnoFrontend) {
+  const horaInicio = turno.inicio.toFormat("HH:mm");
+  const horaFinal = turno.final.toFormat("HH:mm");
+
+  const plantillaEncontrada = plantillasTurnoTextoCompuesto.value.find(
+    (plantilla) => plantilla.inicio === horaInicio && plantilla.final === horaFinal,
+  );
+
+  return plantillaEncontrada || null;
+}
+
 function calcularHorasTurno(turno: TTurnoFrontend) {
   // if (turno.ausencia) return "0 h 0 min";
   const diff = turno.final.diff(turno.inicio, "minutes").minutes;
@@ -458,6 +473,7 @@ async function handleCancelar() {
   });
   if (result.isConfirmed) {
     modalCrearCuadrante.value = false;
+    limpiarDatosModal();
   }
 }
 
@@ -526,7 +542,7 @@ async function iniciarDatos(fecha: DateTime) {
     const turnosTrabajador: TTurnoFrontend[] = trabajadorSelected.value
       ? await Turno.getTurnosIndividuales(fecha, trabajadorSelected.value.id)
       : [];
-    console.log("eooo", turnosTrabajador);
+
     // 2) Calculo los 7 días de lunes a domingo
     const inicioSemana = fecha.startOf("week");
     const diasSemana = Array.from({ length: 7 }, (_, i) => inicioSemana.plus({ days: i }));
@@ -572,7 +588,7 @@ async function guardarFinal() {
 
     if (!trabajadorSelected.value || !inicioSemana.value) throw new Error();
 
-    const resTurnosUpdated = await axiosInstance.post("save-turnos-trabajador-semanal", {
+    await axiosInstance.post("save-turnos-trabajador-semanal", {
       idTrabajador: trabajadorSelected.value.id,
       inicioSemanaISO: inicioSemana.value.toISO(),
       arrayTurnos: arrayTurnosTrabajador.value.map((turno) => ({
@@ -584,48 +600,16 @@ async function guardarFinal() {
       })),
     });
 
-    console.log(resTurnosUpdated.data);
+    Swal.fire({
+      icon: "success",
+      title: "Guardado",
+      text: "Los turnos se han guardado correctamente.",
+      showConfirmButton: false,
+      timer: 1500,
+      timerProgressBar: true,
+    });
 
     reloadCuadrante!();
-
-    // const sendRequestCuadrantes = arrayTurnosTrabajador.value.map((turno) => {
-    //   return {
-    //     horaEntrada: turno.inicio.toISO(),
-    //     horaSalida: turno.final.toISO(),
-    //     idTienda: turno.tiendaId,
-    //     idTurno: turno.id,
-    //     borrable: turno.borrable,
-    //   };
-    // });
-
-    // if (!inicioSemana.value) throw Error("No se ha podido obtener la fecha de inicio de semana");
-
-    // const resGuardar = await axiosInstance.post("cuadrantes/saveCuadrante", {
-    //   idTrabajador: trabajadorSelected.value,
-    //   arraySemanalHoras: sendRequestCuadrantes,
-    //   totalHoras: totalHoras.value,
-    //   idTiendaDefault: userStore.getIdTienda,
-    //   fecha: inicioSemana.value.toISO(),
-    //   uid: uidParaConsultar,
-    //   semana: props.selectedDate.weekNumber,
-    //   year: props.selectedDate.year,
-    // });
-
-    // if (resGuardar.data.ok) {
-    //   if (!reloadCuadrante) throw new Error("No se encontró la inyección 'reloadCuadrante'");
-
-    //   reloadCuadrante();
-    //   modalCrearCuadrante.value = false;
-
-    //   Swal.fire({
-    //     icon: "success",
-    //     title: "Perfecto",
-    //     text: "Turnos guardados correctamente",
-    //     showConfirmButton: false,
-    //     timer: 1500,
-    //     timerProgressBar: true,
-    //   });
-    // } else throw Error();
   } catch (err) {
     console.log(err);
     Swal.fire("Oops...", "No se han podido guardar los turnos", "error");
@@ -688,7 +672,7 @@ async function getEquipoCoordinadoraDeLaTienda() {
           excedencia: false,
           id: currentUser.value.idSql,
           llevaEquipo: currentUser.value.llevaEquipo,
-          nombreApellidos: currentUser.value.nombre!,
+          nombreApellidos: currentUser.value.displayName!,
           tipoTrabajador: "COORDINADORA",
         });
     }
@@ -771,11 +755,43 @@ function setTurnoSeleccionado(inicio: string, final: string) {
   turnoSeleccionado.value = { ...arrayTurnosTrabajador.value[index] };
 }
 
-watch(trabajadorSelected, () => {
+const watchTrabajadorSelected = watch(trabajadorSelected, () => {
   if (inicioSemana.value) {
     iniciarDatos(inicioSemana.value);
     turnoSeleccionado.value = null;
   }
+});
+
+// Función para limpiar datos al cerrar el modal
+function limpiarDatosModal() {
+  trabajadorSelected.value = null;
+  arrayTurnosTrabajador.value = [];
+  turnoSeleccionado.value = null;
+  equipoCoordinadora.value = [];
+  plantillasTurno.value = [];
+  inicioSemana.value = null;
+  cargando.value = false;
+  guardando.value = false;
+  loadingDobleTurno.value = false;
+}
+
+// Watcher para limpiar datos cuando se cierre el modal
+watch(modalCrearCuadrante, (newValue) => {
+  if (newValue) {
+    // Modal se está abriendo - deshabilitar scroll del body
+    document.body.style.overflow = "hidden";
+  } else {
+    // Modal se está cerrando - restaurar scroll del body
+    document.body.style.overflow = "";
+    limpiarDatosModal();
+  }
+});
+
+// Limpiar watchers al desmontar el componente
+onUnmounted(() => {
+  watchTrabajadorSelected();
+  // Restaurar scroll del body por si el componente se desmonta con el modal abierto
+  document.body.style.overflow = "";
 });
 
 defineExpose({
@@ -826,26 +842,6 @@ defineExpose({
   font-size: 0.85rem;
   color: #6c757d;
   margin-top: 0.25rem;
-}
-
-.selector-trabajador {
-  padding: 1.25rem;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.selector-label {
-  display: block;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #495057;
-  margin-bottom: 0.5rem;
-}
-
-.selector-trabajador .form-select {
-  font-size: 0.95rem;
-  padding: 0.5rem;
-  border: 1px solid #ced4da;
-  border-radius: 6px;
 }
 
 /* Resumen de horas */
@@ -913,6 +909,22 @@ defineExpose({
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+/* Selector de trabajador en área principal */
+.selector-trabajador-main {
+  padding: 1.5rem;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.selector-trabajador-main .selector-label {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.75rem;
 }
 
 .tabla-wrapper {

@@ -126,7 +126,7 @@ async function reloadCuadrante() {
   try {
     if (!selectedTienda.value?.id) throw new Error("No se ha seleccionado una tienda");
 
-    const turnosEquipoCompleto = await axiosInstance.get("turno/getTurnosCoordinadora", {
+    const turnosEquipoCompleto = await axiosInstance.get("GetTurnosEquipoCoordinadora", {
       params: {
         fecha: selectedDate.value.toISODate(),
         idTienda: selectedTienda.value.id,

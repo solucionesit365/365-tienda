@@ -90,7 +90,7 @@
               @click="eliminarTurnoSeleccionado"
             >
               <i class="bi bi-trash me-2"></i>
-              Eliminar Turno
+              Eliminar turno
             </BsButton>
 
             <BsButton color="danger" class="w-100" @click="handleCancelar()">
@@ -479,21 +479,27 @@ function actualizarTiendaTurno(turno: TTurnoFrontend, nuevaIdTienda: number) {
 async function eliminarTurnoSeleccionado() {
   if (!turnoSeleccionado.value) return;
 
-  const confirmResult = await Swal.fire({
-    title: "¿Eliminar turno?",
-    text: "Esta acción no se puede deshacer.",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#d33",
-    cancelButtonColor: "#3085d6",
-    confirmButtonText: "Sí, eliminar",
-    cancelButtonText: "Cancelar",
-  });
+  const index = buscarIndexFromTurno(turnoSeleccionado.value.id);
 
-  if (confirmResult.isConfirmed) {
-    await borrarTurno({ idTurno: turnoSeleccionado.value.id! });
-    turnoSeleccionado.value = null;
+  if (arrayTurnosTrabajador.value[index]?.borrable) {
+    arrayTurnosTrabajador.value.splice(index, 1);
+    Swal.fire({
+      icon: "success",
+      title: "Borrado",
+      text: "El turno ha sido borrado.",
+      showConfirmButton: false,
+      timer: 1200,
+      timerProgressBar: true,
+    });
+  } else {
+    arrayTurnosTrabajador.value[index].id = `tmp-${Date.now()}`;
+    arrayTurnosTrabajador.value[index].inicio =
+      arrayTurnosTrabajador.value[index].inicio.startOf("day");
+    arrayTurnosTrabajador.value[index].final =
+      arrayTurnosTrabajador.value[index].inicio.startOf("day");
+    arrayTurnosTrabajador.value[index].tiendaId = null;
   }
+  turnoSeleccionado.value = null;
 }
 
 // Funciones existentes
@@ -520,7 +526,7 @@ async function iniciarDatos(fecha: DateTime) {
     const turnosTrabajador: TTurnoFrontend[] = trabajadorSelected.value
       ? await Turno.getTurnosIndividuales(fecha, trabajadorSelected.value.id)
       : [];
-
+    console.log("eooo", turnosTrabajador);
     // 2) Calculo los 7 días de lunes a domingo
     const inicioSemana = fecha.startOf("week");
     const diasSemana = Array.from({ length: 7 }, (_, i) => inicioSemana.plus({ days: i }));
@@ -538,7 +544,7 @@ async function iniciarDatos(fecha: DateTime) {
 
       // placeholder para días sin turno
       return {
-        id: `placeholder-${key}`,
+        id: `tmp-${key}`,
         inicio: dia,
         final: dia, // mismo día sin horas
         tiendaId: props.selectedTienda?.id,
@@ -563,47 +569,63 @@ async function iniciarDatos(fecha: DateTime) {
 async function guardarFinal() {
   try {
     guardando.value = true;
-    const uidGuardado = localStorage.getItem("uidCoordinadora");
-    const uidParaConsultar = uidGuardado || currentUser.value.uid;
 
-    const sendRequestCuadrantes = arrayTurnosTrabajador.value.map((turno) => {
-      return {
-        horaEntrada: turno.inicio.toISO(),
-        horaSalida: turno.final.toISO(),
-        idTienda: turno.tiendaId,
-        idTurno: turno.id,
+    if (!trabajadorSelected.value || !inicioSemana.value) throw new Error();
+
+    const resTurnosUpdated = await axiosInstance.post("save-turnos-trabajador-semanal", {
+      idTrabajador: trabajadorSelected.value.id,
+      inicioSemanaISO: inicioSemana.value.toISO(),
+      arrayTurnos: arrayTurnosTrabajador.value.map((turno) => ({
+        id: turno.id,
+        inicioISO: turno.inicio.toISO(),
+        finalISO: turno.final.toISO(),
+        tiendaId: turno.tiendaId,
         borrable: turno.borrable,
-      };
+      })),
     });
 
-    if (!inicioSemana.value) throw Error("No se ha podido obtener la fecha de inicio de semana");
+    console.log(resTurnosUpdated.data);
 
-    const resGuardar = await axiosInstance.post("cuadrantes/saveCuadrante", {
-      idTrabajador: trabajadorSelected.value,
-      arraySemanalHoras: sendRequestCuadrantes,
-      totalHoras: totalHoras.value,
-      idTiendaDefault: userStore.getIdTienda,
-      fecha: inicioSemana.value.toISO(),
-      uid: uidParaConsultar,
-      semana: props.selectedDate.weekNumber,
-      year: props.selectedDate.year,
-    });
+    reloadCuadrante!();
 
-    if (resGuardar.data.ok) {
-      if (!reloadCuadrante) throw new Error("No se encontró la inyección 'reloadCuadrante'");
+    // const sendRequestCuadrantes = arrayTurnosTrabajador.value.map((turno) => {
+    //   return {
+    //     horaEntrada: turno.inicio.toISO(),
+    //     horaSalida: turno.final.toISO(),
+    //     idTienda: turno.tiendaId,
+    //     idTurno: turno.id,
+    //     borrable: turno.borrable,
+    //   };
+    // });
 
-      reloadCuadrante();
-      modalCrearCuadrante.value = false;
+    // if (!inicioSemana.value) throw Error("No se ha podido obtener la fecha de inicio de semana");
 
-      Swal.fire({
-        icon: "success",
-        title: "Perfecto",
-        text: "Turnos guardados correctamente",
-        showConfirmButton: false,
-        timer: 1500,
-        timerProgressBar: true,
-      });
-    } else throw Error();
+    // const resGuardar = await axiosInstance.post("cuadrantes/saveCuadrante", {
+    //   idTrabajador: trabajadorSelected.value,
+    //   arraySemanalHoras: sendRequestCuadrantes,
+    //   totalHoras: totalHoras.value,
+    //   idTiendaDefault: userStore.getIdTienda,
+    //   fecha: inicioSemana.value.toISO(),
+    //   uid: uidParaConsultar,
+    //   semana: props.selectedDate.weekNumber,
+    //   year: props.selectedDate.year,
+    // });
+
+    // if (resGuardar.data.ok) {
+    //   if (!reloadCuadrante) throw new Error("No se encontró la inyección 'reloadCuadrante'");
+
+    //   reloadCuadrante();
+    //   modalCrearCuadrante.value = false;
+
+    //   Swal.fire({
+    //     icon: "success",
+    //     title: "Perfecto",
+    //     text: "Turnos guardados correctamente",
+    //     showConfirmButton: false,
+    //     timer: 1500,
+    //     timerProgressBar: true,
+    //   });
+    // } else throw Error();
   } catch (err) {
     console.log(err);
     Swal.fire("Oops...", "No se han podido guardar los turnos", "error");
@@ -678,28 +700,6 @@ async function getEquipoCoordinadoraDeLaTienda() {
 
 function buscarIndexFromTurno(idTurno: string) {
   return arrayTurnosTrabajador.value.findIndex((element) => element.id === idTurno);
-}
-
-async function borrarTurno({ idTurno }: { idTurno: string }) {
-  const index = buscarIndexFromTurno(idTurno);
-
-  if (arrayTurnosTrabajador.value[index]?.borrable) {
-    const resBorrado = await axiosInstance.post("cuadrantes/borrarTurno", {
-      idTurno: arrayTurnosTrabajador.value[index].id,
-    });
-
-    if (resBorrado.data.ok) {
-      arrayTurnosTrabajador.value.splice(index, 1);
-      Swal.fire("Borrado", "El turno ha sido borrado.", "success");
-    } else Swal.fire("Oops...", "No se ha podido borrar este turno", "error");
-  } else {
-    arrayTurnosTrabajador.value[index].id = `tmp-${Date.now()}`;
-    arrayTurnosTrabajador.value[index].inicio =
-      arrayTurnosTrabajador.value[index].inicio.startOf("day");
-    arrayTurnosTrabajador.value[index].final =
-      arrayTurnosTrabajador.value[index].inicio.startOf("day");
-    arrayTurnosTrabajador.value[index].tiendaId = null;
-  }
 }
 
 function administrarPlantillasTurno() {

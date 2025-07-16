@@ -1,7 +1,7 @@
 <template>
-<div class="row row-cols-2 justify-content-center mt-4">
+  <div class="row row-cols-2 justify-content-center mt-4">
     <div class="col-12 col-xl col-sm-12 mt-2">
-      <div class="card border-top border-5 mb-8">
+      <div class="card mb-8">
         <div class="card-body">
           <label for="basic-url" class="form-label">Titulo del video</label>
           <div class="input-group mb-3">
@@ -99,11 +99,10 @@ async function subirVideo() {
 </script>
 
 <style scoped>
-.cardDocs {
-  background-color: #fafafa;
-}
-
-.roundIcon {
-  background-color: #c6f5d5;
+.card {
+  padding: 0.5em 0.5em;
+  border-radius: 1em;
+  border: 1em;
+  box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
 }
 </style>

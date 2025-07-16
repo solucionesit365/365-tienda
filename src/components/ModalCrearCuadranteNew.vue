@@ -74,6 +74,16 @@
             </BsButton>
 
             <BsButton
+              v-if="turnoSeleccionado"
+              color="secondary"
+              class="w-100 mb-2"
+              @click="restablecerTurnoSeleccionado"
+            >
+              <i class="bi bi-arrow-clockwise me-2"></i>
+              Restablecer turno
+            </BsButton>
+
+            <BsButton
               v-if="turnoSeleccionado && esTurnoBorrable(turnoSeleccionado)"
               color="danger"
               class="w-100 mb-2"
@@ -128,7 +138,9 @@
                   <div class="col">
                     <div class="dia-info">
                       <span class="dia-nombre">{{ formatearDia(turno.inicio) }}</span>
-                      <span class="dia-fecha">{{ formatearFecha(turno.inicio) }}</span>
+                      <span class="dia-fecha">{{
+                        formatearFechaConRango(turno.inicio, turno.final)
+                      }}</span>
                     </div>
                   </div>
 
@@ -324,7 +336,14 @@ function onChangePlantilla(newPlantilla: TPlantilla) {
 
   // muta el mismo objeto
   turnoSeleccionado.value.inicio = turnoSeleccionado.value.inicio.set({ hour: hIni, minute: mIni });
-  turnoSeleccionado.value.final = turnoSeleccionado.value.final.set({ hour: hFin, minute: mFin });
+
+  // Si la hora final es menor que la inicial, es un turno nocturno que termina al día siguiente
+  let fechaFinal = turnoSeleccionado.value.inicio.set({ hour: hFin, minute: mFin });
+  if (hFin < hIni || (hFin === hIni && mFin < mIni)) {
+    fechaFinal = fechaFinal.plus({ days: 1 });
+  }
+
+  turnoSeleccionado.value.final = fechaFinal;
 
   // y vuelve a asignar el array para que Vue lo detecte
   arrayTurnosTrabajador.value = [...arrayTurnosTrabajador.value];
@@ -341,6 +360,7 @@ const estadoBotonEsCustom = computed(() => {
 const horasPorDia = computed(() => {
   const horas: Record<string, number> = {};
   arrayTurnosTrabajador.value.forEach((turno) => {
+    // Siempre usar la fecha de inicio del turno para agrupar, según el día que empieza a trabajar
     const dia = turno.inicio.toFormat("EEE", { locale: "es" });
     const hrs = turno.final.diff(turno.inicio, "hours").hours;
     horas[dia] = (horas[dia] || 0) + hrs;
@@ -356,8 +376,16 @@ function formatearDia(fecha: DateTime) {
   );
 }
 
-function formatearFecha(fecha: DateTime) {
-  return fecha.toFormat("dd/MM");
+function formatearFechaConRango(inicio: DateTime, final: DateTime) {
+  const fechaInicio = inicio.toFormat("dd/MM");
+  const fechaFinal = final.toFormat("dd/MM");
+
+  // Si las fechas son diferentes, mostrar el rango
+  if (fechaInicio !== fechaFinal) {
+    return `${fechaInicio} - ${fechaFinal}`;
+  }
+
+  return fechaInicio;
 }
 
 function getTiendaOption(tiendaId: number | null) {
@@ -713,11 +741,18 @@ function modificarHorasTurno(idTurno: string, horaInicioHHmm: string, horaFinalH
     indexTurno
   ].inicio.set({ hour: horasInicio, minute: minutosInicio });
 
-  // Cambio el final
+  // Cambio el final - si la hora final es menor que la inicial, es un turno nocturno
   const [horasFinal, minutosFinal] = horaFinalHHmm.split(":").map(Number);
-  arrayTurnosTrabajador.value[indexTurno].final = arrayTurnosTrabajador.value[indexTurno].final.set(
-    { hour: horasFinal, minute: minutosFinal },
-  );
+  let fechaFinal = arrayTurnosTrabajador.value[indexTurno].inicio.set({
+    hour: horasFinal,
+    minute: minutosFinal,
+  });
+
+  if (horasFinal < horasInicio || (horasFinal === horasInicio && minutosFinal < minutosInicio)) {
+    fechaFinal = fechaFinal.plus({ days: 1 });
+  }
+
+  arrayTurnosTrabajador.value[indexTurno].final = fechaFinal;
   turnoSeleccionado.value = { ...arrayTurnosTrabajador.value[indexTurno] };
 }
 
@@ -751,12 +786,36 @@ function setTurnoSeleccionado(inicio: string, final: string) {
     minute: minutoInicio,
   });
 
-  // Cambia la hora de finalización
+  // Cambia la hora de finalización - si la hora final es menor que la inicial, es un turno nocturno
   const [horaFinal, minutoFinal] = final.split(":").map(Number);
-  arrayTurnosTrabajador.value[index].final = arrayTurnosTrabajador.value[index].final.set({
+  let fechaFinal = arrayTurnosTrabajador.value[index].inicio.set({
     hour: horaFinal,
     minute: minutoFinal,
   });
+
+  if (horaFinal < horaInicio || (horaFinal === horaInicio && minutoFinal < minutoInicio)) {
+    fechaFinal = fechaFinal.plus({ days: 1 });
+  }
+
+  arrayTurnosTrabajador.value[index].final = fechaFinal;
+
+  // Actualiza el array para reactividad
+  arrayTurnosTrabajador.value = [...arrayTurnosTrabajador.value];
+
+  // Actualiza turnoSeleccionado también
+  turnoSeleccionado.value = { ...arrayTurnosTrabajador.value[index] };
+}
+
+function restablecerTurnoSeleccionado() {
+  if (!turnoSeleccionado.value || !turnoSeleccionado.value.id) return;
+
+  const index = buscarIndexFromTurno(turnoSeleccionado.value.id);
+  if (index === -1) return;
+
+  // Restablecer a 00:00 - 00:00 (mismo día)
+  const fechaInicio = arrayTurnosTrabajador.value[index].inicio.startOf("day");
+  arrayTurnosTrabajador.value[index].inicio = fechaInicio;
+  arrayTurnosTrabajador.value[index].final = fechaInicio;
 
   // Actualiza el array para reactividad
   arrayTurnosTrabajador.value = [...arrayTurnosTrabajador.value];

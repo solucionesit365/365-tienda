@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineEmits, type Ref } from "vue";
+import { ref, computed, type Ref } from "vue";
 import moment from "moment";
 import { subirArchivoGeneral } from "@/components/firebase/storage";
 import { axiosInstance } from "@/components/axios/axios";

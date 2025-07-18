@@ -35,66 +35,73 @@
           </div>
 
           <div class="acciones-sidebar">
-            <BsButton color="warning" class="w-100 mb-2" @click="administrarPlantillasTurno()">
-              <i class="bi bi-plus-circle me-2"></i>
+            <BsButton
+              icon="file-pen"
+              color="warning"
+              class="w-100 mb-2 text-start"
+              @click="administrarPlantillasTurno()"
+            >
               Administrar plantillas
             </BsButton>
             <BsButton
               color="primary"
-              class="w-100 mb-2"
+              class="w-100 mb-2 text-start"
+              icon="plus"
               :loading="loadingDobleTurno"
               :disabled="!trabajadorSelected || !turnoSeleccionado"
               @click="addDobleTurno"
             >
-              <i class="bi bi-plus-circle me-2"></i>
               Añadir doble turno
             </BsButton>
             <BsButton
               color="primary"
-              class="w-100 mb-2"
+              class="w-100 mb-2 text-start"
+              icon="clipboard"
               :loading="loadingDobleTurno"
               :disabled="!trabajadorSelected || !turnoSeleccionado"
               @click="introducirManualmente()"
             >
-              <i class="bi bi-plus-circle me-2"></i>
-
               <span v-if="estadoBotonEsCustom">Introducir desde plantilla</span>
               <span v-else>Introducir manualmente</span>
             </BsButton>
 
             <BsButton
               color="success"
-              class="w-100 mb-2"
+              class="w-100 mb-2 text-start"
+              icon="floppy-disk"
               :disabled="guardando || !trabajadorSelected"
+              :loading="guardando"
               @click="guardarFinal()"
             >
-              <span v-if="guardando" class="spinner-border spinner-border-sm me-2"></span>
-              <i v-else class="bi bi-check-circle me-2"></i>
               Guardar cambios
             </BsButton>
 
             <BsButton
               v-if="turnoSeleccionado"
+              icon="arrow-rotate-left"
               color="secondary"
-              class="w-100 mb-2"
+              class="w-100 mb-2 text-start"
               @click="restablecerTurnoSeleccionado"
             >
-              <i class="bi bi-arrow-clockwise me-2"></i>
               Restablecer turno
             </BsButton>
 
             <BsButton
               v-if="turnoSeleccionado && esTurnoBorrable(turnoSeleccionado)"
+              icon="trash"
               color="danger"
-              class="w-100 mb-2"
+              class="w-100 mb-2 text-start"
               @click="eliminarTurnoSeleccionado"
             >
-              <i class="bi bi-trash me-2"></i>
               Eliminar turno
             </BsButton>
 
-            <BsButton color="danger" class="w-100" @click="handleCancelar()">
-              <i class="bi bi-x-circle me-2"></i>
+            <BsButton
+              icon="cancel"
+              color="danger"
+              class="w-100 text-start"
+              @click="handleCancelar()"
+            >
               Cancelar
             </BsButton>
           </div>
@@ -229,6 +236,7 @@ import { ref, computed, watch, inject, onUnmounted, type Ref, type ComputedRef }
 import Swal from "sweetalert2";
 import { DateTime } from "luxon";
 import { axiosInstance } from "@/components/axios/axios";
+import { AxiosError } from "axios";
 
 // Componentes
 import BsModal from "@/components/365/BsModal.vue";
@@ -714,9 +722,23 @@ async function getEquipoCoordinadoraDeLaTienda() {
           tipoTrabajador: "COORDINADORA",
         });
     }
-  } catch (err) {
-    console.log(err);
-    Swal.fire("Oops...", "Ha habido un error", "error");
+  } catch (e) {
+    const error = e as AxiosError;
+
+    if (
+      error.response?.data &&
+      typeof error.response.data === "object" &&
+      "code" in error.response.data
+    ) {
+      if (error.response.data.code == "SIN_COORDINADORA") {
+        Swal.fire("Oops...", "La tienda no tiene coordinadora", "error").then(() => {
+          modalCrearCuadrante.value = false;
+        });
+      } else {
+        Swal.fire("Oops...", "Ha habido un error", "error");
+        console.log(e);
+      }
+    }
   }
 }
 

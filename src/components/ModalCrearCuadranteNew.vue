@@ -48,7 +48,11 @@
               class="w-100 mb-2 text-start"
               icon="plus"
               :loading="loadingDobleTurno"
-              :disabled="!trabajadorSelected || !turnoSeleccionado"
+              :disabled="
+                !trabajadorSelected ||
+                !turnoSeleccionado ||
+                (turnoSeleccionado && estaDiaEnPeriodoAusencia(turnoSeleccionado.inicio))
+              "
               @click="addDobleTurno"
             >
               Añadir doble turno
@@ -58,7 +62,11 @@
               class="w-100 mb-2 text-start"
               icon="clipboard"
               :loading="loadingDobleTurno"
-              :disabled="!trabajadorSelected || !turnoSeleccionado"
+              :disabled="
+                !trabajadorSelected ||
+                !turnoSeleccionado ||
+                (turnoSeleccionado && estaDiaEnPeriodoAusencia(turnoSeleccionado.inicio))
+              "
               @click="introducirManualmente()"
             >
               <span v-if="estadoBotonEsCustom">Introducir desde plantilla</span>
@@ -139,6 +147,7 @@
                   class="tabla-row"
                   :class="{
                     'row-seleccionada': turnoSeleccionado && turnoSeleccionado.id === turno.id,
+                    'row-ausencia': estaDiaEnPeriodoAusencia(turno.inicio),
                   }"
                   @click="seleccionarTurno(turno)"
                 >
@@ -162,15 +171,12 @@
                         :model-value="getPlantillaSeleccionada(turno)"
                         value-key="id"
                         text-key="nombre"
+                        :disabled="estaDiaEnPeriodoAusencia(turno.inicio)"
                         @change="onChangePlantilla"
                       />
                     </div>
-                    <div
-                      v-if="turno.id === 'CAMBIAR ESTO POR EL DISABLED CORRESPONDIENTE'"
-                      class="ausencia-badge"
-                    >
-                      <!-- {{ turno.ausencia.tipo }} -->
-                      Aquí el tipo de ausencia
+                    <div v-if="obtenerAusenciaDelDia(turno.inicio)" class="ausencia-badge">
+                      {{ obtenerAusenciaDelDia(turno.inicio)?.tipo }}
                     </div>
                   </div>
 
@@ -183,6 +189,7 @@
                       class="w-100"
                       text-key="nombre"
                       value-key="id"
+                      :disabled="estaDiaEnPeriodoAusencia(turno.inicio)"
                       @update:modelValue="(opt) => actualizarTiendaTurno(turno, opt.id)"
                     />
                   </div>
@@ -299,10 +306,11 @@ const reloadCuadrante = inject<() => TCuadranteFrontend[]>("reloadCuadrante");
 const totalHoras = computed(() => {
   let total = 0;
   for (let i = 0; i < arrayTurnosTrabajador.value.length; i += 1) {
-    total += arrayTurnosTrabajador.value[i].final.diff(
-      arrayTurnosTrabajador.value[i].inicio,
-      "hours",
-    ).hours;
+    const turno = arrayTurnosTrabajador.value[i];
+    // No contar horas de días con ausencias
+    if (!estaDiaEnPeriodoAusencia(turno.inicio)) {
+      total += turno.final.diff(turno.inicio, "hours").hours;
+    }
   }
   return total;
 });
@@ -372,8 +380,14 @@ const horasPorDia = computed(() => {
   arrayTurnosTrabajador.value.forEach((turno) => {
     // Siempre usar la fecha de inicio del turno para agrupar, según el día que empieza a trabajar
     const dia = turno.inicio.toFormat("EEE", { locale: "es" });
-    const hrs = turno.final.diff(turno.inicio, "hours").hours;
-    horas[dia] = (horas[dia] || 0) + hrs;
+
+    // No contar horas de días con ausencias
+    if (!estaDiaEnPeriodoAusencia(turno.inicio)) {
+      const hrs = turno.final.diff(turno.inicio, "hours").hours;
+      horas[dia] = (horas[dia] || 0) + hrs;
+    } else {
+      horas[dia] = 0; // Mostrar 0 horas para días con ausencias
+    }
   });
   return horas;
 });
@@ -414,7 +428,9 @@ function getPlantillaSeleccionada(turno: TTurnoFrontend) {
 }
 
 function calcularHorasTurno(turno: TTurnoFrontend) {
-  // if (turno.ausencia) return "0 h 0 min";
+  // Si el día está en periodo de ausencia, mostrar 0 horas
+  if (estaDiaEnPeriodoAusencia(turno.inicio)) return "0 h 0 min";
+
   const diff = turno.final.diff(turno.inicio, "minutes").minutes;
   const horas = Math.floor(diff / 60);
   const minutos = Math.round(diff % 60);
@@ -433,6 +449,19 @@ function calcularHorasTurno(turno: TTurnoFrontend) {
 // }
 
 function seleccionarTurno(turno: any) {
+  // No permitir seleccionar turnos en días con ausencias
+  if (estaDiaEnPeriodoAusencia(turno.inicio)) {
+    Swal.fire({
+      icon: "warning",
+      title: "Día no disponible",
+      text: "No se pueden configurar turnos en días con ausencias justificadas.",
+      showConfirmButton: false,
+      timer: 2000,
+      timerProgressBar: true,
+    });
+    return;
+  }
+
   turnoSeleccionado.value = turno;
 }
 
@@ -442,6 +471,27 @@ function formatearHora(fecha: DateTime) {
 
 function esTurnoBorrable(turno: any): boolean {
   return turno && turno.borrable === true;
+}
+
+// Función para verificar si un día está en periodo de ausencia
+function estaDiaEnPeriodoAusencia(fecha: DateTime): boolean {
+  return ausenciasTrabajador.some((ausencia) => {
+    const fechaInicio = ausencia.fechaInicio;
+    const fechaFinal = ausencia.fechaFinal || ausencia.fechaInicio;
+
+    // Verificar si la fecha está dentro del periodo de ausencia
+    return fecha >= fechaInicio.startOf("day") && fecha <= fechaFinal.endOf("day");
+  });
+}
+
+// Función para obtener la ausencia activa de un día específico
+function obtenerAusenciaDelDia(fecha: DateTime) {
+  return ausenciasTrabajador.find((ausencia) => {
+    const fechaInicio = ausencia.fechaInicio;
+    const fechaFinal = ausencia.fechaFinal || ausencia.fechaInicio;
+
+    return fecha >= fechaInicio.startOf("day") && fecha <= fechaFinal.endOf("day");
+  });
 }
 
 function addDobleTurno() {
@@ -1120,6 +1170,13 @@ defineExpose({
 
 .tabla-row.row-ausencia {
   background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  opacity: 0.8;
+}
+
+.tabla-row.row-ausencia:hover {
+  background: #ffeeba;
+  cursor: not-allowed;
 }
 
 .tabla-row.row-seleccionada {

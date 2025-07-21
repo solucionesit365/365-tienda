@@ -95,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, provide, ref, type Ref } from "vue";
+import { computed, onMounted, provide, ref, type Ref } from "vue";
 import { DateTime } from "luxon";
 import { hasPermission, hasRole } from "@/components/rolesPermisos";
 import BsButton from "@/components/365/BsButton.vue";
@@ -158,8 +158,15 @@ function abrirConfiguradorCuadranteSemanal() {
   if (selIsoYear < nowIsoYear || (selIsoYear === nowIsoYear && selWeek < nowWeek)) {
     Swal.fire({
       icon: "warning",
-      title: "No se puede crear turno",
       text: "No se pueden crear turnos para semanas pasadas.",
+    });
+    return;
+  }
+
+  if (!selectedTienda.value) {
+    Swal.fire({
+      icon: "warning",
+      text: "No tienes una tienda asignada.",
     });
     return;
   }
@@ -175,7 +182,27 @@ function downloadExcelAllCuadrantesTiendas() {
   console.log("Descargar Excel de todos los cuadrantes de tiendas");
 }
 
+function handleVista() {
+  if (hasRole("Tienda") || userStore.user.idSql == 3608) {
+    const tienda = tiendas.value.find((t) => t.id === userStore.user.idTienda);
+
+    if (!tienda) {
+      Swal.fire({
+        icon: "error",
+        text: "No hay tienda asignada a tu usuario.",
+      });
+      return;
+    }
+
+    selectedTienda.value = tienda;
+  }
+}
+
 provide("reloadCuadrante", reloadCuadrante);
+
+onMounted(() => {
+  handleVista();
+});
 </script>
 
 <style lang="scss" scoped>

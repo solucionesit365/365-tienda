@@ -254,6 +254,7 @@ import { Turno } from "./kernel/Turno";
 import type { TTurnoFrontend } from "@/interfaces/Turno.interface";
 import ModalSetTurno from "./ModalSetTurno.vue";
 import BsSelect from "./365/BsSelect.vue";
+import type { AusenciaBackendOLD, AusenciaFrontendOLD } from "@/interfaces/AusenciasOLD.interface";
 // import BsModalHeader from "./365/BsModalHeader.vue";
 
 export interface TPlantilla {
@@ -280,6 +281,7 @@ const equipoCoordinadora: Ref<TTrabajador[]> = ref([]);
 const currentUser = computed(() => userStore.user);
 const arrayTurnosTrabajador: Ref<TTurnoFrontend[]> = ref([]);
 const cargando = ref(false);
+let ausenciasTrabajador: AusenciaFrontendOLD[] = [];
 const turnoSeleccionado: Ref<TTurnoFrontend | null> = ref(null);
 const plantillasTurno = ref<TPlantilla[]>([]);
 const loadingDobleTurno = ref(false);
@@ -574,10 +576,26 @@ async function iniciarDatos(fecha: DateTime) {
   try {
     cargando.value = true;
 
+    console.log("muahaha", trabajadorSelected.value);
+    if (!trabajadorSelected.value || !trabajadorSelected.value.id) {
+      Swal.fire({
+        icon: "info",
+        title: "Selecciona un trabajador",
+        text: "Debes seleccionar un trabajador para ver sus turnos.",
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true,
+      });
+      return;
+    }
+
     // 1) Traigo los turnos reales (puede venir [] si no hay datos)
     const turnosTrabajador: TTurnoFrontend[] = trabajadorSelected.value
       ? await Turno.getTurnosIndividuales(fecha, trabajadorSelected.value.id)
       : [];
+
+    // 1.5 Traigo las ausencias del trabajador
+    await getAusenciasTrabajador(trabajadorSelected.value.id);
 
     // 2) Calculo los 7 días de lunes a domingo
     const inicioSemana = fecha.startOf("week");
@@ -864,6 +882,37 @@ function limpiarDatosModal() {
   cargando.value = false;
   guardando.value = false;
   loadingDobleTurno.value = false;
+}
+
+async function getAusenciasTrabajador(idTrabajador: number) {
+  try {
+    if (!idTrabajador) throw new Error("ID del trabajador no proporcionado");
+    if (!inicioSemana.value) throw new Error("Fecha de inicio de semana no establecida");
+    if (!inicioSemana.value.isValid) throw new Error("Fecha de inicio de semana no válida");
+
+    const { data }: { data: AusenciaBackendOLD[] } = await axiosInstance.get(
+      "ausencias/getAusenciasTrabajador",
+      {
+        params: {
+          idTrabajador,
+          fechaInicio: inicioSemana.value?.toISO(),
+          fechaFinal: inicioSemana.value?.endOf("week").toISO(),
+        },
+      },
+    );
+
+    ausenciasTrabajador = data.map((ausencia) => ({
+      ...ausencia,
+      fechaInicio: DateTime.fromISO(ausencia.fechaInicio),
+      fechaFinal: ausencia.fechaFinal ? DateTime.fromISO(ausencia.fechaFinal) : undefined,
+      fechaRevision: ausencia.fechaRevision ? DateTime.fromISO(ausencia.fechaRevision) : undefined,
+    })) as AusenciaFrontendOLD[];
+
+    console.log("Ausencias del trabajador:", ausenciasTrabajador);
+  } catch (error) {
+    console.log(error);
+    Swal.fire("Oops...", "Ha habido un error al cargar las ausencias", "error");
+  }
 }
 
 // Watcher para limpiar datos cuando se cierre el modal

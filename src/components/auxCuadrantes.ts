@@ -52,3 +52,151 @@ export function estructurarTurnos(arrayTurnos: TTurnoFrontend[]) {
   });
   return structuredByWeek;
 }
+
+// Nueva función para estructurar turnos con el formato del endpoint get-equipo-coordinadora-por-tienda
+export function estructurarTurnosNuevoFormato(rawData: any[]) {
+  // Primero verificar si es una lista de trabajadores o una lista de turnos
+  const esTurno = rawData.length > 0 && rawData[0].hasOwnProperty("inicio");
+
+  if (!esTurno) {
+    // Si es una lista de trabajadores sin turnos, crear estructura vacía
+    return rawData.map((trabajador) => {
+      return {
+        idTrabajador: trabajador.id,
+        nombre: trabajador.nombreApellidos,
+        turnos: Array(7)
+          .fill(null)
+          .map(() => []), // Array vacío para cada día
+      };
+    });
+  }
+
+  // Si son turnos, agrupar por trabajador
+  const groupedByWorker: Record<number, any[]> = rawData.reduce((acc: any, turno) => {
+    if (!acc[turno.idTrabajador]) {
+      acc[turno.idTrabajador] = [];
+    }
+    acc[turno.idTrabajador].push(turno);
+    return acc;
+  }, {});
+
+  // Estructura los turnos por días de la semana
+  const structuredByWeek = Object.entries(groupedByWorker).map(([idTrabajador, workerTurnos]) => {
+    const trabajador = workerTurnos[0].Trabajador;
+
+    const weekTurnos = Array(7)
+      .fill(null)
+      .map((_, dayIndex) => {
+        const day = (dayIndex + 1) as WeekdayNumbers;
+        // Busca los turnos para este día
+        const foundTurnos = workerTurnos.filter((turno) => getDayOfWeek(turno.inicio) === day);
+
+        if (foundTurnos.length) {
+          return foundTurnos.map((turno) => ({
+            ...turno,
+            inicio: DateTime.fromISO(turno.inicio),
+            final: DateTime.fromISO(turno.final),
+            totalHoras:
+              turno.inicio === turno.final
+                ? 0
+                : DateTime.fromISO(turno.final).diff(DateTime.fromISO(turno.inicio), "hours").hours,
+            horasContrato: trabajador.contratos?.[0]?.horasContrato || 0,
+            ausencia: turno.inicio === turno.final ? "DESCANSO" : null,
+          }));
+        }
+
+        // Si no existen turnos para el día, crear turno vacío
+        return [];
+      });
+
+    return {
+      idTrabajador: parseInt(idTrabajador),
+      nombre: trabajador.nombreApellidos,
+      turnos: weekTurnos,
+    };
+  });
+
+  return structuredByWeek;
+}
+
+// Función para estructurar turnos con información del trabajador incluida
+export function estructurarTurnosConTrabajador(arrayTurnos: any[]) {
+  // Agrupa los turnos por trabajador
+  const groupedByWorker: Record<number, any[]> = arrayTurnos.reduce((acc: any, turno) => {
+    if (!acc[turno.idTrabajador]) {
+      acc[turno.idTrabajador] = [];
+    }
+    acc[turno.idTrabajador].push(turno);
+    return acc;
+  }, {});
+
+  // Estructura los turnos por días de la semana
+  const structuredByWeek = Object.values(groupedByWorker).map((workerTurnos) => {
+    // Obtener el nombre del trabajador si está disponible
+    const nombreTrabajador =
+      workerTurnos[0].Trabajador?.nombreApellidos || workerTurnos[0].nombre || "Sin nombre";
+
+    const weekTurnos = Array(7)
+      .fill(null)
+      .map((_, dayIndex) => {
+        const day = (dayIndex + 1) as WeekdayNumbers;
+        // Busca los turnos para este día
+        const foundTurnos = workerTurnos.filter((turno) => {
+          const turnoDate =
+            typeof turno.inicio === "string" ? DateTime.fromISO(turno.inicio) : turno.inicio;
+          return turnoDate.weekday === day;
+        });
+
+        if (foundTurnos.length) {
+          return foundTurnos.map((turno) => {
+            // Debug: imprimir los datos del turno
+            console.log("Procesando turno:", turno.inicio, turno.final);
+
+            const inicio =
+              typeof turno.inicio === "string" ? DateTime.fromISO(turno.inicio) : turno.inicio;
+            const final =
+              typeof turno.final === "string" ? DateTime.fromISO(turno.final) : turno.final;
+
+            // Debug: verificar si la conversión fue exitosa
+            console.log(
+              "Después de conversión:",
+              inicio.isValid,
+              final.isValid,
+              inicio.toISO(),
+              final.toISO(),
+            );
+
+            return {
+              ...turno,
+              inicio,
+              final,
+              totalHoras:
+                !inicio.isValid || !final.isValid
+                  ? 0
+                  : inicio.toISO() === final.toISO()
+                    ? 0
+                    : final.diff(inicio, "hours").hours,
+              horasContrato:
+                turno.Trabajador?.contratos?.[0]?.horasContrato || turno.horasContrato || 0,
+              ausencia:
+                !inicio.isValid || !final.isValid
+                  ? null
+                  : inicio.toISO() === final.toISO()
+                    ? "DESCANSO"
+                    : null,
+            };
+          });
+        }
+
+        // Si no existen turnos para el día, devolver array vacío
+        return [];
+      });
+
+    return {
+      idTrabajador: workerTurnos[0].idTrabajador,
+      nombre: nombreTrabajador,
+      turnos: weekTurnos,
+    };
+  });
+  return structuredByWeek;
+}

@@ -169,26 +169,17 @@
                     "
                   >
                     <div class="turno-container">
-                      <template v-if="turnos2.length === 0">
+                      <template
+                        v-if="turnos2.length === 0 || (turnos2.length > 0 && turnos2[0].ausencia)"
+                      >
                         <div class="sin-turno">
                           <i class="fas fa-minus"></i>
                         </div>
                       </template>
                       <template v-else>
                         <div v-for="(turnoDia, index3) in turnos2" :key="index3" class="turno-item">
-                          <!-- Ausencia -->
-                          <template v-if="turnoDia.ausencia">
-                            <div class="ausencia-badge">
-                              <i class="fas fa-calendar-times me-1"></i>
-                              <span class="ausencia-tipo">{{ turnoDia.ausencia.tipo }}</span>
-                              <span v-if="!turnoDia.ausencia.completa" class="ausencia-horas">
-                                ({{ turnoDia.ausencia.horas }}h)
-                              </span>
-                            </div>
-                          </template>
-
-                          <!-- Turno normal -->
-                          <template v-else-if="turnoDia.totalHoras > 0">
+                          <!-- Solo mostrar turnos reales, no ausencias -->
+                          <template v-if="turnoDia.totalHoras > 0">
                             <div class="turno-horario">
                               <i class="fas fa-clock me-1"></i>
                               <span class="horario-texto">
@@ -198,7 +189,7 @@
                             </div>
                             <div class="turno-tienda">
                               <i class="fas fa-store me-1"></i>
-                              {{ getNombreTienda(turnoDia.idTienda) }}
+                              {{ getNombreTienda(turnoDia.tiendaId || turnoDia.idTienda) }}
                             </div>
                           </template>
                         </div>
@@ -215,9 +206,7 @@
                   <td class="td-contrato" data-th="Horas contrato">
                     <div class="contrato-badge">
                       {{
-                        turno.turnos[0] && turno.turnos[0][0] && turno.turnos[0][0].horasContrato
-                          ? turno.turnos[0][0].horasContrato.toFixed(2) + "h"
-                          : "-"
+                        getHorasContrato(turno) > 0 ? getHorasContrato(turno).toFixed(2) + "h" : "-"
                       }}
                     </div>
                   </td>
@@ -286,7 +275,7 @@ import { axiosInstance } from "@/components/axios/axios";
 import { useUserStore } from "@/stores/user";
 import { useTiendaStore } from "@/stores/tienda";
 import ConfiguradorTurno from "@/components/ModalCrearCuadranteNew.vue";
-import { estructurarTurnos } from "@/components/auxCuadrantes";
+import { estructurarTurnosConTrabajador } from "@/components/auxCuadrantes";
 import { Turno } from "@/components/kernel/Turno";
 
 const userStore = useUserStore();
@@ -323,26 +312,28 @@ async function reloadCuadrante() {
       params: { idTienda: selectedTienda.value.id },
     });
 
-    // Endpoint nuevo de turnos:
+    console.log("Datos del equipo:", resEquipo.data);
+    console.log("Fecha seleccionada:", selectedDate.value.toISO());
+    console.log("ID Tienda:", selectedTienda.value.id);
+
+    // Luego obtener los turnos usando el método de Turno
     const turnosEquipo = await Turno.getTurnosEquipoCoordinadoraDeLaTienda(
       selectedTienda.value.id,
       selectedDate.value,
     );
 
-    console.log(turnosEquipo);
+    console.log("Turnos del equipo:", turnosEquipo);
+    console.log("Número de turnos encontrados:", turnosEquipo.length);
 
-    // // // // // Luego obtener los turnos
-    // // // // const resTurnos = await axiosInstance.get("cuadrantes", {
-    // // // //   params: {
-    // // // //     fecha: selectedDate.value.toISO(),
-    // // // //     idTienda: selectedTienda.value.id,
-    // // // //   },
-    // // // // });
+    // Si no hay turnos, continuar con array vacío
+    if (!turnosEquipo || turnosEquipo.length === 0) {
+      console.log("No se encontraron turnos para esta tienda y fecha");
+    }
 
-    if (turnosEquipo.length == 0) throw Error("No se ha podido cargar el cuadrante");
+    // Estructurar los turnos usando la nueva función que maneja información del trabajador
+    const turnosEstructurados = estructurarTurnosConTrabajador(turnosEquipo);
 
-    // Estructurar los turnos
-    const turnosEstructurados = estructurarTurnos(turnosEquipo);
+    console.log("Turnos estructurados:", turnosEstructurados);
 
     // Crear un mapa de turnos por trabajador ID
     const turnosPorTrabajador = new Map();
@@ -459,26 +450,42 @@ function handleVista() {
   }
 }
 
+function getHorasContrato(turno: any): number {
+  // Buscar las horas de contrato en cualquier turno disponible
+  for (let i = 0; i < turno.turnos.length; i++) {
+    for (let j = 0; j < turno.turnos[i].length; j++) {
+      if (turno.turnos[i][j] && turno.turnos[i][j].horasContrato) {
+        return turno.turnos[i][j].horasContrato;
+      }
+    }
+  }
+  return 0;
+}
+
 function getDiferenciaHoras(turno: any) {
   const totalHoras = getTotalHorasCuadranteLinea(turno);
-  const horasContrato =
-    (turno.turnos[0] && turno.turnos[0][0] && turno.turnos[0][0].horasContrato) || 0;
+  const horasContrato = getHorasContrato(turno);
   return totalHoras - horasContrato;
 }
 
 function getNombreTienda(idTienda: number) {
+  console.log("Buscando tienda ID:", idTienda, "en tiendas:", tiendas.value);
   for (let i = 0; i < tiendas.value.length; i += 1) {
     if (tiendas.value[i].id === idTienda) return tiendas.value[i].nombre;
   }
   return "¿?";
 }
 
-function formatTurnoHora(fecha: string | Date) {
+function formatTurnoHora(fecha: string | Date | DateTime) {
   if (typeof fecha === "string") {
     return DateTime.fromISO(fecha).toFormat("HH:mm");
-  } else {
+  } else if (fecha instanceof Date) {
     return DateTime.fromJSDate(fecha).toFormat("HH:mm");
+  } else if (fecha && typeof fecha === "object" && "toFormat" in fecha) {
+    // Es un objeto DateTime de Luxon
+    return fecha.toFormat("HH:mm");
   }
+  return "N/A";
 }
 
 function getTotalHorasCuadranteLinea(data: any) {

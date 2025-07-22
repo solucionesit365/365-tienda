@@ -1,13 +1,13 @@
-import type { TCuadranteBackend } from "@/interfaces/Cuadrante.interface";
+import type { TTurnoFrontend } from "@/interfaces/Turno.interface";
 import { DateTime, type WeekdayNumbers } from "luxon";
 
 function getDayOfWeek(dateStr: string) {
   return DateTime.fromISO(dateStr).weekday;
 }
 
-export function estructurarTurnos(arrayTurnos: TCuadranteBackend[]) {
+export function estructurarTurnos(arrayTurnos: TTurnoFrontend[]) {
   // Agrupa los turnos por trabajador
-  const groupedByWorker: Record<TCuadranteBackend["idTrabajador"], TCuadranteBackend[]> =
+  const groupedByWorker: Record<TTurnoFrontend["idTrabajador"], TTurnoFrontend[]> =
     arrayTurnos.reduce((acc: any, turno) => {
       if (!acc[turno.idTrabajador]) {
         acc[turno.idTrabajador] = [];
@@ -23,11 +23,13 @@ export function estructurarTurnos(arrayTurnos: TCuadranteBackend[]) {
       .map((_, dayIndex) => {
         const day = (dayIndex + 1) as WeekdayNumbers;
         // Busca los turnos para este día
-        const foundTurnos = workerTurnos.filter((turno) => getDayOfWeek(turno.inicio) === day);
+        const foundTurnos = workerTurnos.filter(
+          (turno) => getDayOfWeek(turno.inicio.toISO()!) === day,
+        );
         if (foundTurnos.length) return foundTurnos;
 
         // Si no existen turnos para el día, crea un turno "vacío"
-        const dateStr = DateTime.fromISO(workerTurnos[0]!.inicio)
+        const dateStr = DateTime.fromISO(workerTurnos[0]!.inicio.toISO()!)
           .set({ weekday: day })
           .toISO()!
           .split("T")[0];
@@ -45,7 +47,6 @@ export function estructurarTurnos(arrayTurnos: TCuadranteBackend[]) {
 
     return {
       idTrabajador: workerTurnos[0].idTrabajador,
-      nombre: workerTurnos[0].nombre,
       turnos: weekTurnos,
     };
   });

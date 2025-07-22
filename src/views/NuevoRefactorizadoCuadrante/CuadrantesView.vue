@@ -153,9 +153,6 @@
                 >
                   <td class="td-empleado" data-th="Empleado">
                     <div class="empleado-info">
-                      <div class="empleado-avatar">
-                        {{ getInitials(turno.nombre) }}
-                      </div>
                       <div class="empleado-datos">
                         <div class="empleado-nombre">{{ turno.nombre }}</div>
                         <div class="empleado-id">ID: {{ turno.idTrabajador }}</div>
@@ -290,6 +287,7 @@ import { useUserStore } from "@/stores/user";
 import { useTiendaStore } from "@/stores/tienda";
 import ConfiguradorTurno from "@/components/ModalCrearCuadranteNew.vue";
 import { estructurarTurnos } from "@/components/auxCuadrantes";
+import { Turno } from "@/components/kernel/Turno";
 
 const userStore = useUserStore();
 const tiendaStore = useTiendaStore();
@@ -325,18 +323,26 @@ async function reloadCuadrante() {
       params: { idTienda: selectedTienda.value.id },
     });
 
-    // Luego obtener los turnos
-    const resTurnos = await axiosInstance.get("cuadrantes", {
-      params: {
-        fecha: selectedDate.value.toISO(),
-        idTienda: selectedTienda.value.id,
-      },
-    });
+    // Endpoint nuevo de turnos:
+    const turnosEquipo = await Turno.getTurnosEquipoCoordinadoraDeLaTienda(
+      selectedTienda.value.id,
+      selectedDate.value,
+    );
 
-    if (!resTurnos.data.ok) throw Error("No se ha podido cargar el cuadrante");
+    console.log(turnosEquipo);
+
+    // // // // // Luego obtener los turnos
+    // // // // const resTurnos = await axiosInstance.get("cuadrantes", {
+    // // // //   params: {
+    // // // //     fecha: selectedDate.value.toISO(),
+    // // // //     idTienda: selectedTienda.value.id,
+    // // // //   },
+    // // // // });
+
+    if (turnosEquipo.length == 0) throw Error("No se ha podido cargar el cuadrante");
 
     // Estructurar los turnos
-    const turnosEstructurados = estructurarTurnos(resTurnos.data.data);
+    const turnosEstructurados = estructurarTurnos(turnosEquipo);
 
     // Crear un mapa de turnos por trabajador ID
     const turnosPorTrabajador = new Map();
@@ -365,7 +371,7 @@ async function reloadCuadrante() {
     // Ordenar para que el usuario actual aparezca primero
     ordenarCuadrante(arrayTurnos.value);
 
-    return resTurnos.data.data;
+    return turnosEquipo;
   } catch (error) {
     if (
       typeof error === "object" &&
@@ -451,24 +457,6 @@ function handleVista() {
 
     selectedTienda.value = tienda;
   }
-}
-
-// Funciones para la tabla
-// function cleanName(nombre: string) {
-//   const arrayNombres = nombre.split(" ");
-//   if (arrayNombres.length > 1) {
-//     return arrayNombres[0].substr(0, 4) + " " + arrayNombres[1].substr(0, 1);
-//   } else {
-//     return nombre;
-//   }
-// }
-
-function getInitials(nombre: string) {
-  const parts = nombre.split(" ");
-  if (parts.length >= 2) {
-    return parts[0].charAt(0).toUpperCase() + parts[1].charAt(0).toUpperCase();
-  }
-  return nombre.substring(0, 2).toUpperCase();
 }
 
 function getDiferenciaHoras(turno: any) {
@@ -680,10 +668,10 @@ $neutral-900: #111827;
     z-index: 10;
 
     th {
-      padding: 1.25rem 1rem;
+      padding: 0.75rem 0.5rem;
       font-weight: 600;
       text-align: left;
-      font-size: 0.875rem;
+      font-size: 0.8rem;
       letter-spacing: 0.05em;
       text-transform: uppercase;
       border: none;
@@ -725,7 +713,7 @@ $neutral-900: #111827;
     }
 
     td {
-      padding: 1rem;
+      padding: 0.5rem 0.3rem;
       vertical-align: middle;
       background: transparent;
       border: none;
@@ -757,40 +745,40 @@ $neutral-900: #111827;
   }
 }
 
-// Columnas específicas
+// Columnas específicas optimizadas para tablet horizontal
 .th-empleado {
-  width: 280px;
+  width: 200px;
   text-align: left !important;
 }
 
 .th-dia {
-  width: 140px;
+  width: 100px;
 }
 
 .th-horas,
 .th-contrato,
 .th-diferencia {
-  width: 120px;
+  width: 85px;
 }
 
 // Información del empleado
 .empleado-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .empleado-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   background: linear-gradient(135deg, $primary-color, $secondary-color);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   flex-shrink: 0;
 }
 
@@ -798,13 +786,14 @@ $neutral-900: #111827;
   .empleado-nombre {
     font-weight: 500;
     color: $neutral-800;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
+    line-height: 1.2;
   }
 
   .empleado-id {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: $neutral-500;
-    margin-top: 0.125rem;
+    margin-top: 0.05rem;
   }
 }
 
@@ -831,14 +820,14 @@ $neutral-900: #111827;
 .turno-horario {
   background: rgba($primary-color, 0.1);
   color: $primary-color;
-  padding: 0.375rem 0.75rem;
-  border-radius: 8px;
-  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  margin-bottom: 0.25rem;
+  gap: 0.2rem;
+  margin-bottom: 0.15rem;
 
   i {
     font-size: 0.75rem;
@@ -862,13 +851,13 @@ $neutral-900: #111827;
 .ausencia-badge {
   background: rgba($warning-color, 0.1);
   color: $warning-color;
-  padding: 0.375rem 0.75rem;
-  border-radius: 8px;
-  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: 0.2rem;
 
   .ausencia-tipo {
     font-size: 0.7rem;
@@ -887,19 +876,19 @@ $neutral-900: #111827;
 .contrato-badge {
   background: $neutral-100;
   color: $neutral-700;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   display: inline-block;
 }
 
 // Badges de diferencia
 .diferencia-badge {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   display: inline-flex;
   align-items: center;
   gap: 0.25rem;
@@ -1053,6 +1042,72 @@ $neutral-900: #111827;
     &:hover {
       background: $neutral-400;
     }
+  }
+}
+
+// Optimización específica para tablets en horizontal (768px - 1024px)
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+  .modern-table {
+    th {
+      padding: 0.6rem 0.4rem;
+      font-size: 0.75rem;
+    }
+
+    td {
+      padding: 0.4rem 0.25rem;
+    }
+  }
+
+  .th-empleado {
+    width: 180px;
+  }
+
+  .th-dia {
+    width: 90px;
+  }
+
+  .th-horas,
+  .th-contrato,
+  .th-diferencia {
+    width: 75px;
+  }
+
+  .empleado-info {
+    gap: 0.4rem;
+  }
+
+  .empleado-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
+  }
+
+  .empleado-datos {
+    .empleado-nombre {
+      font-size: 0.8rem;
+    }
+
+    .empleado-id {
+      font-size: 0.65rem;
+    }
+  }
+
+  .turno-horario {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.7rem;
+    margin-bottom: 0.1rem;
+  }
+
+  .ausencia-badge {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.65rem;
+  }
+
+  .horas-badge,
+  .contrato-badge,
+  .diferencia-badge {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
   }
 }
 </style>

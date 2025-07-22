@@ -13,7 +13,7 @@ export class Turno {
   ): Promise<TTurnoFrontend[]> {
     try {
       const { data }: { data: TTurnoBackend[] } = await axiosInstance.get(
-        "turno/getTurnosCoordinadora",
+        "GetTurnosEquipoCoordinadora",
         {
           params: {
             idTienda,
@@ -61,6 +61,7 @@ export class Turno {
    */
   private static convertBackendToFrontendData(turnos: TTurnoBackend[]): TTurnoFrontend[] {
     if (turnos && turnos.length > 0) {
+      console.log("turnitos", turnos);
       const turnosParaFrontend = turnos.map((turno) => {
         return {
           ...turno,

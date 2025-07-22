@@ -149,7 +149,10 @@
                   v-for="(turno, index) in arrayTurnos"
                   v-bind:key="index"
                   class="tabla-row"
-                  :class="{ 'row-actual': userStore.user.idSql === turno.idTrabajador }"
+                  :class="{
+                    'row-actual': userStore.user.idSql === turno.idTrabajador,
+                    'row-externo': !turno.esDelEquipo,
+                  }"
                 >
                   <td class="td-empleado" data-th="Empleado">
                     <div class="empleado-info">
@@ -341,23 +344,41 @@ async function reloadCuadrante() {
       turnosPorTrabajador.set(turno.idTrabajador, turno);
     });
 
-    // Crear array con todos los empleados, incluyendo los que no tienen turnos
-    arrayTurnos.value = resEquipo.data.map((empleado: any) => {
+    // Crear un conjunto de IDs de trabajadores del equipo
+    const trabajadoresDelEquipo = new Set(resEquipo.data.map((emp: any) => emp.id));
+
+    // Crear array con todos los empleados del equipo
+    const trabajadoresEquipo = resEquipo.data.map((empleado: any) => {
       const turnosEmpleado = turnosPorTrabajador.get(empleado.id);
 
       if (turnosEmpleado) {
-        return turnosEmpleado;
+        return {
+          ...turnosEmpleado,
+          esDelEquipo: true, // Marcar como del equipo
+        };
       } else {
         // Si no tiene turnos, crear estructura vacía
         return {
           idTrabajador: empleado.id,
           nombre: empleado.nombreApellidos,
+          esDelEquipo: true, // Marcar como del equipo
           turnos: Array(7)
             .fill(null)
             .map(() => []),
         };
       }
     });
+
+    // Agregar trabajadores externos que tienen turnos pero no están en el equipo
+    const trabajadoresExternos = turnosEstructurados
+      .filter((turno) => !trabajadoresDelEquipo.has(turno.idTrabajador))
+      .map((turno) => ({
+        ...turno,
+        esDelEquipo: false, // Marcar como externo
+      }));
+
+    // Combinar ambos arrays
+    arrayTurnos.value = [...trabajadoresEquipo, ...trabajadoresExternos];
 
     // Ordenar para que el usuario actual aparezca primero
     ordenarCuadrante(arrayTurnos.value);
@@ -715,6 +736,23 @@ $neutral-900: #111827;
         .empleado-nombre {
           color: $primary-color;
           font-weight: 600;
+        }
+      }
+
+      &.row-externo {
+        background: linear-gradient(to right, rgba(255, 165, 0, 0.08), rgba(255, 140, 0, 0.05));
+        border-left: 3px solid #ff8c00;
+
+        .empleado-nombre {
+          color: #ff8c00;
+          font-style: italic;
+
+          &::after {
+            content: " (externo)";
+            font-size: 0.7rem;
+            color: #999;
+            font-weight: normal;
+          }
         }
       }
     }

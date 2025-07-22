@@ -626,7 +626,6 @@ async function iniciarDatos(fecha: DateTime) {
   try {
     cargando.value = true;
 
-    console.log("muahaha", trabajadorSelected.value);
     if (!trabajadorSelected.value || !trabajadorSelected.value.id) {
       Swal.fire({
         icon: "info",

@@ -367,7 +367,28 @@ async function reloadCuadrante() {
 
     return resTurnos.data.data;
   } catch (error) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "response" in error &&
+      typeof (error as any).response === "object" &&
+      (error as any).response !== null &&
+      "data" in (error as any).response &&
+      typeof (error as any).response.data === "object" &&
+      (error as any).response.data !== null &&
+      "code" in (error as any).response.data &&
+      (error as any).response.data.code == "SIN_COORDINADORA"
+    ) {
+      Swal.fire({
+        icon: "warning",
+        title: "Sin coordinadora asignada",
+        text: "No hay coordinadora asignada a esta tienda.",
+      });
+      return;
+    }
+
     console.error("Error al recargar el cuadrante:", error);
+
     Swal.fire({
       icon: "error",
       title: "Error al recargar el cuadrante",

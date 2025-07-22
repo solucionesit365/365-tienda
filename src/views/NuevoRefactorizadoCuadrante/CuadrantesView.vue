@@ -88,7 +88,40 @@
 
     <!-- MAIN CONTENT - Table Area -->
     <main class="flex-grow-1 overflow-hidden p-3">
-      <div class="modern-table-container">
+      <!-- Switch de Vista -->
+      <div class="mb-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Vista del Cuadrante</h5>
+        <div class="view-switch">
+          <div class="btn-group" role="group">
+            <input
+              type="radio"
+              class="btn-check"
+              name="viewMode"
+              id="tableView"
+              v-model="viewMode"
+              value="table"
+              autocomplete="off"
+            />
+            <label class="btn btn-outline-primary" for="tableView">
+              <i class="fas fa-table me-1"></i>Tabla
+            </label>
+            <input
+              type="radio"
+              class="btn-check"
+              name="viewMode"
+              id="timelineView"
+              v-model="viewMode"
+              value="timeline"
+              autocomplete="off"
+            />
+            <label class="btn btn-outline-primary" for="timelineView">
+              <i class="fas fa-chart-gantt me-1"></i>Línea Temporal
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modern-table-container" v-if="viewMode === 'table'">
         <!-- Search Bar -->
         <div class="search-section mb-4">
           <div class="search-wrapper">
@@ -252,6 +285,102 @@
           <p>Selecciona otra tienda o verifica los permisos del equipo.</p>
         </div>
       </div>
+
+      <!-- Vista Timeline -->
+      <div class="timeline-container" v-else-if="viewMode === 'timeline'">
+        <div class="timeline-header mb-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h6>Cobertura de Personal por Horas</h6>
+              <p class="text-muted mb-0">
+                Intensidad de color indica número de trabajadores presentes
+              </p>
+            </div>
+
+            <!-- Controles de navegación del día -->
+            <div class="day-navigation">
+              <div class="btn-group" role="group">
+                <button
+                  class="btn btn-outline-primary btn-sm"
+                  :disabled="selectedDayIndex === 0"
+                  @click="selectedDayIndex--"
+                >
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <div class="current-day-display">
+                  <span class="day-name">
+                    {{
+                      selectedDate
+                        .plus({ days: selectedDayIndex })
+                        .toFormat("EEEE dd", { locale: "es" })
+                    }}
+                  </span>
+                </div>
+                <button
+                  class="btn btn-outline-primary btn-sm"
+                  :disabled="selectedDayIndex === 6"
+                  @click="selectedDayIndex++"
+                >
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Timeline horizontal de 24 horas -->
+        <div class="horizontal-timeline">
+          <!-- Etiquetas de horas -->
+          <div class="hour-labels">
+            <div v-for="hora in 24" :key="`label-${hora - 1}`" class="hour-label">
+              {{ String(hora - 1).padStart(2, "0") }}:00
+            </div>
+          </div>
+
+          <!-- Barras de cobertura -->
+          <div class="coverage-bars">
+            <div
+              v-for="hora in 24"
+              :key="`bar-${hora - 1}`"
+              class="hour-bar"
+              :class="getHourCoverageClass(selectedDayIndex, hora - 1)"
+              :title="getHourTooltip(selectedDayIndex, hora - 1)"
+            >
+              <div class="coverage-bar-horizontal">
+                <div
+                  class="coverage-fill"
+                  :style="{ height: getCoverageHeight(selectedDayIndex, hora - 1) + '%' }"
+                ></div>
+              </div>
+              <span class="worker-count" v-if="getWorkerCount(selectedDayIndex, hora - 1) > 0">
+                {{ getWorkerCount(selectedDayIndex, hora - 1) }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Leyenda -->
+        <div class="timeline-legend mt-4">
+          <div class="legend-items">
+            <div class="legend-item no-coverage">
+              <div class="legend-color"></div>
+              <span>Sin cobertura</span>
+            </div>
+            <div class="legend-item low-coverage">
+              <div class="legend-color"></div>
+              <span>1 trabajador</span>
+            </div>
+            <div class="legend-item medium-coverage">
+              <div class="legend-color"></div>
+              <span>2-3 trabajadores</span>
+            </div>
+            <div class="legend-item high-coverage">
+              <div class="legend-color"></div>
+              <span>4+ trabajadores</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   </div>
 
@@ -293,6 +422,9 @@ const router = useRouter();
 const loadingCuadrantes = ref(false);
 const arrayTurnos: Ref<any[]> = ref([]);
 const searchText = ref("");
+const viewMode = ref("table"); // "table" o "timeline"
+const coverageData: Ref<any[][]> = ref([]); // [dayIndex][hour] = workerCount
+const selectedDayIndex = ref(0); // 0-6 para los días de la semana actual
 
 const restarSemana = () => (selectedDate.value = selectedDate.value.minus({ weeks: 1 }));
 const sumarSemana = () => (selectedDate.value = selectedDate.value.plus({ weeks: 1 }));
@@ -382,6 +514,9 @@ async function reloadCuadrante() {
 
     // Ordenar para que el usuario actual aparezca primero
     ordenarCuadrante(arrayTurnos.value);
+
+    // Calcular datos de cobertura para timeline
+    calculateCoverageData();
 
     return turnosEquipo;
   } catch (error) {
@@ -596,6 +731,70 @@ onMounted(() => {
     reloadCuadrante();
   }
 });
+
+// Funciones para Timeline
+function calculateCoverageData() {
+  // Inicializar matriz 7x24 (7 días, 24 horas)
+  coverageData.value = Array(7)
+    .fill(null)
+    .map(() => Array(24).fill(0));
+
+  // Iterar sobre todos los trabajadores y sus turnos
+  arrayTurnos.value.forEach((trabajador) => {
+    trabajador.turnos.forEach((turnosDelDia: any[], dayIndex: number) => {
+      turnosDelDia.forEach((turno) => {
+        if (turno && turno.totalHoras > 0) {
+          // Obtener horas de inicio y fin
+          const inicio = turno.inicio;
+          const final = turno.final;
+
+          if (inicio.isValid && final.isValid) {
+            const horaInicio = inicio.hour;
+            const horaFin = final.hour;
+
+            // Incrementar contador para cada hora cubierta
+            for (let hora = horaInicio; hora <= horaFin && hora < 24; hora++) {
+              coverageData.value[dayIndex][hora]++;
+            }
+          }
+        }
+      });
+    });
+  });
+}
+
+function getWorkerCount(dayIndex: number, hour: number): number {
+  return coverageData.value[dayIndex]?.[hour] || 0;
+}
+
+function getCoverageHeight(dayIndex: number, hour: number): number {
+  const count = getWorkerCount(dayIndex, hour);
+  if (count === 0) return 0;
+
+  // Calcular máximo para normalizar altura
+  const maxWorkers = Math.max(...coverageData.value.flat());
+  return Math.min((count / Math.max(maxWorkers, 1)) * 100, 100);
+}
+
+function getHourCoverageClass(dayIndex: number, hour: number): string {
+  const count = getWorkerCount(dayIndex, hour);
+  if (count === 0) return "no-coverage";
+  if (count === 1) return "low-coverage";
+  if (count <= 3) return "medium-coverage";
+  return "high-coverage";
+}
+
+function getHourTooltip(dayIndex: number, hour: number): string {
+  const count = getWorkerCount(dayIndex, hour);
+  const dayName = selectedDate.value.plus({ days: dayIndex }).toFormat("EEEE", { locale: "es" });
+  const timeRange = `${String(hour).padStart(2, "0")}:00 - ${String(hour + 1).padStart(2, "0")}:00`;
+
+  if (count === 0) {
+    return `${dayName} ${timeRange}: Sin cobertura`;
+  }
+
+  return `${dayName} ${timeRange}: ${count} trabajador${count > 1 ? "es" : ""}`;
+}
 </script>
 
 <style lang="scss" scoped>
@@ -1153,6 +1352,251 @@ $neutral-900: #111827;
   .diferencia-badge {
     padding: 0.25rem 0.5rem;
     font-size: 0.75rem;
+  }
+}
+
+// Estilos para Timeline View
+.timeline-container {
+  padding: 1.5rem;
+  background: $neutral-50;
+  border-radius: 16px;
+  border: 1px solid $neutral-200;
+}
+
+.timeline-header {
+  h6 {
+    color: $primary-color;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+}
+
+.day-navigation {
+  .current-day-display {
+    padding: 0.375rem 1rem;
+    background: white;
+    border: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    min-width: 160px;
+
+    .day-name {
+      font-weight: 600;
+      color: $primary-color;
+      text-transform: capitalize;
+      white-space: nowrap;
+    }
+  }
+
+  .btn-group {
+    .btn:disabled {
+      opacity: 0.3;
+    }
+  }
+}
+
+.horizontal-timeline {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid $neutral-200;
+
+  .hour-labels {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 1rem;
+
+    .hour-label {
+      flex: 1;
+      text-align: center;
+      font-size: 0.7rem;
+      color: $neutral-600;
+      font-weight: 500;
+      padding: 0.25rem 0;
+    }
+  }
+
+  .coverage-bars {
+    display: flex;
+    gap: 4px;
+    align-items: end;
+    height: 200px;
+
+    .hour-bar {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        transform: scaleX(1.1);
+        z-index: 2;
+      }
+
+      .coverage-bar-horizontal {
+        width: 100%;
+        height: 180px;
+        background: $neutral-200;
+        border-radius: 4px 4px 0 0;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: end;
+
+        .coverage-fill {
+          width: 100%;
+          border-radius: 4px 4px 0 0;
+          transition: height 0.3s ease;
+          min-height: 2px;
+        }
+      }
+
+      .worker-count {
+        position: absolute;
+        top: -25px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: white;
+        background: $primary-color;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      // Clases de cobertura
+      &.no-coverage {
+        .coverage-bar-horizontal .coverage-fill {
+          background: transparent;
+        }
+      }
+
+      &.low-coverage {
+        .coverage-bar-horizontal .coverage-fill {
+          background: linear-gradient(180deg, #fbbf24, #f59e0b);
+        }
+      }
+
+      &.medium-coverage {
+        .coverage-bar-horizontal .coverage-fill {
+          background: linear-gradient(180deg, #10b981, #059669);
+        }
+      }
+
+      &.high-coverage {
+        .coverage-bar-horizontal .coverage-fill {
+          background: linear-gradient(180deg, $primary-color, $secondary-color);
+        }
+      }
+    }
+  }
+}
+
+.timeline-legend {
+  display: flex;
+  justify-content: center;
+
+  .legend-items {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+
+      .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        border: 1px solid $neutral-300;
+      }
+
+      &.no-coverage .legend-color {
+        background: $neutral-200;
+      }
+
+      &.low-coverage .legend-color {
+        background: linear-gradient(45deg, #fbbf24, #f59e0b);
+      }
+
+      &.medium-coverage .legend-color {
+        background: linear-gradient(45deg, #10b981, #059669);
+      }
+
+      &.high-coverage .legend-color {
+        background: linear-gradient(45deg, $primary-color, $secondary-color);
+      }
+    }
+  }
+}
+
+// Estilos del switch de vista
+.view-switch {
+  .btn-check:checked + .btn-outline-primary {
+    background-color: $primary-color;
+    border-color: $primary-color;
+    color: white;
+  }
+}
+
+// Responsive para timeline
+@media (max-width: 768px) {
+  .timeline-container {
+    padding: 1rem;
+  }
+
+  .timeline-header {
+    .d-flex {
+      flex-direction: column;
+      gap: 1rem;
+      align-items: stretch !important;
+    }
+  }
+
+  .day-navigation {
+    .current-day-display {
+      min-width: 100%;
+      justify-content: center;
+    }
+  }
+
+  .horizontal-timeline {
+    padding: 1rem;
+
+    .coverage-bars {
+      height: 120px; // Reducir altura en móviles
+
+      .hour-bar {
+        .coverage-bar-horizontal {
+          height: 100px;
+        }
+
+        .worker-count {
+          top: -20px;
+          width: 16px;
+          height: 16px;
+          font-size: 0.6rem;
+        }
+      }
+    }
+
+    .hour-labels .hour-label {
+      font-size: 0.6rem;
+    }
+  }
+
+  .timeline-legend .legend-items {
+    gap: 1rem;
+    justify-content: center;
   }
 }
 </style>

@@ -83,7 +83,7 @@
         <BsButton
           outline
           v-if="getRole('Super_Admin', 'RRHH_ADMIN', 'Analisis_Datos', 'Procesos')"
-          :disabled="resCuadrantes2.length === 0"
+          :disabled="Object.keys(resCuadrantes2).length === 0"
           icon="file-excel"
           color="success"
           @click="nombreExcelModal = true"
@@ -244,7 +244,11 @@
       </BsModalFooter>
     </BsModal>
 
-    <ModalCrearCuadrante2Component ref="modalCrearCuadrante2Ref" />
+    <ModalCrearCuadrante2Component 
+      ref="modalCrearCuadrante2Ref" 
+      :selected-date="punteroFecha"
+      :selected-tienda="null"
+    />
     <ModalCopiarSemanas ref="modalCopiarSemanasRef" />
 
     <BsModal id="codigoEmpleadoModal" v-model="codigoEmpleadoModal">
@@ -303,13 +307,7 @@ const userStore = useUserStore();
 const punteroFecha = ref(DateTime.now().startOf("week").setLocale("es"));
 const arrayTiendas: Ref<TTienda[]> = ref([]);
 const arrayTiendasFiltradas: Ref<TTienda[]> = ref([]);
-const arrayTurnos: Ref<
-  {
-    idTrabajador: any;
-    nombre: any;
-    turnos: any[];
-  }[]
-> = ref([]);
+const arrayTurnos: Ref<any[]> = ref([]);
 const modalCopiarSemanasRef = ref<InstanceType<typeof ModalCopiarSemanas> | null>(null);
 const currentUser = computed(() => userStore.user);
 const user = computed(() => userStore.user);
@@ -382,11 +380,7 @@ function sumarSemana() {
 function abrirModalCrearCuadrante() {
   try {
     if (!user.value.idTienda) throw new Error("El trabajador actual no tiene una tienda asignada");
-    modalCrearCuadrante2Ref.value?.abrirModal(
-      punteroFecha.value.toJSDate(),
-      arrayTiendas.value,
-      user.value.idTienda,
-    );
+    modalCrearCuadrante2Ref.value?.abrirModal(punteroFecha.value);
     codigoEmpleadoModal.value = false;
   } catch (error) {
     console.log(error);

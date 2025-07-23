@@ -154,6 +154,12 @@ const props = defineProps<{
 
 const reloadCuadrante = inject<() => Promise<void>>("reloadCuadrante")!;
 
+function getNombreTienda(idTienda: number) {
+  // Esta función necesitaría acceso a las tiendas para funcionar correctamente
+  // Por ahora devolvemos un valor placeholder
+  return `Tienda ${idTienda}`;
+}
+
 function filtrarTablaPorNombre() {
   const input = document.getElementById("buscador") as HTMLInputElement;
   if (!input) return;

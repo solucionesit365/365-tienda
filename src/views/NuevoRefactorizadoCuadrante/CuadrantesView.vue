@@ -328,32 +328,43 @@
           </div>
         </div>
 
-        <!-- Timeline horizontal de 24 horas -->
+        <!-- Timeline horizontal de 48 intervalos de 30 minutos -->
         <div class="horizontal-timeline">
           <!-- Etiquetas de horas -->
           <div class="hour-labels">
-            <div v-for="hora in 24" :key="`label-${hora - 1}`" class="hour-label">
-              {{ String(hora - 1).padStart(2, "0") }}:00
+            <div
+              v-for="interval in 48"
+              :key="`label-${interval - 1}`"
+              class="hour-label"
+              :class="{ 'half-hour': (interval - 1) % 2 === 1 }"
+            >
+              {{
+                Math.floor((interval - 1) / 2)
+                  .toString()
+                  .padStart(2, "0") +
+                ":" +
+                (((interval - 1) % 2) * 30).toString().padStart(2, "0")
+              }}
             </div>
           </div>
 
           <!-- Barras de cobertura -->
           <div class="coverage-bars">
             <div
-              v-for="hora in 24"
-              :key="`bar-${hora - 1}`"
+              v-for="interval in 48"
+              :key="`bar-${interval - 1}`"
               class="hour-bar"
-              :class="getHourCoverageClass(selectedDayIndex, hora - 1)"
-              :title="getHourTooltip(selectedDayIndex, hora - 1)"
+              :class="getHourCoverageClass(selectedDayIndex, interval - 1)"
+              :title="getHourTooltip(selectedDayIndex, interval - 1)"
             >
               <div class="coverage-bar-horizontal">
                 <div
                   class="coverage-fill"
-                  :style="{ height: getCoverageHeight(selectedDayIndex, hora - 1) + '%' }"
+                  :style="{ height: getCoverageHeight(selectedDayIndex, interval - 1) + '%' }"
                 ></div>
               </div>
-              <span class="worker-count" v-if="getWorkerCount(selectedDayIndex, hora - 1) > 0">
-                {{ getWorkerCount(selectedDayIndex, hora - 1) }}
+              <span class="worker-count" v-if="getWorkerCount(selectedDayIndex, interval - 1) > 0">
+                {{ getWorkerCount(selectedDayIndex, interval - 1) }}
               </span>
             </div>
           </div>
@@ -423,7 +434,7 @@ const loadingCuadrantes = ref(false);
 const arrayTurnos: Ref<any[]> = ref([]);
 const searchText = ref("");
 const viewMode = ref("table"); // "table" o "timeline"
-const coverageData: Ref<any[][]> = ref([]); // [dayIndex][hour] = workerCount
+const coverageData: Ref<any[][]> = ref([]); // [dayIndex][halfHourIndex] = workerCount (48 intervalos de 30min)
 const selectedDayIndex = ref(0); // 0-6 para los días de la semana actual
 
 const restarSemana = () => (selectedDate.value = selectedDate.value.minus({ weeks: 1 }));
@@ -734,10 +745,10 @@ onMounted(() => {
 
 // Funciones para Timeline
 function calculateCoverageData() {
-  // Inicializar matriz 7x24 (7 días, 24 horas)
+  // Inicializar matriz 7x48 (7 días, 48 intervalos de 30min)
   coverageData.value = Array(7)
     .fill(null)
-    .map(() => Array(24).fill(0));
+    .map(() => Array(48).fill(0));
 
   // Iterar sobre todos los trabajadores y sus turnos
   arrayTurnos.value.forEach((trabajador) => {
@@ -749,12 +760,17 @@ function calculateCoverageData() {
           const final = turno.final;
 
           if (inicio.isValid && final.isValid) {
-            const horaInicio = inicio.hour;
-            const horaFin = final.hour;
+            // Convertir a intervalos de 30 minutos
+            const inicioIntervals = inicio.hour * 2 + Math.floor(inicio.minute / 30);
+            const finalIntervals = final.hour * 2 + Math.floor(final.minute / 30);
 
-            // Incrementar contador para cada hora cubierta
-            for (let hora = horaInicio; hora <= horaFin && hora < 24; hora++) {
-              coverageData.value[dayIndex][hora]++;
+            // Incrementar contador para cada intervalo de 30min cubierto
+            for (
+              let interval = inicioIntervals;
+              interval < finalIntervals && interval < 48;
+              interval++
+            ) {
+              coverageData.value[dayIndex][interval]++;
             }
           }
         }
@@ -763,12 +779,12 @@ function calculateCoverageData() {
   });
 }
 
-function getWorkerCount(dayIndex: number, hour: number): number {
-  return coverageData.value[dayIndex]?.[hour] || 0;
+function getWorkerCount(dayIndex: number, intervalIndex: number): number {
+  return coverageData.value[dayIndex]?.[intervalIndex] || 0;
 }
 
-function getCoverageHeight(dayIndex: number, hour: number): number {
-  const count = getWorkerCount(dayIndex, hour);
+function getCoverageHeight(dayIndex: number, intervalIndex: number): number {
+  const count = getWorkerCount(dayIndex, intervalIndex);
   if (count === 0) return 0;
 
   // Calcular máximo para normalizar altura
@@ -776,18 +792,27 @@ function getCoverageHeight(dayIndex: number, hour: number): number {
   return Math.min((count / Math.max(maxWorkers, 1)) * 100, 100);
 }
 
-function getHourCoverageClass(dayIndex: number, hour: number): string {
-  const count = getWorkerCount(dayIndex, hour);
+function getHourCoverageClass(dayIndex: number, intervalIndex: number): string {
+  const count = getWorkerCount(dayIndex, intervalIndex);
   if (count === 0) return "no-coverage";
   if (count === 1) return "low-coverage";
   if (count <= 3) return "medium-coverage";
   return "high-coverage";
 }
 
-function getHourTooltip(dayIndex: number, hour: number): string {
-  const count = getWorkerCount(dayIndex, hour);
+function getHourTooltip(dayIndex: number, intervalIndex: number): string {
+  const count = getWorkerCount(dayIndex, intervalIndex);
   const dayName = selectedDate.value.plus({ days: dayIndex }).toFormat("EEEE", { locale: "es" });
-  const timeRange = `${String(hour).padStart(2, "0")}:00 - ${String(hour + 1).padStart(2, "0")}:00`;
+
+  // Convertir índice de intervalo a horas y minutos
+  const hour = Math.floor(intervalIndex / 2);
+  const minutes = (intervalIndex % 2) * 30;
+  const nextHour = Math.floor((intervalIndex + 1) / 2);
+  const nextMinutes = ((intervalIndex + 1) % 2) * 30;
+
+  const timeStart = `${String(hour).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  const timeEnd = `${String(nextHour).padStart(2, "0")}:${String(nextMinutes).padStart(2, "0")}`;
+  const timeRange = `${timeStart} - ${timeEnd}`;
 
   if (count === 0) {
     return `${dayName} ${timeRange}: Sin cobertura`;
@@ -1413,6 +1438,13 @@ $neutral-900: #111827;
       color: $neutral-600;
       font-weight: 500;
       padding: 0.25rem 0;
+
+      // Estilo para intervalos de media hora
+      &.half-hour {
+        font-size: 0.6rem;
+        color: $neutral-500;
+        font-weight: 400;
+      }
     }
   }
 
@@ -1591,6 +1623,10 @@ $neutral-900: #111827;
 
     .hour-labels .hour-label {
       font-size: 0.6rem;
+
+      &.half-hour {
+        font-size: 0.5rem;
+      }
     }
   }
 

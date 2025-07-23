@@ -458,18 +458,11 @@ async function reloadCuadrante() {
       params: { idTienda: selectedTienda.value.id },
     });
 
-    console.log("Datos del equipo:", resEquipo.data);
-    console.log("Fecha seleccionada:", selectedDate.value.toISO());
-    console.log("ID Tienda:", selectedTienda.value.id);
-
     // Luego obtener los turnos usando el método de Turno
     const turnosEquipo = await Turno.getTurnosEquipoCoordinadoraDeLaTienda(
       selectedTienda.value.id,
       selectedDate.value,
     );
-
-    console.log("Turnos del equipo:", turnosEquipo);
-    console.log("Número de turnos encontrados:", turnosEquipo.length);
 
     // Si no hay turnos, continuar con array vacío
     if (!turnosEquipo || turnosEquipo.length === 0) {
@@ -478,8 +471,6 @@ async function reloadCuadrante() {
 
     // Estructurar los turnos usando la nueva función que maneja información del trabajador
     const turnosEstructurados = estructurarTurnosConTrabajador(turnosEquipo);
-
-    console.log("Turnos estructurados:", turnosEstructurados);
 
     // Crear un mapa de turnos por trabajador ID
     const turnosPorTrabajador = new Map();
@@ -622,7 +613,8 @@ function getHorasContrato(turno: any): number {
   for (let i = 0; i < turno.turnos.length; i++) {
     for (let j = 0; j < turno.turnos[i].length; j++) {
       if (turno.turnos[i][j] && turno.turnos[i][j].horasContrato) {
-        return turno.turnos[i][j].horasContrato;
+        // Convertir porcentaje a horas: 40 * (porcentaje / 100)
+        return 40 * (turno.turnos[i][j].horasContrato / 100);
       }
     }
   }
@@ -636,7 +628,6 @@ function getDiferenciaHoras(turno: any) {
 }
 
 function getNombreTienda(idTienda: number) {
-  console.log("Buscando tienda ID:", idTienda, "en tiendas:", tiendas.value);
   for (let i = 0; i < tiendas.value.length; i += 1) {
     if (tiendas.value[i].id === idTienda) return tiendas.value[i].nombre;
   }

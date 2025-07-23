@@ -149,22 +149,10 @@ export function estructurarTurnosConTrabajador(arrayTurnos: any[]) {
 
         if (foundTurnos.length) {
           return foundTurnos.map((turno) => {
-            // Debug: imprimir los datos del turno
-            console.log("Procesando turno:", turno.inicio, turno.final);
-
             const inicio =
               typeof turno.inicio === "string" ? DateTime.fromISO(turno.inicio) : turno.inicio;
             const final =
               typeof turno.final === "string" ? DateTime.fromISO(turno.final) : turno.final;
-
-            // Debug: verificar si la conversión fue exitosa
-            console.log(
-              "Después de conversión:",
-              inicio.isValid,
-              final.isValid,
-              inicio.toISO(),
-              final.toISO(),
-            );
 
             return {
               ...turno,

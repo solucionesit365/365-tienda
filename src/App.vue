@@ -47,7 +47,7 @@ async function initializeAuthListener() {
           if (!user.email) throw Error("El usuario no tiene un email asociado");
 
           await loadTiendas();
-          console.log(sqlUser.data.data.tienda);
+
           userStore.setUser({
             uid: user.uid,
             displayName: sqlUser.data.data.displayName,

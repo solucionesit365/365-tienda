@@ -79,7 +79,7 @@
           v-if="hasPermission('VerResumCuadrantes')"
           icon="chart-bar"
           color="info"
-          @click="router.push('/resumenCuadrantes')"
+          @click="handleVerResumen()"
         >
           Resumen
         </BsButton>
@@ -408,7 +408,7 @@ import { DateTime } from "luxon";
 import { hasPermission, hasRole } from "@/components/rolesPermisos";
 import BsButton from "@/components/365/BsButton.vue";
 import type { TTienda } from "@/interfaces/Tienda.interface";
-import { useRouter } from "vue-router";
+// import { useRouter } from "vue-router";
 import BsButtonGroup from "@/components/365/BsButtonGroup.vue";
 import BsSelect from "@/components/365/BsSelect.vue";
 // import BsInput from "@/components/365/BsInput.vue";
@@ -429,7 +429,7 @@ const selectedDate = ref(DateTime.now().startOf("week"));
 const selectedTienda: Ref<TTienda | null> = ref(
   userStore.user.coordinadoraDeLaTienda ? userStore.user.coordinadoraDeLaTienda : null,
 );
-const router = useRouter();
+// const router = useRouter();
 const loadingCuadrantes = ref(false);
 const arrayTurnos: Ref<any[]> = ref([]);
 const searchText = ref("");
@@ -590,6 +590,14 @@ function checkPinCoordinadora() {
 
 function downloadExcelAllCuadrantesTiendas() {
   console.log("Descargar Excel de todos los cuadrantes de tiendas");
+  Swal.fire({
+    icon: "info",
+    title: "Función deshabilitada",
+    text: "Esta función está deshabilitada temporalmente.",
+    timer: 2000,
+    showConfirmButton: false,
+    timerProgressBar: true,
+  });
 }
 
 function handleVista() {
@@ -710,6 +718,17 @@ function searchByName() {
       }
     }
   }
+}
+
+function handleVerResumen() {
+  Swal.fire({
+    icon: "info",
+    title: "Función deshabilitada",
+    text: "Esta función está deshabilitada temporalmente.",
+    timer: 2000,
+    showConfirmButton: false,
+    timerProgressBar: true,
+  });
 }
 
 // Watchers

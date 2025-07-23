@@ -956,8 +956,6 @@ async function getAusenciasTrabajador(idTrabajador: number) {
       fechaFinal: ausencia.fechaFinal ? DateTime.fromISO(ausencia.fechaFinal) : undefined,
       fechaRevision: ausencia.fechaRevision ? DateTime.fromISO(ausencia.fechaRevision) : undefined,
     })) as AusenciaFrontendOLD[];
-
-    console.log("Ausencias del trabajador:", ausenciasTrabajador);
   } catch (error) {
     console.log(error);
     Swal.fire("Oops...", "Ha habido un error al cargar las ausencias", "error");

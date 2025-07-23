@@ -28,7 +28,12 @@
           >
             <i class="fas fa-pencil me-1"></i> Gestión cuadrante
           </BsButton>
-          <BsButton v-if="hasPermission('CrearCuadrante')" color="warning" size="lg">
+          <BsButton 
+            v-if="hasPermission('CrearCuadrante')" 
+            color="warning" 
+            size="lg"
+            @click="abrirModalCopiarTurnos"
+          >
             <i class="fas fa-copy me-1"></i> Copiar
           </BsButton>
         </template>
@@ -400,6 +405,11 @@
     :selected-date="selectedDate"
     :selected-tienda="selectedTienda"
   />
+  
+  <ModalCopiarTurnosSemana
+    ref="modalCopiarTurnos"
+    :id-tienda="selectedTienda?.id || 0"
+  />
 </template>
 
 <script setup lang="ts">
@@ -418,12 +428,14 @@ import { axiosInstance } from "@/components/axios/axios";
 import { useUserStore } from "@/stores/user";
 import { useTiendaStore } from "@/stores/tienda";
 import ConfiguradorTurno from "@/components/ModalCrearCuadranteNew.vue";
+import ModalCopiarTurnosSemana from "@/components/ModalCopiarTurnosSemana.vue";
 import { estructurarTurnosConTrabajador } from "@/components/auxCuadrantes";
 import { Turno } from "@/components/kernel/Turno";
 
 const userStore = useUserStore();
 const tiendaStore = useTiendaStore();
 const modalConfiguradorTurno = ref<InstanceType<typeof ConfiguradorTurno> | null>(null);
+const modalCopiarTurnos = ref<InstanceType<typeof ModalCopiarTurnosSemana> | null>(null);
 const tiendas: Ref<TTienda[]> = computed(() => tiendaStore.tiendas);
 const selectedDate = ref(DateTime.now().startOf("week"));
 const selectedTienda: Ref<TTienda | null> = ref(
@@ -731,6 +743,19 @@ function handleVerResumen() {
   });
 }
 
+function abrirModalCopiarTurnos() {
+  if (!selectedTienda.value) {
+    Swal.fire({
+      icon: "warning",
+      title: "Selecciona una tienda",
+      text: "Debes seleccionar una tienda antes de copiar turnos.",
+    });
+    return;
+  }
+  
+  modalCopiarTurnos.value?.abrirModal();
+}
+
 // Watchers
 watch(selectedDate, () => {
   if (selectedTienda.value) {
@@ -751,6 +776,13 @@ onMounted(() => {
   if (selectedTienda.value) {
     reloadCuadrante();
   }
+  
+  // Escuchar evento de recarga del cuadrante
+  window.addEventListener("recargar-cuadrante", () => {
+    if (selectedTienda.value) {
+      reloadCuadrante();
+    }
+  });
 });
 
 // Funciones para Timeline

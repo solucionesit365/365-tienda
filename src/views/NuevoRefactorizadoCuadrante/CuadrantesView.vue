@@ -19,7 +19,7 @@
         </div>
       </div>
       <div class="d-flex align-items-center gap-2">
-        <template v-if="!hasPermission('ModoTienda')">
+        <template v-if="hasPermission('ModoTienda')">
           <BsButton
             v-if="hasPermission('CrearCuadrante')"
             color="success"
@@ -28,18 +28,13 @@
           >
             <i class="fas fa-pencil me-1"></i> Gestión cuadrante
           </BsButton>
-          <BsButton 
-            v-if="hasPermission('CrearCuadrante')" 
-            color="warning" 
+          <BsButton
+            v-if="hasPermission('CrearCuadrante')"
+            color="warning"
             size="lg"
             @click="abrirModalCopiarTurnos"
           >
             <i class="fas fa-copy me-1"></i> Copiar
-          </BsButton>
-        </template>
-        <template v-else>
-          <BsButton color="success" size="sm" @click="checkPinCoordinadora()">
-            <i class="fas fa-lock me-1"></i> Crear cuadrante
           </BsButton>
         </template>
       </div>
@@ -405,11 +400,8 @@
     :selected-date="selectedDate"
     :selected-tienda="selectedTienda"
   />
-  
-  <ModalCopiarTurnosSemana
-    ref="modalCopiarTurnos"
-    :id-tienda="selectedTienda?.id || 0"
-  />
+
+  <ModalCopiarTurnosSemana ref="modalCopiarTurnos" :id-tienda="selectedTienda?.id || 0" />
 </template>
 
 <script setup lang="ts">
@@ -566,7 +558,7 @@ async function reloadCuadrante() {
   }
 }
 
-function abrirConfiguradorCuadranteSemanal() {
+async function abrirConfiguradorCuadranteSemanal() {
   const now = DateTime.now();
   const select = selectedDate.value;
 
@@ -593,11 +585,11 @@ function abrirConfiguradorCuadranteSemanal() {
     return;
   }
 
-  modalConfiguradorTurno.value?.abrirModal(select);
-}
+  // Validar PIN antes de abrir el configurador
+  const pinValido = await validarPINCoordinadora();
+  if (!pinValido) return;
 
-function checkPinCoordinadora() {
-  console.log(`Verificar PIN para acción`);
+  modalConfiguradorTurno.value?.abrirModal(select);
 }
 
 function downloadExcelAllCuadrantesTiendas() {
@@ -743,16 +735,79 @@ function handleVerResumen() {
   });
 }
 
-function abrirModalCopiarTurnos() {
+async function validarPINCoordinadora(): Promise<boolean> {
   if (!selectedTienda.value) {
     Swal.fire({
       icon: "warning",
       title: "Selecciona una tienda",
-      text: "Debes seleccionar una tienda antes de copiar turnos.",
+      text: "Debes seleccionar una tienda primero.",
     });
-    return;
+    return false;
   }
-  
+
+  const { value: pin } = await Swal.fire({
+    title: "Verificación de PIN",
+    text: "Introduce tu PIN de coordinadora:",
+    input: "number",
+    inputPlaceholder: "Introduce el PIN de 4 dígitos",
+    inputAttributes: {
+      maxlength: "4",
+      autocapitalize: "off",
+      autocorrect: "off",
+    },
+    showCancelButton: true,
+    confirmButtonText: "Verificar",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    inputValidator: (value) => {
+      if (!value) {
+        return "Debes introducir un PIN";
+      }
+      if (!/^\d{4}$/.test(value)) {
+        return "El PIN debe tener exactamente 4 dígitos";
+      }
+      return null;
+    },
+  });
+
+  if (!pin) return false;
+
+  try {
+    const response = await axiosInstance.post("check-pin-coordinadora", {
+      idTienda: selectedTienda.value.id,
+      pin: parseInt(pin),
+    });
+
+    if (response.data === true) {
+      return true;
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "PIN incorrecto",
+        text: "El PIN introducido no es válido. Inténtalo de nuevo.",
+        confirmButtonText: "Entendido",
+      });
+      return false;
+    }
+  } catch (error: any) {
+    console.error("Error al verificar PIN:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Error de verificación",
+      text:
+        error.response?.data?.message ||
+        "Ha ocurrido un error al verificar el PIN. Inténtalo de nuevo.",
+      confirmButtonText: "Entendido",
+    });
+    return false;
+  }
+}
+
+async function abrirModalCopiarTurnos() {
+  const pinValido = await validarPINCoordinadora();
+  if (!pinValido) return;
+
   modalCopiarTurnos.value?.abrirModal();
 }
 
@@ -776,7 +831,7 @@ onMounted(() => {
   if (selectedTienda.value) {
     reloadCuadrante();
   }
-  
+
   // Escuchar evento de recarga del cuadrante
   window.addEventListener("recargar-cuadrante", () => {
     if (selectedTienda.value) {

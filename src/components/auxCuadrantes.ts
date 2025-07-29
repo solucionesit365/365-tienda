@@ -132,9 +132,12 @@ export function estructurarTurnosConTrabajador(arrayTurnos: any[]) {
 
   // Estructura los turnos por días de la semana
   const structuredByWeek = Object.values(groupedByWorker).map((workerTurnos) => {
-    // Obtener el nombre del trabajador si está disponible
+    // Obtener el nombre del trabajador si está disponible - usar 'trabajador' (minúscula) como viene del backend
     const nombreTrabajador =
-      workerTurnos[0].Trabajador?.nombreApellidos || workerTurnos[0].nombre || "Sin nombre";
+      workerTurnos[0].trabajador?.nombreApellidos || 
+      workerTurnos[0].Trabajador?.nombreApellidos || 
+      workerTurnos[0].nombre || 
+      "Sin nombre";
 
     const weekTurnos = Array(7)
       .fill(null)
@@ -165,7 +168,9 @@ export function estructurarTurnosConTrabajador(arrayTurnos: any[]) {
                     ? 0
                     : final.diff(inicio, "hours").hours,
               horasContrato:
-                turno.Trabajador?.contratos?.[0]?.horasContrato || turno.horasContrato || 0,
+                turno.trabajador?.contratos?.[0]?.horasContrato || 
+                turno.Trabajador?.contratos?.[0]?.horasContrato || 
+                turno.horasContrato || 0,
               ausencia:
                 !inicio.isValid || !final.isValid
                   ? null

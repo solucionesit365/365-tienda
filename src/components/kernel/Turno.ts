@@ -61,11 +61,13 @@ export class Turno {
    */
   private static convertBackendToFrontendData(turnos: TTurnoBackend[]): TTurnoFrontend[] {
     if (turnos && turnos.length > 0) {
-      const turnosParaFrontend = turnos.map((turno) => {
+      const turnosParaFrontend = turnos.map((turno: any) => {
         return {
           ...turno,
           inicio: DateTime.fromISO(turno.inicio),
           final: DateTime.fromISO(turno.final),
+          // Preservar la información del trabajador si existe
+          trabajador: turno.trabajador,
         };
       });
 

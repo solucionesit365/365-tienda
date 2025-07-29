@@ -191,7 +191,7 @@
                     <div class="empleado-info">
                       <div class="empleado-datos">
                         <div class="empleado-nombre">{{ turno.nombre }}</div>
-                        <div class="empleado-id">ID: {{ turno.idTrabajador }}</div>
+                        <div v-if="hasRole('Super_Admin')" class="empleado-id">ID: {{ turno.idTrabajador }}</div>
                       </div>
                     </div>
                   </td>

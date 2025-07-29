@@ -30,6 +30,7 @@ const permissionsPorRuta: { [key: string]: string[] } = {
 
 export function hasPermission(...validPermisos: string[]) {
   const userStore = useUserStore();
+  if (hasRole("Super_Admin")) return true;
   const currentUserPermissions = (userStore.getPermissions ?? []).map((permiso) => permiso.name);
   return validPermisos.some((permissionName) => currentUserPermissions.includes(permissionName));
 }

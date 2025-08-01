@@ -12,11 +12,7 @@ export default defineConfig({
     vueDevTools(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: [
-        "favicon.ico",
-        "robots.txt",
-        "logo.png, android-launchericon-192-192.png, android-launchericon-512-512.png ",
-      ],
+      includeAssets: ["favicon.ico", "robots.txt", "logo.png, 192x192.png, 512x512.png "],
       manifest: {
         name: "365 GDT",
         short_name: "365 GDT",
@@ -27,12 +23,12 @@ export default defineConfig({
         start_url: "/",
         icons: [
           {
-            src: "/android-launchericon-192-192.png",
+            src: "/192x192.png",
             sizes: "192x192",
             type: "image/png",
           },
           {
-            src: "/android-launchericon-512-512.png",
+            src: "/512x512.png",
             sizes: "512x512",
             type: "image/png",
           },

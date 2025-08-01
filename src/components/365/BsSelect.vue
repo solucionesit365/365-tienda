@@ -114,7 +114,6 @@
         @keydown.escape="closeDropdown"
       >
         <span class="selected-text">{{ displayText }}</span>
-        <i class="bi bi-chevron-down ms-2"></i>
       </div>
       <div class="dropdown-menu w-100" :class="{ show: isOpen }" @click.stop>
         <div v-if="filter" class="p-2">

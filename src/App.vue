@@ -18,6 +18,7 @@ import BackButton from "./components/BackButton.vue";
 import { onAuthStateChanged, getAuth } from "firebase/auth";
 import { app } from "@/components/firebase/index.js";
 import { useUserStore } from "./stores/user";
+import { useTiendaStore } from "./stores/tienda";
 import Swal from "sweetalert2";
 import { onMounted, ref, watch } from "vue";
 import { axiosInstance } from "./components/axios/axios";
@@ -48,6 +49,8 @@ async function initializeAuthListener() {
           if (!sqlUser.data.ok) throw Error(sqlUser.data?.message);
           if (!user.email) throw Error("El usuario no tiene un email asociado");
 
+          await loadTiendas();
+
           userStore.setUser({
             uid: user.uid,
             displayName: sqlUser.data.data.displayName,
@@ -55,6 +58,8 @@ async function initializeAuthListener() {
             logeado: true,
             idSql: sqlUser.data.data.id,
             idTienda: sqlUser.data.data.idTienda,
+            coordinadoraDeLaTienda: sqlUser.data.data.coordinadoraDeLaTienda,
+            tienda: sqlUser.data.data.tienda,
             llevaEquipo: sqlUser.data.data.llevaEquipo,
             nombreTienda: sqlUser.data.data.tienda?.nombre ?? null,
             displayFoto: sqlUser.data.data.displayFoto,
@@ -80,6 +85,23 @@ function limpiarCoordinadora() {
   localStorage.removeItem("uidCoordinadora");
   localStorage.removeItem("idSqlCoordinadora");
 }
+
+async function loadTiendas() {
+  try {
+    const resTiendas = await axiosInstance.get("tiendas");
+    const tiendaStore = useTiendaStore();
+
+    tiendaStore.setTiendas(resTiendas.data);
+  } catch (error) {
+    console.error("Error al cargar las tiendas:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "No se pudieron cargar las tiendas. Por favor, inténtalo de nuevo más tarde.",
+    });
+  }
+}
+
 watch(
   () => router.currentRoute.value.path,
   (newPath) => {

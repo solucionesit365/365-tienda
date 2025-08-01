@@ -17,7 +17,7 @@
         color="#3381bd"
         titulo="Cuadrantes"
         icono="fas fa-clock"
-        link="/cuadrantes-tienda"
+        link="/cuadrantes"
       />
       <ItemMenuDesktop
         v-if="hasPermission('ModoTienda')"
@@ -110,12 +110,7 @@
   <div class="d-block d-sm-block d-md-none mb-8">
     <div class="row row-cols-3 justify-content-center mt-4">
       <ItemMenuMobile color="#EF5350" titulo="Cultura" icono="fas fa-atlas" link="/videoCultura" />
-      <ItemMenuMobile
-        color="#3381bd"
-        titulo="Cuadrantes"
-        icono="fas fa-clock"
-        link="/cuadrantes-tienda"
-      />
+      <ItemMenuMobile color="#3381bd" titulo="Cuadrantes" icono="fas fa-clock" link="/cuadrantes" />
 
       <ItemMenuMobile
         v-if="hasPermission('ModoTienda')"

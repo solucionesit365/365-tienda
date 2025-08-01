@@ -1,14 +1,23 @@
 <template>
   <div class="modal-header">
     <slot></slot>
-    <button type="button" class="btn-close" @click="$emit('close')" aria-label="Close"></button>
   </div>
 </template>
 
 <script setup lang="ts">
 defineEmits(["close"]);
 </script>
-<style>
+
+<style lang="css">
+.modal-header {
+  border-bottom: 1px solid #e0e0e0;
+  background: linear-gradient(90deg, #e66c5a 0%, #333 100%);
+  color: #fff;
+  padding: 1.2rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
 
 .btn-close {
   background: transparent;

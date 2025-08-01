@@ -820,33 +820,38 @@ async function editarFichajes(id: string) {
 
 async function guardarAjuste() {
   try {
-    // Asegurarse de que horasPagar.comentario sea una cadena
     if (!tarjetaEditar.value.horasPagar.comentario) {
       tarjetaEditar.value.horasPagar.comentario = "";
     }
 
-    // Lógica existente para editar fichajes
+    // Validar fichajes
     if (tarjetaEditar.value.idFichajes.entrada) {
-      editarFichajes(tarjetaEditar.value.idFichajes.entrada);
+      await editarFichajes(tarjetaEditar.value.idFichajes.entrada);
     }
     if (tarjetaEditar.value.idFichajes.salida) {
-      editarFichajes(tarjetaEditar.value.idFichajes.salida);
+      await editarFichajes(tarjetaEditar.value.idFichajes.salida);
     }
 
-    //set horas aprendiz
     if (aprendizClicked.value) {
       tarjetaEditar.value.horasAprendiz = tarjetaEditar.value.horasFichaje;
     }
 
-    // Realizar la petición POST
+    // Validar y corregir cuadrante antes de enviar
+    tarjetaEditar.value.cuadrante = {
+      ...tarjetaEditar.value.cuadrante,
+      nombre: String(tarjetaEditar.value.nombre || "Sin nombre"),
+      idTienda: Number(tarjetaEditar.value.cuadrante?.idTienda || currentUser.idTienda),
+      totalHoras: Number(
+        tarjetaEditar.value.cuadrante?.totalHoras || tarjetaEditar.value.horasCuadrante || 0,
+      ),
+    };
+
     const resPost = await axiosInstance.post(
       "/fichajes-validados/addFichajeValidado",
       tarjetaEditar.value,
     );
 
-    // Resto de la lógica de la función
     if (resPost) {
-      // getHorasValidar();
       Swal.fire(
         `Horas de ${tarjetaEditar.value.nombre} validadas!`,
         "Si quieres proponer horas a pagar ve a 'VALIDADAS'",

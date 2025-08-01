@@ -886,7 +886,7 @@ td {
   background: white;
 }
 
-@media screen and (max-width: 650px) {
+@media screen and (max-width: 800px) {
   thead {
     display: none;
   }

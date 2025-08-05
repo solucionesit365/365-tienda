@@ -538,31 +538,42 @@ function getTiendas() {
 function abrirTeams() {
   let blurred = false;
 
-  window.addEventListener("blur", () => {
+  const handleBlur = () => {
     blurred = true;
-  });
+    window.removeEventListener("blur", handleBlur);
+  };
+
+  window.addEventListener("blur", handleBlur);
 
   setTimeout(() => {
     if (!blurred) {
-      window.location.href = "https://teams.microsoft.com";
+      // Abrir Teams en una nueva pestaña si no se abrió la app
+      window.open("https://teams.microsoft.com", "_blank");
     }
   }, 2000);
 
+  // Intentar abrir la app de Teams
   window.location.href = "msteams://";
 }
 
 function abrirOutlook() {
   let blurred = false;
 
-  window.addEventListener("blur", () => {
+  const handleBlur = () => {
     blurred = true;
-  });
+    window.removeEventListener("blur", handleBlur);
+  };
+
+  window.addEventListener("blur", handleBlur);
+
   setTimeout(() => {
     if (!blurred) {
-      window.location.href = "https://outlook.office.com/mail/";
+      // Abrir Outlook en una nueva pestaña si no se abrió la app
+      window.open("https://outlook.office.com/mail/", "_blank");
     }
   }, 2000);
 
+  // Intentar abrir la app de Outlook
   window.location.href = "ms-outlook://";
 }
 

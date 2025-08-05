@@ -98,6 +98,22 @@
       />
 
       <ItemMenuDesktop
+        color="#5e99f5"
+        titulo="Microsoft Teams"
+        icono="fa-solid fa-users"
+        link="#"
+        @click="abrirTeams"
+      />
+
+      <ItemMenuDesktop
+        color="#0072c6"
+        titulo="Outlook"
+        icono="fas fa-envelope"
+        link="#"
+        @click="abrirOutlook"
+      />
+
+      <ItemMenuDesktop
         color="#648fe0"
         titulo="Necesito ayuda"
         icono="fas fa-question-circle"
@@ -189,6 +205,15 @@
         icono="far fa-flag"
         link="/anuncios"
       />
+
+      <ItemMenuMobile
+        color="#5e99f5"
+        titulo="Microsoft Teams"
+        icono="fa-solid fa-users"
+        link="/teams"
+      />
+
+      <ItemMenuMobile color="#0072c6" titulo="Outlook" icono="fas fa-envelope" link="/outlook" />
 
       <ItemMenuMobile
         color="#648fe0"
@@ -508,6 +533,37 @@ function getTiendas() {
     .catch((err) => {
       console.log(err);
     });
+}
+
+function abrirTeams() {
+  let blurred = false;
+
+  window.addEventListener("blur", () => {
+    blurred = true;
+  });
+
+  setTimeout(() => {
+    if (!blurred) {
+      window.location.href = "https://teams.microsoft.com";
+    }
+  }, 2000);
+
+  window.location.href = "msteams://";
+}
+
+function abrirOutlook() {
+  let blurred = false;
+
+  window.addEventListener("blur", () => {
+    blurred = true;
+  });
+  setTimeout(() => {
+    if (!blurred) {
+      window.location.href = "https://outlook.office.com/mail/";
+    }
+  }, 2000);
+
+  window.location.href = "ms-outlook://";
 }
 
 onMounted(() => {

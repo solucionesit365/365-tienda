@@ -11,5 +11,7 @@ const firebaseConfig = {
   measurementId: "G-1J6JS28GMD",
 };
 
+console.log("AuthDomain:", import.meta.env.VITE_AUTH_DOMAIN);
+console.log("Mode:", import.meta.env.MODE);
 export const app = initializeApp(firebaseConfig);
 export const messaging = getMessaging(app);

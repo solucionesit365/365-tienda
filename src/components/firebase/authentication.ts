@@ -167,9 +167,28 @@ export function linkWithMicrosoft() {
   }
 }
 
-getRedirectResult(auth)
-  .then(async (result) => {
+export async function handleRedirectResult() {
+  try {
+    const result = await getRedirectResult(auth);
     if (result?.user) {
+      // Verificar si es un login inicial con Microsoft o un linkeo
+      const isMicrosoftLogin = result.user.providerData.some(
+        (pd) => pd.providerId === "microsoft.com"
+      );
+
+      if (isMicrosoftLogin) {
+        // Login exitoso con Microsoft
+        Swal.fire(
+          "Inicio de sesión correcto",
+          "Bienvenid@ al portal de 365Obrador " + result.user.displayName,
+          "success"
+        );
+        localStorage.setItem("loggedIn", "true");
+        
+        // Llamamos a initializeFCM después del inicio de sesión exitoso
+        initializeFCM();
+      }
+
       // ¡Linkeo completado!
       const hasPasswordProvider = result.user.providerData.some(
         (pd) => pd.providerId === "password",
@@ -177,9 +196,9 @@ getRedirectResult(auth)
 
       if (hasPasswordProvider) await unlink(result.user, "password");
     }
-  })
-  .catch((error) => {
+  } catch (error) {
     // Maneja errores típicos de linkeo (p.ej. cuenta-exists-with-different-credential)
     console.error("Error en redirect result:", error);
     Swal.fire("Error al vincular", error.message, "error");
-  });
+  }
+}

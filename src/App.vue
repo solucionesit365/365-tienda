@@ -10,13 +10,19 @@
   <template v-else>
     <LoaderComponent class="fondo" />
   </template>
+  <LinkMicrosoftAccount
+    @confirm="linkWithMicrosoft"
+    @cancel="handleCancelLinkMicrosoft"
+    ref="refLinkMicrosoftAccountModal"
+  />
 </template>
 
 <script setup lang="ts">
 import { RouterView, useRouter } from "vue-router";
 import BackButton from "./components/BackButton.vue";
-import { onAuthStateChanged, getAuth } from "firebase/auth";
+import { onAuthStateChanged, getAuth, getIdTokenResult, type IdTokenResult } from "firebase/auth";
 import { app } from "@/components/firebase/index.js";
+import { handleRedirectResult, linkWithMicrosoft } from "@/components/firebase/authentication";
 import { useUserStore } from "./stores/user";
 import { useTiendaStore } from "./stores/tienda";
 import Swal from "sweetalert2";
@@ -25,12 +31,14 @@ import { axiosInstance } from "./components/axios/axios";
 import LoaderComponent from "./components/LoaderComponent.vue";
 import NavComponent from "./components/NavComponent.vue";
 import FooterComponent from "./components/FooterComponent.vue";
+import LinkMicrosoftAccount from "./components/LinkMicrosoftAccount.vue";
 
 const auth = getAuth(app);
 const userStore = useUserStore();
 const router = useRouter();
 const loading = ref(true);
 const hideFooter = ref(false);
+const refLinkMicrosoftAccountModal = ref<InstanceType<typeof LinkMicrosoftAccount> | null>(null);
 
 function antiLag() {
   if (userStore.isLogeado && userStore.getUid) return false;
@@ -38,6 +46,9 @@ function antiLag() {
 }
 
 async function initializeAuthListener() {
+  // Primero manejamos el resultado del redirect de Microsoft
+  await handleRedirectResult();
+  
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       try {
@@ -67,6 +78,9 @@ async function initializeAuthListener() {
             roles: sqlUser.data.data.roles,
             permissions: sqlUser.data.data.permisos,
           });
+
+          const tokenResult = await getIdTokenResult(user);
+          handleLinkMicrosoftAccount(tokenResult);
         }
       } catch (err) {
         console.log(err);
@@ -117,6 +131,70 @@ watch(
     }
   },
 );
+
+// Función para verificar si el usuario ya ha declinado la vinculación
+function hasDeclinedMicrosoftLinking(userId: string): boolean {
+  try {
+    const stored = localStorage.getItem("microsoftLinkDecision");
+    if (!stored) return false;
+
+    const decision = JSON.parse(stored);
+
+    // Si hay un usuario específico asociado, verificar que coincida
+    if (decision.userId && decision.userId !== userId) {
+      return false;
+    }
+
+    // Verificar si la decisión es válida (no más antigua de 30 días)
+    const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+    const isExpired = Date.now() - decision.timestamp > thirtyDaysInMs;
+
+    if (isExpired) {
+      // Limpiar decisión expirada
+      localStorage.removeItem("microsoftLinkDecision");
+      return false;
+    }
+
+    return decision.declined === true;
+  } catch (error) {
+    console.error("Error checking Microsoft link decision:", error);
+    return false;
+  }
+}
+
+// Función para guardar la decisión de no vincular
+function saveMicrosoftLinkDecision(userId: string) {
+  localStorage.setItem(
+    "microsoftLinkDecision",
+    JSON.stringify({
+      declined: true,
+      timestamp: Date.now(),
+      userId: userId,
+    }),
+  );
+}
+
+function handleLinkMicrosoftAccount(idTokenResult: IdTokenResult) {
+  if (idTokenResult.signInProvider != "password") return;
+
+  // Verificar si el usuario ya ha declinado la vinculación
+  const currentUserId = userStore.getUid;
+  if (currentUserId && hasDeclinedMicrosoftLinking(currentUserId)) {
+    console.log("Usuario ya declinó vincular con Microsoft, no se mostrará el modal");
+    return;
+  }
+
+  refLinkMicrosoftAccountModal.value?.open();
+}
+
+// Función para manejar cuando el usuario cancela/declina la vinculación
+function handleCancelLinkMicrosoft() {
+  const currentUserId = userStore.getUid;
+  if (currentUserId) {
+    saveMicrosoftLinkDecision(currentUserId);
+    console.log("Decisión de no vincular con Microsoft guardada");
+  }
+}
 
 onMounted(() => {
   initializeAuthListener();

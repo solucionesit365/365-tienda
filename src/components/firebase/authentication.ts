@@ -137,30 +137,8 @@ export function restablecerContraseña(email: string) {
 }
 
 export function accederConMicrosoft() {
-  console.log("Iniciando login con Microsoft...");
-  console.log("Modo:", import.meta.env.MODE);
-  
-  if (import.meta.env.MODE === "development") {
-    console.log("Usando signInWithPopup (desarrollo)");
-    signInWithPopup(auth, microsoftProvider)
-      .then((result) => {
-        console.log("Login exitoso con Microsoft:", result);
-        Swal.fire("¡Éxito!", "Has iniciado sesión con Microsoft", "success");
-        router.push("/");
-        initializeFCM();
-      })
-      .catch((error) => {
-        console.error("Error en login con Microsoft:", error);
-        Swal.fire("Error", `No se pudo iniciar sesión con Microsoft: ${error.message}`, "error");
-      });
-  } else {
-    console.log("Usando signInWithRedirect (producción)");
-    signInWithRedirect(auth, microsoftProvider)
-      .catch((error) => {
-        console.error("Error iniciando redirect:", error);
-        Swal.fire("Error", `No se pudo iniciar el proceso de login: ${error.message}`, "error");
-      });
-  }
+  if (import.meta.env.MODE === "development") signInWithPopup(auth, microsoftProvider);
+  else signInWithRedirect(auth, microsoftProvider);
 }
 
 export function linkWithMicrosoft() {
@@ -189,49 +167,19 @@ export function linkWithMicrosoft() {
   }
 }
 
-// Manejo del resultado del redirect (para login y linkeo)
 getRedirectResult(auth)
   .then(async (result) => {
-    console.log("Procesando resultado del redirect...", result);
-    
     if (result?.user) {
-      console.log("Usuario autenticado tras redirect:", result.user.email);
-      
-      // Verificar si es un linkeo o un login normal
-      const isLinking = result.user.providerData.length > 1;
-      
-      if (isLinking) {
-        // ¡Linkeo completado!
-        const hasPasswordProvider = result.user.providerData.some(
-          (pd) => pd.providerId === "password",
-        );
+      // ¡Linkeo completado!
+      const hasPasswordProvider = result.user.providerData.some(
+        (pd) => pd.providerId === "password",
+      );
 
-        if (hasPasswordProvider) await unlink(result.user, "password");
-        Swal.fire("¡Éxito!", "Cuenta vinculada con Microsoft", "success");
-      } else {
-        // Login normal con Microsoft completado
-        console.log("Login con Microsoft completado exitosamente");
-        Swal.fire("¡Bienvenido!", "Has iniciado sesión con Microsoft", "success");
-        router.push("/");
-        initializeFCM();
-      }
-    } else {
-      console.log("No hay resultado del redirect (puede ser carga inicial de la página)");
+      if (hasPasswordProvider) await unlink(result.user, "password");
     }
   })
   .catch((error) => {
-    // Maneja errores típicos de linkeo o login
+    // Maneja errores típicos de linkeo (p.ej. cuenta-exists-with-different-credential)
     console.error("Error en redirect result:", error);
-    console.error("Código de error:", error.code);
-    console.error("Mensaje completo:", error.message);
-    
-    if (error.code === "auth/account-exists-with-different-credential") {
-      Swal.fire("Error", "Esta cuenta ya existe con diferentes credenciales", "error");
-    } else if (error.code === "auth/popup-blocked") {
-      Swal.fire("Error", "El popup fue bloqueado. Por favor, permite popups para este sitio", "error");
-    } else if (error.code === "auth/cancelled-popup-request") {
-      Swal.fire("Info", "Se canceló el proceso de autenticación", "info");
-    } else {
-      Swal.fire("Error", `Error al procesar el login: ${error.message}`, "error");
-    }
+    Swal.fire("Error al vincular", error.message, "error");
   });

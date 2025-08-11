@@ -39,6 +39,14 @@ const router = createRouter({
       component: () => import("../views/PoliticasView.vue"),
     },
     {
+      path: "/restablecer",
+      name: "Restablecer contraseña",
+      meta: {
+        requiresAuth: false,
+      },
+      component: () => import("../views/RestablecerView.vue"),
+    },
+    {
       path: "/abrir-incidencia",
       name: "Abrir incidencias",
       meta: {

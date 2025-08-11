@@ -27,6 +27,12 @@
             </div>
           </form>
 
+          <div class="form-check mb-3 text-center text-muted">
+            <router-link to="/restablecer" class="text-dark text-decoration-none">
+              ¿Olvidaste tu contraseña?
+            </router-link>
+          </div>
+
           <div class="d-grid">
             <button class="btn btn-login text-uppercase fw-bold" @click="entrarConEmail()">
               Entrar

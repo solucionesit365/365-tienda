@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getMessaging } from "firebase/messaging";
 
 const firebaseConfig = {
@@ -11,7 +11,11 @@ const firebaseConfig = {
   measurementId: "G-1J6JS28GMD",
 };
 
-console.log("AuthDomain:", import.meta.env.VITE_AUTH_DOMAIN);
-console.log("Mode:", import.meta.env.MODE);
-export const app = initializeApp(firebaseConfig);
+if (!(window as any).__ENV_LOGGED__) {
+  console.log("AuthDomain:", import.meta.env.VITE_AUTH_DOMAIN);
+  console.log("Mode:", import.meta.env.MODE);
+  (window as any).__ENV_LOGGED__ = true;
+}
+
+export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const messaging = getMessaging(app);

@@ -1,16 +1,27 @@
-import { precacheAndRoute, cleanupOutdatedCaches } from "workbox-precaching";
+/// <reference lib="webworker" />
+
+// --- Workbox
+import {
+  precacheAndRoute,
+  cleanupOutdatedCaches,
+  createHandlerBoundToURL,
+} from "workbox-precaching";
 import { clientsClaim, skipWaiting } from "workbox-core";
 import { registerRoute, NavigationRoute } from "workbox-routing";
-import { createHandlerBoundToURL } from "workbox-precaching";
 
-// Firebase Messaging imports
+// --- Firebase Messaging (SW build)
 import { initializeApp } from "firebase/app";
 import { getMessaging, onBackgroundMessage } from "firebase/messaging/sw";
 
-// Configuración de Firebase
+// Para TypeScript
+declare const self: ServiceWorkerGlobalScope;
+
+// =====================
+//  Firebase (FCM) init
+// =====================
 const firebaseConfig = {
   apiKey: "AIzaSyCME2CYaIso7PngM2wihV4LZGB_JzZoKjc",
-  authDomain: "silema-dev.firebaseapp.com", // Valor por defecto, se puede configurar
+  authDomain: "silema-dev.firebaseapp.com",
   projectId: "silema",
   storageBucket: "silema.appspot.com",
   messagingSenderId: "565898129046",
@@ -18,59 +29,73 @@ const firebaseConfig = {
   measurementId: "G-1J6JS28GMD",
 };
 
-// Inicializar Firebase en el service worker
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
-// PWA Service Worker
-declare const self: ServiceWorkerGlobalScope & typeof globalThis;
-
-// Activar inmediatamente el service worker
+// =====================
+//  Control del SW
+// =====================
 skipWaiting();
 clientsClaim();
 
-// Limpiar caches antiguos
+// Limpia cachés antiguos y precachea lo inyectado por VitePWA
 cleanupOutdatedCaches();
+precacheAndRoute(self.__WB_MANIFEST || []);
 
-// Workbox inyectará automáticamente la lista de archivos a precargar aquí
-precacheAndRoute(self.__WB_MANIFEST);
-
-// Manejar navegación para SPA
+// =====================
+//  SPA Navigation Fallback
+//  ⚠️ EXCLUYE rutas internas de Firebase
+// =====================
 const handler = createHandlerBoundToURL("/index.html");
-const navigationRoute = new NavigationRoute(handler);
+const navigationRoute = new NavigationRoute(handler, {
+  denylist: [
+    /^\/__\//, // /__/*
+    /\/auth\/iframe/, // Firebase Auth iframe
+    /\/auth\/handler/, // Firebase Auth handler
+  ],
+});
 registerRoute(navigationRoute);
 
-// Firebase Messaging - Manejar mensajes en segundo plano
+// =====================
+//  FCM: mensajes en 2º plano
+// =====================
 onBackgroundMessage(messaging, (payload) => {
+  // (opcional) console.log en dev
   console.log("Mensaje recibido en segundo plano:", payload);
 
   const notificationTitle = payload.notification?.title || "Nueva notificación";
-  const notificationOptions = {
+  const notificationOptions: NotificationOptions = {
     body: payload.notification?.body || "",
     icon: "/192x192.png",
     badge: "/192x192.png",
     data: payload.data,
   };
 
-  return (self as any).registration.showNotification(notificationTitle, notificationOptions);
+  return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-// Manejar clicks en notificaciones
-self.addEventListener("notificationclick", (event: any) => {
-  console.log("Click en notificación:", event);
+// =====================
+//  Clicks en notificaciones
+// =====================
+self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  // Abrir o enfocar la aplicación
+  // Usamos async/await para evitar el problema de tipos con readonly arrays
   event.waitUntil(
-    (self as any).clients
-      .matchAll({ type: "window", includeUncontrolled: true })
-      .then((clients: any[]) => {
-        // Si hay una ventana abierta, enfocarla
-        if (clients.length > 0) {
-          return clients[0].focus();
-        }
-        // Si no, abrir una nueva
-        return (self as any).clients.openWindow("/");
-      }),
+    (async () => {
+      const clientList = (await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      })) as readonly WindowClient[];
+
+      // Enfoca la primera ventana existente
+      if (clientList.length > 0) {
+        await clientList[0].focus();
+        return;
+      }
+
+      // Si no hay ventanas, abre una nueva
+      await self.clients.openWindow("/");
+    })(),
   );
 });

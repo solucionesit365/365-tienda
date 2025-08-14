@@ -35,6 +35,7 @@ import LoaderComponent from "./components/LoaderComponent.vue";
 import NavComponent from "./components/NavComponent.vue";
 import FooterComponent from "./components/FooterComponent.vue";
 import LinkMicrosoftAccount from "./components/LinkMicrosoftAccount.vue";
+import { initializeFCM } from "./components/firebase/messaging";
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -200,6 +201,7 @@ function handleCancelLinkMicrosoft() {
 
 onMounted(() => {
   initializeAuthListener();
+  initializeFCM();
 });
 </script>
 

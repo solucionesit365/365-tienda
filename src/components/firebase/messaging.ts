@@ -10,7 +10,7 @@ let __FCM_INITIALIZED__ = false;
 let __LAST_SAVED_TOKEN__: string | null = null;
 
 // --- Guarda el token en tu backend ------------------------------------------------
-async function saveFCMToken(token: string, uid: string) {
+async function saveFCMToken(deviceToken: string, uid: string) {
   try {
     const auth = getAuth(app);
     const currentUser = auth.currentUser;
@@ -22,7 +22,7 @@ async function saveFCMToken(token: string, uid: string) {
 
     await axiosInstance.post(
       "register-notification-device",
-      { uid, token },
+      { uid, token: deviceToken },
       { headers: { Authorization: `Bearer ${accessToken}` } },
     );
   } catch (error) {

@@ -347,7 +347,6 @@
 
 <script setup lang="ts">
 import { onMounted, ref, type Ref } from "vue";
-import { getAllDocs } from "@/components/firebase/firestore";
 import Swal from "sweetalert2";
 import {
   subirArchivoGeneral,
@@ -492,14 +491,29 @@ async function cargarAnuncios() {
   }
 }
 
-function getTiendas() {
-  getAllDocs("tiendas").then((resTiendas: any) => {
-    if (resTiendas.length > 0) {
-      resTiendas.forEach((tienda: any) => {
-        tiendas.value.push({ text: tienda.nombre, value: tienda.id });
-      });
-    }
-  });
+async function getTiendas() {
+  try {
+    const {
+      data,
+    }: {
+      data: {
+        id: number;
+        nombre: string;
+        direccion: string | null;
+        idExterno: number | null;
+        coordinatorId: number | null;
+        supervisorId: number | null;
+        existsBC: boolean;
+      }[];
+    } = await axiosInstance.get("tiendas");
+
+    data.forEach((tienda) => {
+      tiendas.value.push({ text: tienda.nombre, value: tienda.id });
+    });
+  } catch (err) {
+    console.log(err);
+    Swal.fire("Oops...", "Ha habido un error", "error");
+  }
 }
 
 onMounted(() => {

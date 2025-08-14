@@ -20,9 +20,12 @@
 <script setup lang="ts">
 import { RouterView, useRouter } from "vue-router";
 import BackButton from "./components/BackButton.vue";
-import { onAuthStateChanged, getAuth, getIdTokenResult, type IdTokenResult } from "firebase/auth";
-import { app } from "@/components/firebase/index.js";
-import { handleRedirectResult, linkWithMicrosoft } from "@/components/firebase/authentication";
+import { onAuthStateChanged, getIdTokenResult, type IdTokenResult } from "firebase/auth";
+import {
+  auth,
+  handleRedirectResult,
+  linkWithMicrosoft,
+} from "@/components/firebase/authentication";
 import { useUserStore } from "./stores/user";
 import { useTiendaStore } from "./stores/tienda";
 import Swal from "sweetalert2";
@@ -33,7 +36,6 @@ import NavComponent from "./components/NavComponent.vue";
 import FooterComponent from "./components/FooterComponent.vue";
 import LinkMicrosoftAccount from "./components/LinkMicrosoftAccount.vue";
 
-const auth = getAuth(app);
 const userStore = useUserStore();
 const router = useRouter();
 const loading = ref(true);
@@ -48,7 +50,7 @@ function antiLag() {
 async function initializeAuthListener() {
   // Primero manejamos el resultado del redirect de Microsoft
   await handleRedirectResult();
-  
+
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       try {

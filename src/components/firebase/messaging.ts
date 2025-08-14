@@ -14,22 +14,15 @@ async function saveFCMToken(token: string, uid: string) {
     if (currentUser) {
       const accessToken = await currentUser.getIdToken(); // Obtener el token de acceso
 
-      await axiosInstance
-        .post(
-          `/notificaciones/saveTokenFCM?token=${token}&uid=${uid}`,
-          {},
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
+      await axiosInstance.post(
+        `/notificaciones/saveTokenFCM?token=${token}&uid=${uid}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
           },
-        )
-        .then((response) => {
-          console.log(
-            `%c${response.data.data.data}`,
-            "color: green; background-color: black; font-size: 16px;",
-          );
-        });
+        },
+      );
     } else {
       console.error("No hay un usuario autenticado.");
     }

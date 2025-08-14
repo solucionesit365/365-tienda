@@ -23,7 +23,7 @@ import { initializeFCM } from "./messaging";
 
 const provider = new GoogleAuthProvider();
 const microsoftProvider = new OAuthProvider("microsoft.com");
-const auth = getAuth(app);
+export const auth = getAuth(app);
 
 export function checkLogin() {
   return new Promise<User | null>((resolve, reject) => {

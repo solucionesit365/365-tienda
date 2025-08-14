@@ -12,6 +12,9 @@ export default defineConfig({
     vueDevTools(),
     VitePWA({
       registerType: "autoUpdate",
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
       includeAssets: ["favicon.ico", "robots.txt", "logo.png, 192x192.png, 512x512.png "],
       manifest: {
         name: "365 GDT",

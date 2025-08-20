@@ -210,10 +210,17 @@
         color="#5e99f5"
         titulo="Microsoft Teams"
         icono="fa-solid fa-users"
-        link="/teams"
+        link="#"
+        @click="abrirTeams"
       />
 
-      <ItemMenuMobile color="#0072c6" titulo="Outlook" icono="fas fa-envelope" link="/outlook" />
+      <ItemMenuMobile
+        color="#0072c6"
+        titulo="Outlook"
+        icono="fas fa-envelope"
+        link="#"
+        @click="abrirOutlook"
+      />
 
       <ItemMenuMobile
         color="#648fe0"

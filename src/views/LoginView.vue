@@ -72,9 +72,9 @@
 </template>
 
 <script setup lang="ts">
-import { accederConEmail, accederConMicrosoft } from "@/components/firebase/authentication";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { accederConEmail, accederConMicrosoft } from "@/components/firebase/authentication";
 
 const router = useRouter();
 const email = ref("");
@@ -89,23 +89,13 @@ function entrarConEmail() {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .btn-login {
   font-size: 0.9rem;
   letter-spacing: 0.05rem;
   padding: 0.75rem 1rem;
   color: white;
   background: #e66c5a;
-}
-
-.btn-google {
-  color: white !important;
-  background: linear-gradient(
-    270deg,
-    rgb(216, 42, 36) 0%,
-    rgb(223, 67, 61) 0%,
-    rgb(236, 98, 74) 34%
-  );
 }
 
 .btn-microsoft {
@@ -127,3 +117,4 @@ function entrarConEmail() {
   }
 }
 </style>
+npm run

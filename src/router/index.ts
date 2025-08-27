@@ -198,6 +198,14 @@ const router = createRouter({
       },
       component: () => import("../components/VideosFormación/CrearFormacion.vue"),
     },
+    {
+      path: "/inspectorIndex",
+      name: "Acceso Inspector",
+      meta: {
+        requiresAuth: false,
+      },
+      component: () => import("../components/InspecciónFichajes/InepectorIndexComponent.vue"),
+    },
   ],
 });
 

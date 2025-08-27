@@ -103,6 +103,12 @@
         icono="fas fa-question-circle"
         link="/abrir-incidencia"
       />
+      <ItemMenuDesktop
+        color="#648fe0"
+        titulo="Inspeccion Fichajes"
+        icono="fas fa-question-circle"
+        link="/inspectorIndex"
+      />
     </div>
   </div>
 
@@ -195,6 +201,12 @@
         titulo="Necesito ayuda"
         icono="fas fa-question-circle"
         link="/abrir-incidencia"
+      />
+      <ItemMenuMobile
+        color="#648fe0"
+        titulo="Inspeccion Fichajes"
+        icono="fas fa-question-circle"
+        link="/inspectorIndex"
       />
     </div>
   </div>

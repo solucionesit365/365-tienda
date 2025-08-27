@@ -3,7 +3,7 @@
     <div class="container">
       <div class="row">
         <div class="col-md-12">
-          <p class="footerText text-muted fs-6">365 Equipo - {{ appVersion }}</p>
+          <p class="footerText text-muted fs-6">365 GDT - {{ appVersion }}</p>
         </div>
       </div>
     </div>

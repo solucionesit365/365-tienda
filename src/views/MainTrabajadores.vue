@@ -98,6 +98,22 @@
       />
 
       <ItemMenuDesktop
+        color="#5e99f5"
+        titulo="Microsoft Teams"
+        icono="fa-solid fa-users"
+        link="#"
+        @click="abrirTeams"
+      />
+
+      <ItemMenuDesktop
+        color="#0072c6"
+        titulo="Outlook"
+        icono="fas fa-envelope"
+        link="#"
+        @click="abrirOutlook"
+      />
+
+      <ItemMenuDesktop
         color="#648fe0"
         titulo="Necesito ayuda"
         icono="fas fa-question-circle"
@@ -194,6 +210,22 @@
         titulo="Tablón de anuncios"
         icono="far fa-flag"
         link="/anuncios"
+      />
+
+      <ItemMenuMobile
+        color="#5e99f5"
+        titulo="Microsoft Teams"
+        icono="fa-solid fa-users"
+        link="#"
+        @click="abrirTeams"
+      />
+
+      <ItemMenuMobile
+        color="#0072c6"
+        titulo="Outlook"
+        icono="fas fa-envelope"
+        link="#"
+        @click="abrirOutlook"
       />
 
       <ItemMenuMobile
@@ -520,6 +552,48 @@ function getTiendas() {
     .catch((err) => {
       console.log(err);
     });
+}
+
+function abrirTeams() {
+  let blurred = false;
+
+  const handleBlur = () => {
+    blurred = true;
+    window.removeEventListener("blur", handleBlur);
+  };
+
+  window.addEventListener("blur", handleBlur);
+
+  setTimeout(() => {
+    if (!blurred) {
+      // Abrir Teams en una nueva pestaña si no se abrió la app
+      window.open("https://teams.microsoft.com", "_blank");
+    }
+  }, 2000);
+
+  // Intentar abrir la app de Teams
+  window.location.href = "msteams://";
+}
+
+function abrirOutlook() {
+  let blurred = false;
+
+  const handleBlur = () => {
+    blurred = true;
+    window.removeEventListener("blur", handleBlur);
+  };
+
+  window.addEventListener("blur", handleBlur);
+
+  setTimeout(() => {
+    if (!blurred) {
+      // Abrir Outlook en una nueva pestaña si no se abrió la app
+      window.open("https://outlook.office.com/mail/", "_blank");
+    }
+  }, 2000);
+
+  // Intentar abrir la app de Outlook
+  window.location.href = "ms-outlook://";
 }
 
 onMounted(() => {

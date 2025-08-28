@@ -58,11 +58,22 @@ export function loginGoogleWithRedirect() {
 
 export async function signInWithCustomToken(customToken: string) {
   try {
+    // Primero cerramos la sesión actual para asegurar un login limpio
+    await signOut(auth);
+
+    // Esperamos un momento para que se complete el cierre de sesión
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Ahora iniciamos sesión con el custom token
     const userCredential = await signInWithCustomTokenCompat(auth, customToken);
 
-    if (userCredential) router.push("/");
+    if (userCredential) {
+      // Forzar recarga completa de la página para limpiar el estado
+      window.location.href = "/";
+    }
   } catch (error) {
     console.error("Error signing in with custom token:", error);
+    Swal.fire("Error", "No se pudo iniciar sesión con el usuario objetivo", "error");
   }
 }
 

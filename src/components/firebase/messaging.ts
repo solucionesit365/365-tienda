@@ -7,7 +7,6 @@ import { app, messaging } from ".";
 import { checkLogin } from "./authentication";
 
 let __FCM_INITIALIZED__ = false;
-let __LAST_SAVED_TOKEN__: string | null = null;
 
 // --- Guarda el token en tu backend ------------------------------------------------
 async function saveFCMToken(deviceToken: string, uid: string) {
@@ -30,7 +29,7 @@ async function saveFCMToken(deviceToken: string, uid: string) {
   }
 }
 
-// --- Obtiene el token y lo sincroniza si cambió -----------------------------------
+// --- Obtiene el token y lo registra siempre -----------------------------------
 async function ensureToken(
   userUid: string,
   registration: ServiceWorkerRegistration,
@@ -46,16 +45,11 @@ async function ensureToken(
     return;
   }
 
-  // Log SIEMPRE que lo obtenemos (arranque o refresco)
+  // Log SIEMPRE que lo obtenemos
   console.log("Token FCM:", token);
 
-  // Evita golpear tu backend si no cambió
-  if (token !== __LAST_SAVED_TOKEN__) {
-    await saveFCMToken(token, userUid);
-    __LAST_SAVED_TOKEN__ = token;
-    // guarda también localmente por si recargas
-    localStorage.setItem("fcm_token", token);
-  }
+  // Siempre intentamos registrar/actualizar el token en el backend
+  await saveFCMToken(token, userUid);
 }
 
 // --- Inicializa FCM: pide permiso, obtiene token, configura listeners -------------
@@ -68,9 +62,6 @@ export async function initializeFCM() {
       console.warn("FCM no soportado en este navegador.");
       return;
     }
-
-    // Carga último token guardado (para comparar)
-    __LAST_SAVED_TOKEN__ = localStorage.getItem("fcm_token");
 
     const user = await checkLogin();
     if (!user) return;

@@ -27,7 +27,10 @@
     "titleBar.activeBackground": "#9b34eb",
     "titleBar.activeForeground": "#e7e7e7",
     "titleBar.inactiveBackground": "#9b34eb99",
-    "titleBar.inactiveForeground": "#e7e7e799"
+    "titleBar.inactiveForeground": "#e7e7e799",
+    "tab.activeBorderTop": "#8fe77e", // azul VS Code por defecto
+    "tab.activeBorder": "#8fe77e", // subrayado en la parte inferior
+    "tab.activeBorderBottom": "#8fe77e" // si prefieres abajo
   },
   "peacock.color": "#9b34eb"
 }

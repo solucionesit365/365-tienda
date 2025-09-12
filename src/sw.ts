@@ -80,7 +80,8 @@ onBackgroundMessage(messaging, (payload) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  // Usamos async/await para evitar el problema de tipos con readonly arrays
+  const targetUrl = event.notification.data?.link || "/"; // fallback a "/" si no viene nada
+
   event.waitUntil(
     (async () => {
       const clientList = (await self.clients.matchAll({
@@ -88,14 +89,18 @@ self.addEventListener("notificationclick", (event) => {
         includeUncontrolled: true,
       })) as readonly WindowClient[];
 
-      // Enfoca la primera ventana existente
-      if (clientList.length > 0) {
-        await clientList[0].focus();
-        return;
+      // Si ya hay una pestaña que coincide con la URL, enfócala
+      for (const client of clientList) {
+        if (
+          client.url.includes(new URL(targetUrl, self.location.origin).hostname) &&
+          "focus" in client
+        ) {
+          return client.focus();
+        }
       }
 
-      // Si no hay ventanas, abre una nueva
-      await self.clients.openWindow("/");
+      // Si no existe, abre una nueva ventana con el link
+      return self.clients.openWindow(targetUrl);
     })(),
   );
 });

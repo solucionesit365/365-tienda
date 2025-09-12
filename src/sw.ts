@@ -35,8 +35,40 @@ const messaging = getMessaging(app);
 // =====================
 //  Control del SW
 // =====================
-skipWaiting();
-clientsClaim();
+// No hacer skipWaiting() automáticamente para permitir actualizaciones controladas
+// skipWaiting();
+// clientsClaim();
+
+// Escuchar mensajes para activar la nueva versión
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('SW: Recibido SKIP_WAITING, activando nueva versión');
+    self.skipWaiting();
+  }
+});
+
+// Activar inmediatamente al instalarse para tomar control
+self.addEventListener('install', (event) => {
+  console.log('SW: Instalado');
+  // No hacer skip waiting aquí, esperamos confirmación del usuario
+});
+
+// Limpiar cachés antiguos y tomar control al activarse
+self.addEventListener('activate', (event) => {
+  console.log('SW: Activado');
+  event.waitUntil(
+    (async () => {
+      // Tomar control de todas las ventanas inmediatamente
+      await self.clients.claim();
+      
+      // Notificar a todas las ventanas que el SW se ha actualizado
+      const clients = await self.clients.matchAll();
+      clients.forEach(client => {
+        client.postMessage({ type: 'SW_UPDATED' });
+      });
+    })()
+  );
+});
 
 // Limpia cachés antiguos y precachea lo inyectado por VitePWA
 cleanupOutdatedCaches();

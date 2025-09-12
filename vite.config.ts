@@ -9,13 +9,18 @@ export default defineConfig({
     vue(),
     vueDevTools(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt", // Cambiado de "autoUpdate" a "prompt" para mostrar el diálogo
       strategies: "injectManifest",
       // tu SW vive en src/sw.ts
       srcDir: "src",
       filename: "sw.ts",
       // (opcional) registra automáticamente el SW en dev/prod
       injectRegister: "auto",
+      // Configuración para mejor detección de actualizaciones
+      workbox: {
+        skipWaiting: false, // No actualizar automáticamente, esperar confirmación
+        clientsClaim: false,
+      },
       // ojo: aquí tenías una cadena con comas dentro del mismo string
       includeAssets: ["favicon.ico", "robots.txt", "logo.png", "192x192.png", "512x512.png"],
       manifest: {

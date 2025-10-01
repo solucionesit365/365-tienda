@@ -22,7 +22,7 @@
       </a>
 
       <!-- Salir -->
-      <a class="nav-btn" href="#" @click.prevent="signOut">
+      <a class="nav-btn" href="#" @click.stop="signOut">
         <div class="icon-wrapper">
           <i class="fas fa-sign-out-alt"></i>
         </div>
@@ -35,13 +35,27 @@
 <script setup lang="ts">
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import { logout } from "./firebase/authentication";
+import Swal from "sweetalert2";
 
 function actualizarApp() {
   location.reload();
 }
 
 function signOut() {
-  logout();
+  Swal.fire({
+    title: "¿Quieres cerrar sesión?",
+    text: "Tendrás que iniciar sesión de nuevo para acceder.",
+    icon: "warning",
+    showCancelButton: true,
+    cancelButtonColor: "#d33",
+    confirmButtonColor: "#3085d6",
+    cancelButtonText: "Cancelar",
+    confirmButtonText: "Confirmar",
+  }).then((result) => {
+    if (result.isConfirmed) {
+      logout();
+    }
+  });
 }
 </script>
 

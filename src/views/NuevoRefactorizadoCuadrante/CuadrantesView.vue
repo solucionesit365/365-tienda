@@ -191,7 +191,9 @@
                     <div class="empleado-info">
                       <div class="empleado-datos">
                         <div class="empleado-nombre">{{ turno.nombre }}</div>
-                        <div v-if="hasRole('Super_Admin')" class="empleado-id">ID: {{ turno.idTrabajador }}</div>
+                        <div v-if="hasRole('Super_Admin')" class="empleado-id">
+                          ID: {{ turno.idTrabajador }}
+                        </div>
                       </div>
                     </div>
                   </td>
@@ -205,14 +207,24 @@
                     "
                   >
                     <div class="turno-container">
-                      <template
-                        v-if="turnos2.length === 0 || (turnos2.length > 0 && turnos2[0].ausencia)"
-                      >
-                        <div class="sin-turno">
-                          <i class="fas fa-minus"></i>
+                      <template v-if="turnos2.length > 0 && turnos2[0].fiesta">
+                        <div class="ausencia-badge">
+                          <span class="ausencia-tipo">Fiesta</span>
+                        </div>
+                      </template>
+
+                      <template v-else-if="turnos2.length > 0 && turnos2[0].ausencia">
+                        <div class="ausencia-badge">
+                          <i class="fas fa-user-slash"></i>
+                          <span class="ausencia-tipo">
+                            {{ turnos2[0].ausencia.tipo || turnos2[0].ausencia }}
+                          </span>
                         </div>
                       </template>
                       <template v-else>
+                        <div v-if="turnos2.length === 0" class="sin-turno">
+                          <i class="fas fa-minus"></i>
+                        </div>
                         <div v-for="(turnoDia, index3) in turnos2" :key="index3" class="turno-item">
                           <!-- Solo mostrar turnos reales, no ausencias -->
                           <template v-if="turnoDia.totalHoras > 0">
@@ -474,7 +486,10 @@ async function reloadCuadrante() {
     }
 
     // Estructurar los turnos usando la nueva función que maneja información del trabajador
-    const turnosEstructurados = estructurarTurnosConTrabajador(turnosEquipo);
+    const turnosEstructurados = estructurarTurnosConTrabajador(
+      turnosEquipo,
+      selectedDate.value.startOf("week"),
+    );
 
     // Crear un mapa de turnos por trabajador ID
     const turnosPorTrabajador = new Map();
@@ -621,12 +636,17 @@ function handleVista() {
 }
 
 function getHorasContrato(turno: any): number {
-  // Buscar las horas de contrato en cualquier turno disponible
   for (let i = 0; i < turno.turnos.length; i++) {
     for (let j = 0; j < turno.turnos[i].length; j++) {
-      if (turno.turnos[i][j] && turno.turnos[i][j].horasContrato) {
-        // Convertir porcentaje a horas: 40 * (porcentaje / 100)
-        return 40 * (turno.turnos[i][j].horasContrato / 100);
+      const t = turno.turnos[i][j];
+      if (t && t.horasContrato) {
+        // 👇 Si es vacaciones Mongo → ya viene en horas reales
+        if (t.ausencia?.tipo === "VACACIONES") {
+          return t.horasContrato;
+        }
+
+        // 👇 Si no, sigue siendo porcentaje y hay que convertir
+        return 40 * (t.horasContrato / 100);
       }
     }
   }
@@ -659,37 +679,51 @@ function formatTurnoHora(fecha: string | Date | DateTime) {
 }
 
 function getTotalHorasCuadranteLinea(data: any) {
-  let todosTienenPermisoMaternidad = true;
-  let horasContrato = 0;
+  const horasContrato = getHorasContrato(data);
+  let totalHoras = 0;
+  let diasVacaciones = 0;
+  let todosMaternidad = true;
 
   for (let i = 0; i < data.turnos.length; i++) {
     for (let j = 0; j < data.turnos[i].length; j++) {
       const turno = data.turnos[i][j];
+      if (!turno) continue;
 
-      if (turno.ausencia && turno.ausencia.tipo === "PERMISO MATERNIDAD/PATERNIDAD") {
-        horasContrato = turno.horasContrato;
+      const tipoAusencia = turno.ausencia?.tipo
+        ? String(turno.ausencia.tipo).trim().toUpperCase()
+        : null;
+
+      // Caso maternidad/paternidad → toda la semana cuenta como contrato
+      if (tipoAusencia === "PERMISO MATERNIDAD/PATERNIDAD") {
+        continue;
       } else {
-        todosTienenPermisoMaternidad = false;
-        break;
+        todosMaternidad = false;
+      }
+
+      if (tipoAusencia === "VACACIONES") {
+        // Contar solo vacaciones de lunes a viernes
+        if (i < 5) {
+          diasVacaciones++;
+        }
+      } else {
+        // Horas reales trabajadas
+        totalHoras += turno.totalHoras || 0;
       }
     }
-    if (!todosTienenPermisoMaternidad) {
-      break;
-    }
   }
 
-  if (todosTienenPermisoMaternidad && horasContrato != null) {
-    return horasContrato;
+  // Caso 1: toda la semana maternidad
+  if (todosMaternidad) {
+    return horasContrato; // cuenta como contrato completo
   }
 
-  // Si no todos los turnos tienen la ausencia, sumar las horas normalmente
-  let sum = 0;
-  for (let i = 0; i < data.turnos.length; i++) {
-    for (let j = 0; j < data.turnos[i].length; j++) {
-      sum += data.turnos[i][j].totalHoras;
-    }
+  // Caso 2: vacaciones proporcionales (solo lunes–viernes)
+  if (diasVacaciones > 0) {
+    const horasPorDia = horasContrato / 5;
+    totalHoras += diasVacaciones * horasPorDia;
   }
-  return sum;
+
+  return totalHoras;
 }
 
 function ordenarCuadrante(resTurnos: any) {
@@ -1219,14 +1253,14 @@ $neutral-900: #111827;
   color: $warning-color;
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
 
   .ausencia-tipo {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     text-transform: uppercase;
     letter-spacing: 0.025em;
   }

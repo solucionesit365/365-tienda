@@ -581,10 +581,14 @@ async function abrirConfiguradorCuadranteSemanal() {
   const selIsoYear = select.weekYear;
   const nowWeek = now.weekNumber;
   const selWeek = select.weekNumber;
+  const isMonday = now.weekday === 1; // 1 = lunes en Luxon
+
+  // Permitir modificar la semana anterior solo si es lunes
+  const isLastWeekOnMonday = isMonday && selIsoYear === nowIsoYear && selWeek === nowWeek - 1;
 
   // Si el año ISO seleccionado es anterior,
-  // o si es el mismo año ISO pero la semana es menor…
-  if (selIsoYear < nowIsoYear || (selIsoYear === nowIsoYear && selWeek < nowWeek)) {
+  // o si es el mismo año ISO pero la semana es menor (y no es lunes viendo la semana anterior)
+  if (selIsoYear < nowIsoYear || (selIsoYear === nowIsoYear && selWeek < nowWeek && !isLastWeekOnMonday)) {
     Swal.fire({
       icon: "warning",
       text: "No se pueden crear turnos para semanas pasadas.",

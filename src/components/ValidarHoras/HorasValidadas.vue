@@ -87,21 +87,21 @@
                   @click="verSolicitud(item)"
                   color="warning"
                 >
-                  Solicitud: {{ item.horasPagar.total }}H
+                  Pendiente: {{ item.horasPagar.total }}H
                 </BsButton>
                 <BsButton
                   v-if="item.horasPagar.estadoValidado == 'RECHAZADAS'"
                   @click="verSolicitud(item)"
                   color="danger"
                 >
-                  Solicitud: {{ item.horasPagar.total }}H
+                  Denegada: {{ item.horasPagar.total }}H
                 </BsButton>
                 <BsButton
                   v-if="item.horasPagar.estadoValidado == 'APROBADAS'"
                   @click="verSolicitud(item)"
                   color="success"
                 >
-                  Solicitud: {{ item.horasPagar.total }}H
+                  Aprobada: {{ item.horasPagar.total }}H
                 </BsButton>
               </div>
             </div>
@@ -238,9 +238,52 @@
               {{ tarjetaPagar.horasPagar.estadoValidado }}
             </span>
           </div>
+          <div class="row" v-if="tarjetaPagar.horasPagar.estadoValidado !== 'APROBADAS'">
+            <div class="mt-4">Editar:</div>
+            <div class="col-6 mt-4">¿Cuántas horas propones a pagar?</div>
+            <div class="col-6 mt-4">
+              <div class="input-group">
+                <button
+                  class="input-group-text bg-warning text-light"
+                  @click="tarjetaPagar.horasPagar.total -= 0.25"
+                >
+                  <i class="fas fa-minus"></i>
+                </button>
+                <input
+                  type="number"
+                  class="form-control"
+                  v-model="tarjetaPagar.horasPagar.total"
+                  step="0.25"
+                  disabled
+                />
+                <button
+                  class="input-group-text bg-success text-light"
+                  @click="tarjetaPagar.horasPagar.total += 0.25"
+                >
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="col-12 mt-4">
+              Comentario:
+              <select class="form-select mt-2" v-model="tarjetaPagar.horasPagar.comentario">
+                <option disabled value="">Selecciona un comentario</option>
+                <option v-for="opt in options1" :key="opt.value" :value="opt.value">
+                  {{ opt.text }}
+                </option>
+              </select>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <BsButton color="secondary" @click="modalVerSolicitud = false">Cerrar</BsButton>
+          <BsButton
+            color="primary"
+            v-if="tarjetaPagar.horasPagar.estadoValidado !== 'APROBADAS'"
+            @click="enviarPropuesta()"
+            >Proponer</BsButton
+          >
         </div>
       </div>
     </div>

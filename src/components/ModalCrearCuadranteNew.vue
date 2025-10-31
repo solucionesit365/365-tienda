@@ -182,7 +182,7 @@
 
                   <div class="col">
                     <BsSelect
-                      :options="arrayTiendas"
+                      :options="tiendasFiltradasPorInicial"
                       :model-value="getTiendaOption(turno.tiendaId)"
                       filter
                       size="md"
@@ -844,6 +844,18 @@ function modificarHorasTurno(idTurno: string, horaInicioHHmm: string, horaFinalH
   arrayTurnosTrabajador.value[indexTurno].final = fechaFinal;
   turnoSeleccionado.value = { ...arrayTurnosTrabajador.value[indexTurno] };
 }
+
+const tiendasFiltradasPorInicial = computed(() => {
+  const displayName = (currentUser.value?.displayName || "").trim();
+  const letra = displayName ? displayName.charAt(0).toUpperCase() : "";
+  if (!letra) return arrayTiendas.value;
+
+  const prefix = `${letra}--`;
+  return arrayTiendas.value.filter((t: any) => {
+    const nombre = t.nombre.toString().toUpperCase();
+    return nombre.startsWith(prefix);
+  });
+});
 
 function onApplyModalSetTurno(dataEvent: { inicio: string; final: string }) {
   if (!turnoSeleccionado.value || !turnoSeleccionado.value.id)

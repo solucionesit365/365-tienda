@@ -488,6 +488,7 @@ async function getSubordinados() {
     if (subordinados.data.ok) {
       const promesasDNI = subordinados.data.data.map(async (subordinado: any) => {
         subordinado.antiguedadDias = calcularAntiguedad(subordinado.contratos[0].fechaAntiguedad);
+        subordinado.nPerceptor = subordinado.nPerceptor;
 
         // subordinado.dni = await obtenerDniPorIdTrabajador(subordinado.id);
         return subordinado;
@@ -699,6 +700,10 @@ async function getHorasValidar() {
         const subordinado = arraySubordinados.value.find((s) => s.id === element.idTrabajador);
         if (subordinado) {
           element.antiguedadDias = subordinado.antiguedadDias;
+        }
+        const nPerceptor = arraySubordinados.value.find((s) => s.id === element.idTrabajador);
+        if (nPerceptor) {
+          element.nPerceptor = nPerceptor.nPerceptor;
         }
         datos.value.push(element);
       });

@@ -456,6 +456,122 @@ const selectedDayIndex = ref(0); // 0-6 para los días de la semana actual
 const restarSemana = () => (selectedDate.value = selectedDate.value.minus({ weeks: 1 }));
 const sumarSemana = () => (selectedDate.value = selectedDate.value.plus({ weeks: 1 }));
 
+// async function reloadCuadrante() {
+//   try {
+//     if (!selectedTienda.value?.id) {
+//       Swal.fire({
+//         icon: "warning",
+//         title: "Selecciona una tienda",
+//         text: "Debes seleccionar una tienda para ver los cuadrantes.",
+//       });
+//       return;
+//     }
+
+//     loadingCuadrantes.value = true;
+
+//     // Primero obtener el equipo de la tienda
+//     const resEquipo = await axiosInstance.get("get-equipo-coordinadora-por-tienda", {
+//       params: { idTienda: selectedTienda.value.id },
+//     });
+
+//     // Luego obtener los turnos usando el método de Turno
+//     const turnosEquipo = await Turno.getTurnosEquipoCoordinadoraDeLaTienda(
+//       selectedTienda.value.id,
+//       selectedDate.value,
+//     );
+
+//     // Si no hay turnos, continuar con array vacío
+//     if (!turnosEquipo || turnosEquipo.length === 0) {
+//       console.log("No se encontraron turnos para esta tienda y fecha");
+//     }
+
+//     // Estructurar los turnos usando la nueva función que maneja información del trabajador
+//     const turnosEstructurados = estructurarTurnosConTrabajador(
+//       turnosEquipo,
+//       selectedDate.value.startOf("week"),
+//     );
+
+//     // Crear un mapa de turnos por trabajador ID
+//     const turnosPorTrabajador = new Map();
+//     turnosEstructurados.forEach((turno) => {
+//       turnosPorTrabajador.set(turno.idTrabajador, turno);
+//     });
+
+//     // Crear un conjunto de IDs de trabajadores del equipo
+//     const trabajadoresDelEquipo = new Set(resEquipo.data.map((emp: any) => emp.id));
+
+//     // Crear array con todos los empleados del equipo
+//     const trabajadoresEquipo = resEquipo.data.map((empleado: any) => {
+//       const turnosEmpleado = turnosPorTrabajador.get(empleado.id);
+
+//       if (turnosEmpleado) {
+//         return {
+//           ...turnosEmpleado,
+//           esDelEquipo: true, // Marcar como del equipo
+//         };
+//       } else {
+//         // Si no tiene turnos, crear estructura vacía
+//         return {
+//           idTrabajador: empleado.id,
+//           nombre: empleado.nombreApellidos,
+//           esDelEquipo: true, // Marcar como del equipo
+//           turnos: Array(7)
+//             .fill(null)
+//             .map(() => []),
+//         };
+//       }
+//     });
+
+//     // Agregar trabajadores externos que tienen turnos pero no están en el equipo
+//     const trabajadoresExternos = turnosEstructurados
+//       .filter((turno) => !trabajadoresDelEquipo.has(turno.idTrabajador))
+//       .map((turno) => ({
+//         ...turno,
+//         esDelEquipo: false, // Marcar como externo
+//       }));
+
+//     // Combinar ambos arrays
+//     arrayTurnos.value = [...trabajadoresEquipo, ...trabajadoresExternos];
+
+//     // Ordenar para que el usuario actual aparezca primero
+//     ordenarCuadrante(arrayTurnos.value);
+
+//     // Calcular datos de cobertura para timeline
+//     calculateCoverageData();
+
+//     return turnosEquipo;
+//   } catch (error) {
+//     if (
+//       typeof error === "object" &&
+//       error !== null &&
+//       "response" in error &&
+//       typeof (error as any).response === "object" &&
+//       (error as any).response !== null &&
+//       "data" in (error as any).response &&
+//       typeof (error as any).response.data === "object" &&
+//       (error as any).response.data !== null &&
+//       "code" in (error as any).response.data &&
+//       (error as any).response.data.code == "SIN_COORDINADORA"
+//     ) {
+//       Swal.fire({
+//         icon: "warning",
+//         title: "Sin coordinadora asignada",
+//         text: "No hay coordinadora asignada a esta tienda.",
+//       });
+//       return;
+//     }
+
+//     console.error("Error al recargar el cuadrante:", error);
+
+//     Swal.fire({
+//       icon: "error",
+//       title: "Error al recargar el cuadrante",
+//       text: "Por favor, inténtalo de nuevo más tarde.",
+//     });
+//   } finally {
+//     loadingCuadrantes.value = false;
+//   }
+// }
 async function reloadCuadrante() {
   try {
     if (!selectedTienda.value?.id) {
@@ -473,6 +589,17 @@ async function reloadCuadrante() {
     const resEquipo = await axiosInstance.get("get-equipo-coordinadora-por-tienda", {
       params: { idTienda: selectedTienda.value.id },
     });
+
+    // Verificar si la respuesta tiene la estructura esperada
+    if (!resEquipo.data || !resEquipo.data.subordinados || !resEquipo.data.coordinadoras) {
+      console.error("Respuesta inesperada de la API:", resEquipo);
+      Swal.fire({
+        icon: "error",
+        title: "Error al cargar equipo",
+        text: "No se pudo obtener la información del equipo.",
+      });
+      return;
+    }
 
     // Luego obtener los turnos usando el método de Turno
     const turnosEquipo = await Turno.getTurnosEquipoCoordinadoraDeLaTienda(
@@ -497,30 +624,55 @@ async function reloadCuadrante() {
       turnosPorTrabajador.set(turno.idTrabajador, turno);
     });
 
-    // Crear un conjunto de IDs de trabajadores del equipo
-    const trabajadoresDelEquipo = new Set(resEquipo.data.map((emp: any) => emp.id));
+    // Crear un conjunto de IDs de trabajadores del equipo (subordinados + coordinadoras)
+    const trabajadoresDelEquipo = new Set([
+      ...resEquipo.data.subordinados.map((emp: any) => emp.id),
+      ...resEquipo.data.coordinadoras.map((coordinadora: any) => coordinadora.id),
+    ]);
 
-    // Crear array con todos los empleados del equipo
-    const trabajadoresEquipo = resEquipo.data.map((empleado: any) => {
-      const turnosEmpleado = turnosPorTrabajador.get(empleado.id);
+    // Crear array con todos los empleados del equipo (subordinados + coordinadoras)
+    const trabajadoresEquipo = [
+      ...resEquipo.data.subordinados.map((empleado: any) => {
+        const turnosEmpleado = turnosPorTrabajador.get(empleado.id);
 
-      if (turnosEmpleado) {
-        return {
-          ...turnosEmpleado,
-          esDelEquipo: true, // Marcar como del equipo
-        };
-      } else {
-        // Si no tiene turnos, crear estructura vacía
-        return {
-          idTrabajador: empleado.id,
-          nombre: empleado.nombreApellidos,
-          esDelEquipo: true, // Marcar como del equipo
-          turnos: Array(7)
-            .fill(null)
-            .map(() => []),
-        };
-      }
-    });
+        if (turnosEmpleado) {
+          return {
+            ...turnosEmpleado,
+            esDelEquipo: true, // Marcar como del equipo
+          };
+        } else {
+          // Si no tiene turnos, crear estructura vacía
+          return {
+            idTrabajador: empleado.id,
+            nombre: empleado.nombreApellidos,
+            esDelEquipo: true, // Marcar como del equipo
+            turnos: Array(7)
+              .fill(null)
+              .map(() => []),
+          };
+        }
+      }),
+      ...resEquipo.data.coordinadoras.map((coordinadora: any) => {
+        const turnosEmpleado = turnosPorTrabajador.get(coordinadora.id);
+
+        if (turnosEmpleado) {
+          return {
+            ...turnosEmpleado,
+            esDelEquipo: true, // Marcar como del equipo
+          };
+        } else {
+          // Si no tiene turnos, crear estructura vacía
+          return {
+            idTrabajador: coordinadora.id,
+            nombre: coordinadora.nombreApellidos,
+            esDelEquipo: true, // Marcar como del equipo
+            turnos: Array(7)
+              .fill(null)
+              .map(() => []),
+          };
+        }
+      }),
+    ];
 
     // Agregar trabajadores externos que tienen turnos pero no están en el equipo
     const trabajadoresExternos = turnosEstructurados
@@ -588,7 +740,10 @@ async function abrirConfiguradorCuadranteSemanal() {
 
   // Si el año ISO seleccionado es anterior,
   // o si es el mismo año ISO pero la semana es menor (y no es lunes viendo la semana anterior)
-  if (selIsoYear < nowIsoYear || (selIsoYear === nowIsoYear && selWeek < nowWeek && !isLastWeekOnMonday)) {
+  if (
+    selIsoYear < nowIsoYear ||
+    (selIsoYear === nowIsoYear && selWeek < nowWeek && !isLastWeekOnMonday)
+  ) {
     Swal.fire({
       icon: "warning",
       text: "No se pueden crear turnos para semanas pasadas.",

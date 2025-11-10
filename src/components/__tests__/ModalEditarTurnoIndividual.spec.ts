@@ -66,8 +66,8 @@ describe('ModalEditarTurnoIndividual.vue', () => {
   const defaultProps = {
     show: false,
     plantillasTurno: [
-      { id: 1, nombre: 'Mañana', inicio: '09:00', final: '14:00' },
-      { id: 2, nombre: 'Tarde', inicio: '14:00', final: '22:00' },
+      { id: '1', nombre: 'Mañana', inicio: '09:00', final: '14:00' },
+      { id: '2', nombre: 'Tarde', inicio: '14:00', final: '22:00' },
     ],
   }
 
@@ -223,9 +223,9 @@ describe('ModalEditarTurnoIndividual.vue', () => {
 
     it('debe recibir múltiples plantillas', () => {
       const plantillas = [
-        { id: 1, nombre: 'Mañana', inicio: '09:00', final: '14:00' },
-        { id: 2, nombre: 'Tarde', inicio: '14:00', final: '22:00' },
-        { id: 3, nombre: 'Noche', inicio: '22:00', final: '06:00' },
+        { id: '1', nombre: 'Mañana', inicio: '09:00', final: '14:00' },
+        { id: '2', nombre: 'Tarde', inicio: '14:00', final: '22:00' },
+        { id: '3', nombre: 'Noche', inicio: '22:00', final: '06:00' },
       ]
 
       wrapper = mount(ModalEditarTurnoIndividual, {

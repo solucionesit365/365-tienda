@@ -1,5 +1,5 @@
 <template>
-  <div class="container-fluid d-flex flex-column min-vh-100 p-0">
+  <div class="container-fluid p-0 cuadrantes-wrapper">
     <!-- HEADER -->
     <header
       class="d-flex justify-content-between align-items-center p-3 bg-white border-bottom shadow-sm flex-wrap"
@@ -11,17 +11,29 @@
           }}]
         </h2>
         <div class="btn-group" role="group" aria-label="Navegación semana">
-          <BsButton variant="outline-primary" size="lg" @click="restarSemana()" class="btn-nav-corporate">
+          <BsButton
+            variant="outline-primary"
+            size="lg"
+            @click="restarSemana()"
+            class="btn-nav-corporate"
+          >
             <i class="fas fa-chevron-left"></i>
           </BsButton>
-          <BsButton variant="outline-primary" size="lg" @click="sumarSemana()" class="btn-nav-corporate">
+          <BsButton
+            variant="outline-primary"
+            size="lg"
+            @click="sumarSemana()"
+            class="btn-nav-corporate"
+          >
             <i class="fas fa-chevron-right"></i>
           </BsButton>
         </div>
         <BsButton color="primary" size="lg" @click="reloadCuadrante()" class="btn-corporate">
           <i class="fas fa-redo-alt"></i>
         </BsButton>
-        <BsButton color="primary" size="lg" @click="$router.push('/')" class="btn-corporate"> Volver </BsButton>
+        <BsButton color="primary" size="lg" @click="$router.push('/')" class="btn-corporate">
+          Volver
+        </BsButton>
       </div>
       <div class="d-flex align-items-center gap-2">
         <!-- Switch de edición para modo tienda -->
@@ -33,16 +45,16 @@
             id="switchEdicion"
             v-model="modoEdicionActivo"
             @change="toggleModoEdicion"
-            style="cursor: pointer; width: 3rem; height: 1.5rem;"
+            style="cursor: pointer; width: 3rem; height: 1.5rem"
           />
-          <label class="form-check-label fw-semibold" for="switchEdicion" style="cursor: pointer;">
-            {{ modoEdicionActivo ? 'Edición activa' : 'Solo visualización' }}
+          <label class="form-check-label fw-semibold" for="switchEdicion" style="cursor: pointer">
+            {{ modoEdicionActivo ? "Edición activa" : "Solo visualización" }}
           </label>
         </div>
 
         <template v-if="hasPermission('ModoTienda') || hasRole('Coordinadora_A')">
           <BsButton
-            v-if="hasPermission('CrearCuadrante')"
+            v-if="hasPermission('CrearCuadrante') && modoEdicionActivo"
             variant="outline-primary"
             size="lg"
             @click="abrirModalPlantillas()"
@@ -80,7 +92,7 @@
             >
               <span>
                 <i class="fas fa-store me-2"></i>
-                {{ selectedTienda?.nombre || 'Seleccionar tienda...' }}
+                {{ selectedTienda?.nombre || "Seleccionar tienda..." }}
               </span>
               <i class="fas fa-chevron-down"></i>
             </button>
@@ -90,7 +102,7 @@
     </section>
 
     <!-- MAIN CONTENT - Table Area -->
-    <main class="flex-grow-1 overflow-hidden p-3 main-content-cuadrantes">
+    <main class="overflow-hidden p-3 main-content-cuadrantes">
       <!-- Búsqueda y Switch de Vista -->
       <div class="mb-3 d-flex justify-content-between align-items-center gap-3">
         <div :class="hasRole('Super_Admin') ? 'w-50' : 'flex-grow-1'">
@@ -158,19 +170,16 @@
                   </th>
                   <th class="th-horas">
                     <div class="th-content">
-                      <i class="fas fa-clock me-2"></i>
                       <span>Horas</span>
                     </div>
                   </th>
                   <th class="th-contrato">
                     <div class="th-content">
-                      <i class="fas fa-file-contract me-2"></i>
                       <span>Contrato</span>
                     </div>
                   </th>
                   <th class="th-diferencia">
                     <div class="th-content">
-                      <i class="fas fa-chart-line me-2"></i>
                       <span>+/-</span>
                     </div>
                   </th>
@@ -210,14 +219,12 @@
                     <div class="turno-container">
                       <template v-if="turnos2.length > 0 && turnos2[0].fiesta">
                         <div class="ausencia-badge fiesta-badge-custom">
-                          <i class="fas fa-glass-cheers me-1"></i>
                           <span class="ausencia-tipo">Fiesta</span>
                         </div>
                       </template>
 
                       <template v-else-if="turnos2.length > 0 && turnos2[0].ausencia">
                         <div class="ausencia-badge">
-                          <i class="fas fa-user-slash"></i>
                           <span class="ausencia-tipo">
                             {{ turnos2[0].ausencia.tipo || turnos2[0].ausencia }}
                           </span>
@@ -232,7 +239,6 @@
                           <!-- Solo mostrar turnos reales, no ausencias -->
                           <template v-if="turnoDia.totalHoras > 0">
                             <div class="turno-horario">
-                              <i class="fas fa-clock me-1"></i>
                               <span class="horario-texto">
                                 {{ formatTurnoHora(turnoDia.inicio) }} -
                                 {{ formatTurnoHora(turnoDia.final) }}
@@ -433,7 +439,7 @@
         class="modal fade show modal-seleccion-tienda-overlay"
         tabindex="-1"
         role="dialog"
-        style="display: block; z-index: 2060;"
+        style="display: block; z-index: 2060"
         @click.self="cerrarModalSeleccionTienda"
       >
         <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
@@ -469,14 +475,17 @@
                   v-for="tienda in tiendasFiltradas"
                   :key="tienda.id"
                   class="tienda-item"
-                  :class="{ 'selected': selectedTienda?.id === tienda.id }"
+                  :class="{ selected: selectedTienda?.id === tienda.id }"
                   @click="seleccionarTiendaModal(tienda)"
                 >
                   <div class="tienda-item-content">
                     <i class="fas fa-store me-2"></i>
                     <span class="tienda-nombre">{{ tienda.nombre }}</span>
                   </div>
-                  <i v-if="selectedTienda?.id === tienda.id" class="fas fa-check-circle text-success"></i>
+                  <i
+                    v-if="selectedTienda?.id === tienda.id"
+                    class="fas fa-check-circle text-success"
+                  ></i>
                 </div>
                 <div v-if="tiendasFiltradas.length === 0" class="text-center p-4 text-muted">
                   <i class="fas fa-search fa-2x mb-2"></i>
@@ -489,7 +498,7 @@
       </div>
     </Transition>
     <Transition name="backdrop-fade">
-      <div v-if="modalSeleccionTienda" class="modal-backdrop fade show" style="z-index: 2055;"></div>
+      <div v-if="modalSeleccionTienda" class="modal-backdrop fade show" style="z-index: 2055"></div>
     </Transition>
   </Teleport>
 </template>
@@ -700,7 +709,10 @@ async function reloadCuadrante() {
       }));
 
     // Combinar ambos arrays y filtrar tablets de tienda
-    arrayTurnos.value = filtrarTrabajadoresSinTablets([...trabajadoresEquipo, ...trabajadoresExternos]);
+    arrayTurnos.value = filtrarTrabajadoresSinTablets([
+      ...trabajadoresEquipo,
+      ...trabajadoresExternos,
+    ]);
 
     // Ordenar para que el usuario actual aparezca primero
     ordenarCuadrante(arrayTurnos.value);
@@ -1327,27 +1339,25 @@ $neutral-700: #374151;
 $neutral-800: #1f2937;
 $neutral-900: #111827;
 
+// Wrapper de cuadrantes
+.cuadrantes-wrapper {
+  background: #f8fafc;
+}
+
 // Container principal
 .container-fluid {
   background: #f8fafc;
-  min-height: 100vh;
 }
 
 // Main content específico para cuadrantes
 .main-content-cuadrantes {
-  padding-bottom: 80px !important; // Más espacio para tablets/desktop
-  overflow-y: visible; // Usar scroll natural de la ventana
-  overflow-x: hidden; // Ocultar scroll horizontal
-  max-height: none; // Sin limitación de altura para usar scroll natural
+  padding-bottom: 1rem !important;
 }
 
 // Contenedor de tabla moderno
 .modern-table-container {
-  height: auto; // Altura automática
   display: flex;
   flex-direction: column;
-  min-height: 400px; // Altura mínima para evitar colapso
-  max-height: none; // Sin limitación de altura para usar scroll natural
 }
 
 // Sección de búsqueda
@@ -1398,10 +1408,23 @@ $neutral-900: #111827;
     0 1px 3px 0 rgba(0, 0, 0, 0.1),
     0 1px 2px 0 rgba(0, 0, 0, 0.06);
   overflow: hidden;
-  flex: 1;
   display: flex;
   flex-direction: column;
-  margin-bottom: 40px; // Espacio adicional debajo de la tabla
+  margin-bottom: 0;
+  position: relative;
+
+  // Pseudo-elemento para el header con degradado que ocupa todo el ancho
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 70px;
+    background: linear-gradient(to right, $primary-color, $secondary-color);
+    z-index: 1;
+    border-radius: 16px 16px 0 0;
+  }
 }
 
 // Tabla moderna
@@ -1411,41 +1434,62 @@ $neutral-900: #111827;
   border-spacing: 0;
 
   thead {
-    background: linear-gradient(to right, $primary-color, $secondary-color);
+    background: transparent;
     color: white;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    position: relative;
+    z-index: 2;
+
+    tr {
+      display: table-row;
+    }
 
     th {
-      padding: 0.75rem 0.5rem;
+      padding: 1rem 0.5rem;
       font-weight: 600;
       text-align: left;
       font-size: 0.8rem;
       letter-spacing: 0.05em;
       text-transform: uppercase;
       border: none;
-      white-space: nowrap;
+      white-space: normal;
+      background: transparent;
+      position: relative;
+      vertical-align: middle;
 
       &:first-child {
-        border-top-left-radius: 16px;
+        border-top-left-radius: 0;
       }
 
       &:last-child {
-        border-top-right-radius: 16px;
+        border-top-right-radius: 0;
       }
     }
   }
 
   tbody {
     tr {
-      transition: all 0.3s ease;
-      border-bottom: 1px solid $neutral-100;
+      transition: background-color 0.2s ease;
+      border-bottom: 2px solid rgba($primary-color, 0.15);
+      position: relative;
+
+      &::after {
+        content: "";
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(
+          to right,
+          rgba($primary-color, 0.3),
+          rgba($secondary-color, 0.2),
+          rgba($primary-color, 0.3)
+        );
+        opacity: 1;
+      }
 
       &:hover {
         background-color: $neutral-50;
-        transform: scale(1.002);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
       }
 
       &.row-actual {
@@ -1519,13 +1563,13 @@ $neutral-900: #111827;
 }
 
 .th-dia {
-  width: 100px;
+  width: 140px;
 }
 
 .th-horas,
 .th-contrato,
 .th-diferencia {
-  width: 85px;
+  width: 70px;
 }
 
 // Información del empleado
@@ -1641,7 +1685,11 @@ $neutral-900: #111827;
 
   // Estilo especial para fiestas
   &.fiesta-badge-custom {
-    background: linear-gradient(135deg, rgba($success-color, 0.2) 0%, rgba($success-color, 0.15) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba($success-color, 0.2) 0%,
+      rgba($success-color, 0.15) 100%
+    );
     color: color.adjust($success-color, $lightness: -15%);
     border: 1.5px solid rgba($success-color, 0.5);
     font-weight: 700;
@@ -1758,14 +1806,12 @@ $neutral-900: #111827;
 
 // Scrollbar personalizado
 .table-responsive {
-  overflow-y: visible; // Usar scroll natural de la ventana
-  overflow-x: auto; // Mantener scroll horizontal para tablas anchas
-  max-height: none; // Sin limitación de altura para usar scroll natural
-  border-radius: 16px; // Mantener bordes redondeados
+  overflow-x: auto;
+  border-radius: 0;
 
   &::-webkit-scrollbar {
     height: 8px;
-    width: 8px; // También para scroll vertical
+    width: 8px;
   }
 
   &::-webkit-scrollbar-track {
@@ -1801,13 +1847,13 @@ $neutral-900: #111827;
   }
 
   .th-dia {
-    width: 90px;
+    width: 120px;
   }
 
   .th-horas,
   .th-contrato,
   .th-diferencia {
-    width: 75px;
+    width: 65px;
   }
 
   .empleado-info {
@@ -2092,26 +2138,15 @@ $neutral-900: #111827;
 // Celdas clickeables
 .clickeable-celda {
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
 
   &:hover {
     background-color: rgba($primary-color, 0.08) !important;
-    transform: scale(1.02);
-    box-shadow: 0 2px 8px rgba($primary-color, 0.15);
-  }
-
-  &:active {
-    transform: scale(0.98);
   }
 
   .sin-turno {
     color: $primary-color;
     opacity: 0.6;
-    transition: opacity 0.2s;
-
-    &:hover {
-      opacity: 1;
-    }
   }
 }
 

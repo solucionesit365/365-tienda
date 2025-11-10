@@ -963,6 +963,8 @@ function handleResize() {
 </script>
 
 <style scoped lang="scss">
+@use "sass:color";
+
 // Transiciones del modal
 .modal-fade-enter-active,
 .modal-fade-leave-active {
@@ -1089,7 +1091,7 @@ function handleResize() {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 
     &:hover {
-      background: linear-gradient(90deg, darken(#e66c5a, 5%) 0%, darken(#333, 5%) 100%);
+      background: linear-gradient(90deg, color.adjust(#e66c5a, $lightness: -5%) 0%, color.adjust(#333, $lightness: -5%) 100%);
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
     }
   }
@@ -1395,8 +1397,8 @@ $secondary-color: #333;
   transition: all 0.3s ease;
 
   &:hover:not(:disabled) {
-    background-color: darken($primary-color, 8%) !important;
-    border-color: darken($primary-color, 8%) !important;
+    background-color: color.adjust($primary-color, $lightness: -8%) !important;
+    border-color: color.adjust($primary-color, $lightness: -8%) !important;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba($primary-color, 0.4);
   }
@@ -1436,8 +1438,8 @@ $secondary-color: #333;
 
   &:hover {
     background-color: rgba($primary-color, 0.05);
-    border-color: darken($primary-color, 8%);
-    color: darken($primary-color, 8%);
+    border-color: color.adjust($primary-color, $lightness: -8%);
+    color: color.adjust($primary-color, $lightness: -8%);
   }
 
   &:focus {
@@ -1474,8 +1476,8 @@ $secondary-color: #333;
 
   &:hover {
     background-color: rgba($primary-color, 0.05);
-    border-color: darken($primary-color, 8%);
-    color: darken($primary-color, 8%);
+    border-color: color.adjust($primary-color, $lightness: -8%);
+    color: color.adjust($primary-color, $lightness: -8%);
   }
 
   &:focus {

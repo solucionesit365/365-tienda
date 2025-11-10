@@ -1210,6 +1210,8 @@ function getHourTooltip(dayIndex: number, intervalIndex: number): string {
 </script>
 
 <style lang="scss" scoped>
+@use "sass:color";
+
 // Variables de diseño moderno
 $primary-color: #e66c5a;
 $secondary-color: #333;
@@ -1226,8 +1228,8 @@ $neutral-50: #f9fafb;
   transition: all 0.3s ease;
 
   &:hover {
-    background-color: darken($primary-color, 8%) !important;
-    border-color: darken($primary-color, 8%) !important;
+    background-color: color.adjust($primary-color, $lightness: -8%) !important;
+    border-color: color.adjust($primary-color, $lightness: -8%) !important;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba($primary-color, 0.4);
   }
@@ -1614,7 +1616,7 @@ $neutral-900: #111827;
 // Ausencias
 .ausencia-badge {
   background: rgba($warning-color, 0.15);
-  color: darken($warning-color, 10%);
+  color: color.adjust($warning-color, $lightness: -10%);
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
   font-size: 0.6rem;
@@ -1639,7 +1641,7 @@ $neutral-900: #111827;
   // Estilo especial para fiestas
   &.fiesta-badge-custom {
     background: linear-gradient(135deg, rgba($success-color, 0.2) 0%, rgba($success-color, 0.15) 100%);
-    color: darken($success-color, 15%);
+    color: color.adjust($success-color, $lightness: -15%);
     border: 1.5px solid rgba($success-color, 0.5);
     font-weight: 700;
     box-shadow: 0 2px 4px rgba($success-color, 0.15);
@@ -2124,8 +2126,8 @@ $neutral-900: #111827;
 
   &:hover:not(:disabled) {
     background-color: rgba($primary-color, 0.05);
-    border-color: darken($primary-color, 8%);
-    color: darken($primary-color, 8%);
+    border-color: color.adjust($primary-color, $lightness: -8%);
+    color: color.adjust($primary-color, $lightness: -8%);
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba($primary-color, 0.2);
   }

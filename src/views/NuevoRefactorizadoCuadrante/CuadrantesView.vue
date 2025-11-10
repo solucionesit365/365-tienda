@@ -1,38 +1,61 @@
 <template>
-  <div class="container-fluid d-flex flex-column vh-100 p-0">
+  <div class="container-fluid d-flex flex-column min-vh-100 p-0">
     <!-- HEADER -->
     <header
       class="d-flex justify-content-between align-items-center p-3 bg-white border-bottom shadow-sm flex-wrap"
     >
-      <div class="d-flex align-items-center mb-2 mb-md-0">
-        <h2 class="h4 mb-0 me-3">Semana {{ selectedDate.weekNumber }} – {{ selectedDate.year }}</h2>
+      <div class="d-flex align-items-center mb-2 mb-md-0 gap-2">
+        <h2 class="h4 mb-0 me-3">
+          Semana {{ selectedDate.weekNumber }} – {{ selectedDate.year }} [{{
+            selectedTienda?.nombre
+          }}]
+        </h2>
         <div class="btn-group" role="group" aria-label="Navegación semana">
-          <BsButton variant="outline-secondary" size="lg" @click="restarSemana()">
+          <BsButton variant="outline-primary" size="lg" @click="restarSemana()" class="btn-nav-corporate">
             <i class="fas fa-chevron-left"></i>
           </BsButton>
-          <BsButton variant="outline-secondary" size="lg" @click="sumarSemana()">
+          <BsButton variant="outline-primary" size="lg" @click="sumarSemana()" class="btn-nav-corporate">
             <i class="fas fa-chevron-right"></i>
           </BsButton>
-          <BsButton color="success" size="lg" @click="reloadCuadrante()">
-            <i class="fas fa-redo-alt"></i>
-          </BsButton>
         </div>
+        <BsButton color="primary" size="lg" @click="reloadCuadrante()" class="btn-corporate">
+          <i class="fas fa-redo-alt"></i>
+        </BsButton>
+        <BsButton color="primary" size="lg" @click="$router.push('/')" class="btn-corporate"> Volver </BsButton>
       </div>
       <div class="d-flex align-items-center gap-2">
-        <template v-if="hasPermission('ModoTienda')">
+        <!-- Switch de edición para modo tienda -->
+        <div class="form-check form-switch d-flex align-items-center me-3">
+          <input
+            class="form-check-input me-2"
+            type="checkbox"
+            role="switch"
+            id="switchEdicion"
+            v-model="modoEdicionActivo"
+            @change="toggleModoEdicion"
+            style="cursor: pointer; width: 3rem; height: 1.5rem;"
+          />
+          <label class="form-check-label fw-semibold" for="switchEdicion" style="cursor: pointer;">
+            {{ modoEdicionActivo ? 'Edición activa' : 'Solo visualización' }}
+          </label>
+        </div>
+
+        <template v-if="hasPermission('ModoTienda') || hasRole('Coordinadora_A')">
           <BsButton
             v-if="hasPermission('CrearCuadrante')"
-            color="success"
+            variant="outline-primary"
             size="lg"
-            @click="abrirConfiguradorCuadranteSemanal()"
+            @click="abrirModalPlantillas()"
+            class="btn-nav-corporate"
           >
-            <i class="fas fa-pencil me-1"></i> Gestión cuadrante
+            <i class="fas fa-cog me-1"></i> Gestión plantillas
           </BsButton>
           <BsButton
             v-if="hasPermission('CrearCuadrante')"
-            color="warning"
+            color="primary"
             size="lg"
             @click="abrirModalCopiarTurnos"
+            class="btn-corporate"
           >
             <i class="fas fa-copy me-1"></i> Copiar
           </BsButton>
@@ -40,57 +63,46 @@
       </div>
     </header>
 
-    <section v-if="hasPermission('ConsultarCuadrante')" class="p-3">
+    <section v-if="hasRole('Super_Admin')" class="p-3">
       <BsButtonGroup class="gap-3 flex-wrap">
         <div class="flex-grow-1">
-          <BsSelect
-            v-model:options="tiendas"
-            v-model:selected="selectedTienda"
-            text-key="nombre"
-            value-key="id"
-            :filter="true"
-            :select-all="true"
-            size="lg"
-            label="Tienda"
-            label-position="left"
-            :search-placeholder="'Buscar tienda'"
-            :options-selected-label="'tienda/s seleccionada/s'"
-            :preselect="false"
-            class="w-100"
-          />
+          <div v-if="loadingTiendas" class="d-flex align-items-center justify-content-center py-3">
+            <BsSpinner class="me-2" />
+            <span class="text-muted">Cargando tiendas...</span>
+          </div>
+          <div v-else class="d-flex align-items-center gap-2">
+            <label class="form-label mb-0 fw-semibold">Tienda:</label>
+            <button
+              type="button"
+              class="btn btn-tienda-selector-main flex-grow-1 text-start d-flex align-items-center justify-content-between"
+              @click="abrirModalSeleccionTienda"
+              :disabled="loadingTiendas"
+            >
+              <span>
+                <i class="fas fa-store me-2"></i>
+                {{ selectedTienda?.nombre || 'Seleccionar tienda...' }}
+              </span>
+              <i class="fas fa-chevron-down"></i>
+            </button>
+          </div>
         </div>
-
-        <BsButton outline icon="search" color="success" @click="reloadCuadrante()">
-          Buscar
-        </BsButton>
-
-        <BsButton
-          outline
-          v-if="hasRole('Super_Admin', 'RRHH_ADMIN', 'Analisis_Datos', 'Procesos')"
-          icon="file-excel"
-          color="success"
-          @click="downloadExcelAllCuadrantesTiendas()"
-        >
-          Descargar excel
-        </BsButton>
-
-        <BsButton
-          outline
-          v-if="hasPermission('VerResumCuadrantes')"
-          icon="chart-bar"
-          color="info"
-          @click="handleVerResumen()"
-        >
-          Resumen
-        </BsButton>
       </BsButtonGroup>
     </section>
 
     <!-- MAIN CONTENT - Table Area -->
-    <main class="flex-grow-1 overflow-hidden p-3">
-      <!-- Switch de Vista -->
-      <div class="mb-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Vista del Cuadrante</h5>
+    <main class="flex-grow-1 overflow-hidden p-3 main-content-cuadrantes">
+      <!-- Búsqueda y Switch de Vista -->
+      <div class="mb-3 d-flex justify-content-between align-items-center gap-3">
+        <div :class="hasRole('Super_Admin') ? 'w-50' : 'flex-grow-1'">
+          <input
+            v-model="searchText"
+            @input="searchByName"
+            type="text"
+            class="modern-search"
+            placeholder="Buscar empleado..."
+          />
+        </div>
+
         <div class="view-switch">
           <div class="btn-group" role="group">
             <input
@@ -102,7 +114,8 @@
               value="table"
               autocomplete="off"
             />
-            <label class="btn btn-outline-primary" for="tableView">
+
+            <label class="btn btn-outline-secondary btn-view-mode" for="tableView">
               <i class="fas fa-table me-1"></i>Tabla
             </label>
             <input
@@ -114,28 +127,14 @@
               value="timeline"
               autocomplete="off"
             />
-            <label class="btn btn-outline-primary" for="timelineView">
-              <i class="fas fa-chart-gantt me-1"></i>Línea Temporal
+            <label class="btn btn-outline-secondary btn-view-mode" for="timelineView">
+              <i class="fas fa-chart-gantt me-1"></i>Línea temporal
             </label>
           </div>
         </div>
       </div>
 
       <div class="modern-table-container" v-if="viewMode === 'table'">
-        <!-- Search Bar -->
-        <div class="search-section mb-4">
-          <div class="search-wrapper">
-            <i class="fas fa-search search-icon"></i>
-            <input
-              v-model="searchText"
-              @input="searchByName"
-              type="text"
-              class="modern-search"
-              placeholder="Buscar empleado..."
-            />
-          </div>
-        </div>
-
         <div v-if="!loadingCuadrantes" class="table-card">
           <div class="table-responsive">
             <table id="tabla" class="modern-table">
@@ -202,13 +201,16 @@
                     v-for="(turnos2, index2) in turno.turnos"
                     v-bind:key="index2"
                     class="td-turno"
+                    :class="{ 'clickeable-celda': modoEdicionActivo }"
                     :data-th="
                       selectedDate.plus({ days: index2 }).toFormat('EEEE dd', { locale: 'es' })
                     "
+                    @click="modoEdicionActivo ? abrirModalEditarTurno(turno, index2) : null"
                   >
                     <div class="turno-container">
                       <template v-if="turnos2.length > 0 && turnos2[0].fiesta">
-                        <div class="ausencia-badge">
+                        <div class="ausencia-badge fiesta-badge-custom">
+                          <i class="fas fa-glass-cheers me-1"></i>
                           <span class="ausencia-tipo">Fiesta</span>
                         </div>
                       </template>
@@ -221,9 +223,10 @@
                           </span>
                         </div>
                       </template>
+
                       <template v-else>
                         <div v-if="turnos2.length === 0" class="sin-turno">
-                          <i class="fas fa-minus"></i>
+                          <i :class="modoEdicionActivo ? 'fas fa-plus-circle' : 'fas fa-minus'"></i>
                         </div>
                         <div v-for="(turnoDia, index3) in turnos2" :key="index3" class="turno-item">
                           <!-- Solo mostrar turnos reales, no ausencias -->
@@ -303,7 +306,7 @@
         <div class="timeline-header mb-4">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <h6>Cobertura de Personal por Horas</h6>
+              <h6>Cobertura de personal por horas</h6>
               <p class="text-muted mb-0">
                 Intensidad de color indica número de trabajadores presentes
               </p>
@@ -313,7 +316,7 @@
             <div class="day-navigation">
               <div class="btn-group" role="group">
                 <button
-                  class="btn btn-outline-primary btn-sm"
+                  class="btn btn-outline-secondary btn-sm btn-timeline-nav"
                   :disabled="selectedDayIndex === 0"
                   @click="selectedDayIndex--"
                 >
@@ -329,7 +332,7 @@
                   </span>
                 </div>
                 <button
-                  class="btn btn-outline-primary btn-sm"
+                  class="btn btn-outline-secondary btn-sm btn-timeline-nav"
                   :disabled="selectedDayIndex === 6"
                   @click="selectedDayIndex++"
                 >
@@ -340,22 +343,22 @@
           </div>
         </div>
 
-        <!-- Timeline horizontal de 48 intervalos de 30 minutos -->
+        <!-- Timeline horizontal de 96 intervalos de 15 minutos -->
         <div class="horizontal-timeline">
           <!-- Etiquetas de horas -->
           <div class="hour-labels">
             <div
-              v-for="interval in 48"
+              v-for="interval in 96"
               :key="`label-${interval - 1}`"
               class="hour-label"
-              :class="{ 'half-hour': (interval - 1) % 2 === 1 }"
+              :class="{ 'quarter-hour': (interval - 1) % 4 !== 0 }"
             >
               {{
-                Math.floor((interval - 1) / 2)
+                Math.floor((interval - 1) / 4)
                   .toString()
                   .padStart(2, "0") +
                 ":" +
-                (((interval - 1) % 2) * 30).toString().padStart(2, "0")
+                (((interval - 1) % 4) * 15).toString().padStart(2, "0")
               }}
             </div>
           </div>
@@ -363,7 +366,7 @@
           <!-- Barras de cobertura -->
           <div class="coverage-bars">
             <div
-              v-for="interval in 48"
+              v-for="interval in 96"
               :key="`bar-${interval - 1}`"
               class="hour-bar"
               :class="getHourCoverageClass(selectedDayIndex, interval - 1)"
@@ -407,13 +410,88 @@
     </main>
   </div>
 
-  <ConfiguradorTurno
-    ref="modalConfiguradorTurno"
-    :selected-date="selectedDate"
-    :selected-tienda="selectedTienda"
+  <ModalCopiarTurnosSemana ref="modalCopiarTurnos" :id-tienda="selectedTienda?.id || 0" />
+
+  <ModalEditarTurnoIndividual
+    ref="modalEditarTurnoIndividual"
+    :plantillas-turno="plantillasTurno"
+    @turno-guardado="reloadCuadrante"
   />
 
-  <ModalCopiarTurnosSemana ref="modalCopiarTurnos" :id-tienda="selectedTienda?.id || 0" />
+  <PlantillasTurnoModal
+    v-if="selectedTienda?.id"
+    ref="plantillasModal"
+    :idTienda="selectedTienda.id"
+    @plantillas-updated="cargarPlantillasTurno"
+  />
+
+  <!-- Modal de selección de tienda -->
+  <Teleport to="body">
+    <Transition name="modal-fade">
+      <div
+        v-if="modalSeleccionTienda"
+        class="modal fade show modal-seleccion-tienda-overlay"
+        tabindex="-1"
+        role="dialog"
+        style="display: block; z-index: 2060;"
+        @click.self="cerrarModalSeleccionTienda"
+      >
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+          <div class="modal-content modal-seleccion-tienda">
+            <div class="modal-header">
+              <h5 class="modal-title">
+                <i class="fas fa-store me-2"></i>
+                Seleccionar Tienda
+              </h5>
+              <button
+                type="button"
+                class="btn-close"
+                @click="cerrarModalSeleccionTienda"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body p-0">
+              <div class="search-container p-3 border-bottom">
+                <div class="search-wrapper">
+                  <i class="fas fa-search search-icon"></i>
+                  <input
+                    type="text"
+                    class="form-control ps-5"
+                    placeholder="Buscar tienda..."
+                    v-model="busquedaTienda"
+                    @input="filtrarTiendas"
+                    ref="inputBusquedaTiendaModal"
+                  />
+                </div>
+              </div>
+              <div class="tiendas-list">
+                <div
+                  v-for="tienda in tiendasFiltradas"
+                  :key="tienda.id"
+                  class="tienda-item"
+                  :class="{ 'selected': selectedTienda?.id === tienda.id }"
+                  @click="seleccionarTiendaModal(tienda)"
+                >
+                  <div class="tienda-item-content">
+                    <i class="fas fa-store me-2"></i>
+                    <span class="tienda-nombre">{{ tienda.nombre }}</span>
+                  </div>
+                  <i v-if="selectedTienda?.id === tienda.id" class="fas fa-check-circle text-success"></i>
+                </div>
+                <div v-if="tiendasFiltradas.length === 0" class="text-center p-4 text-muted">
+                  <i class="fas fa-search fa-2x mb-2"></i>
+                  <p>No se encontraron tiendas</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
+    <Transition name="backdrop-fade">
+      <div v-if="modalSeleccionTienda" class="modal-backdrop fade show" style="z-index: 2055;"></div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -422,39 +500,129 @@ import { DateTime } from "luxon";
 import { hasPermission, hasRole } from "@/components/rolesPermisos";
 import BsButton from "@/components/365/BsButton.vue";
 import type { TTienda } from "@/interfaces/Tienda.interface";
-// import { useRouter } from "vue-router";
 import BsButtonGroup from "@/components/365/BsButtonGroup.vue";
-import BsSelect from "@/components/365/BsSelect.vue";
-// import BsInput from "@/components/365/BsInput.vue";
 import BsSpinner from "@/components/365/BsSpinner.vue";
 import Swal from "sweetalert2";
 import { axiosInstance } from "@/components/axios/axios";
 import { useUserStore } from "@/stores/user";
 import { useTiendaStore } from "@/stores/tienda";
-import ConfiguradorTurno from "@/components/ModalCrearCuadranteNew.vue";
 import ModalCopiarTurnosSemana from "@/components/ModalCopiarTurnosSemana.vue";
+import ModalEditarTurnoIndividual from "@/components/ModalEditarTurnoIndividual.vue";
+import PlantillasTurnoModal from "@/components/ModalPlantillasTurno.vue";
 import { estructurarTurnosConTrabajador } from "@/components/auxCuadrantes";
 import { Turno } from "@/components/kernel/Turno";
 
 const userStore = useUserStore();
 const tiendaStore = useTiendaStore();
-const modalConfiguradorTurno = ref<InstanceType<typeof ConfiguradorTurno> | null>(null);
 const modalCopiarTurnos = ref<InstanceType<typeof ModalCopiarTurnosSemana> | null>(null);
+const modalEditarTurnoIndividual = ref<InstanceType<typeof ModalEditarTurnoIndividual> | null>(
+  null,
+);
+const plantillasModal = ref<InstanceType<typeof PlantillasTurnoModal> | null>(null);
 const tiendas: Ref<TTienda[]> = computed(() => tiendaStore.tiendas);
 const selectedDate = ref(DateTime.now().startOf("week"));
-const selectedTienda: Ref<TTienda | null> = ref(
-  userStore.user.coordinadoraDeLaTienda ? userStore.user.coordinadoraDeLaTienda : null,
-);
-// const router = useRouter();
+const selectedTienda: Ref<TTienda | null> = ref(null);
 const loadingCuadrantes = ref(false);
+const loadingTiendas = ref(false);
 const arrayTurnos: Ref<any[]> = ref([]);
 const searchText = ref("");
 const viewMode = ref("table"); // "table" o "timeline"
-const coverageData: Ref<any[][]> = ref([]); // [dayIndex][halfHourIndex] = workerCount (48 intervalos de 30min)
+const coverageData: Ref<any[][]> = ref([]); // [dayIndex][quarterHourIndex] = workerCount (96 intervalos de 15min)
 const selectedDayIndex = ref(0); // 0-6 para los días de la semana actual
+const plantillasTurno: Ref<any[]> = ref([]);
+
+// Variables para modal de selección de tienda
+const modalSeleccionTienda = ref(false);
+const busquedaTienda = ref("");
+const tiendasFiltradas: Ref<TTienda[]> = ref([]);
+const inputBusquedaTiendaModal = ref<HTMLInputElement | null>(null);
+
+// Variables para modo edición con PIN
+const modoEdicionActivo = ref(false);
 
 const restarSemana = () => (selectedDate.value = selectedDate.value.minus({ weeks: 1 }));
 const sumarSemana = () => (selectedDate.value = selectedDate.value.plus({ weeks: 1 }));
+
+async function toggleModoEdicion() {
+  if (modoEdicionActivo.value) {
+    // El usuario quiere activar la edición, validar PIN
+    const pinValido = await validarPINCoordinadora();
+    if (!pinValido) {
+      // Si el PIN no es válido, desactivar el switch
+      modoEdicionActivo.value = false;
+    }
+  }
+  // Si se desactiva, no hace falta validar nada
+}
+
+async function validarPINCoordinadora(): Promise<boolean> {
+  if (!selectedTienda.value) {
+    Swal.fire({
+      icon: "warning",
+      title: "Selecciona una tienda",
+      text: "Debes seleccionar una tienda primero.",
+    });
+    return false;
+  }
+
+  const { value: pin } = await Swal.fire({
+    title: "Verificación de PIN",
+    text: "Introduce tu PIN de coordinadora:",
+    input: "number",
+    inputPlaceholder: "Introduce el PIN de 4 dígitos",
+    inputAttributes: {
+      maxlength: "4",
+      autocapitalize: "off",
+      autocorrect: "off",
+    },
+    showCancelButton: true,
+    confirmButtonText: "Verificar",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    inputValidator: (value) => {
+      if (!value) {
+        return "Debes introducir un PIN";
+      }
+      if (!/^\d{4}$/.test(value)) {
+        return "El PIN debe tener exactamente 4 dígitos";
+      }
+      return null;
+    },
+  });
+
+  if (!pin) return false;
+
+  try {
+    const response = await axiosInstance.post("check-pin-coordinadora", {
+      idTienda: selectedTienda.value.id,
+      pin: parseInt(pin),
+    });
+
+    if (response.data === true) {
+      return true;
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "PIN incorrecto",
+        text: "El PIN introducido no es válido. Inténtalo de nuevo.",
+        confirmButtonText: "Entendido",
+      });
+      return false;
+    }
+  } catch (error: any) {
+    console.error("Error al verificar PIN:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Error de verificación",
+      text:
+        error.response?.data?.message ||
+        "Ha ocurrido un error al verificar el PIN. Inténtalo de nuevo.",
+      confirmButtonText: "Entendido",
+    });
+    return false;
+  }
+}
 
 async function reloadCuadrante() {
   try {
@@ -571,56 +739,6 @@ async function reloadCuadrante() {
   } finally {
     loadingCuadrantes.value = false;
   }
-}
-
-async function abrirConfiguradorCuadranteSemanal() {
-  const now = DateTime.now();
-  const select = selectedDate.value;
-
-  const nowIsoYear = now.weekYear;
-  const selIsoYear = select.weekYear;
-  const nowWeek = now.weekNumber;
-  const selWeek = select.weekNumber;
-  const isMonday = now.weekday === 1; // 1 = lunes en Luxon
-
-  // Permitir modificar la semana anterior solo si es lunes
-  const isLastWeekOnMonday = isMonday && selIsoYear === nowIsoYear && selWeek === nowWeek - 1;
-
-  // Si el año ISO seleccionado es anterior,
-  // o si es el mismo año ISO pero la semana es menor (y no es lunes viendo la semana anterior)
-  if (selIsoYear < nowIsoYear || (selIsoYear === nowIsoYear && selWeek < nowWeek && !isLastWeekOnMonday)) {
-    Swal.fire({
-      icon: "warning",
-      text: "No se pueden crear turnos para semanas pasadas.",
-    });
-    return;
-  }
-
-  if (!selectedTienda.value) {
-    Swal.fire({
-      icon: "warning",
-      text: "No tienes una tienda asignada.",
-    });
-    return;
-  }
-
-  // Validar PIN antes de abrir el configurador
-  const pinValido = await validarPINCoordinadora();
-  if (!pinValido) return;
-
-  modalConfiguradorTurno.value?.abrirModal(select);
-}
-
-function downloadExcelAllCuadrantesTiendas() {
-  console.log("Descargar Excel de todos los cuadrantes de tiendas");
-  Swal.fire({
-    icon: "info",
-    title: "Función deshabilitada",
-    text: "Esta función está deshabilitada temporalmente.",
-    timer: 2000,
-    showConfirmButton: false,
-    timerProgressBar: true,
-  });
 }
 
 function handleVista() {
@@ -762,91 +880,110 @@ function searchByName() {
   }
 }
 
-function handleVerResumen() {
-  Swal.fire({
-    icon: "info",
-    title: "Función deshabilitada",
-    text: "Esta función está deshabilitada temporalmente.",
-    timer: 2000,
-    showConfirmButton: false,
-    timerProgressBar: true,
-  });
-}
-
-async function validarPINCoordinadora(): Promise<boolean> {
-  if (!selectedTienda.value) {
-    Swal.fire({
-      icon: "warning",
-      title: "Selecciona una tienda",
-      text: "Debes seleccionar una tienda primero.",
-    });
-    return false;
-  }
-
-  const { value: pin } = await Swal.fire({
-    title: "Verificación de PIN",
-    text: "Introduce tu PIN de coordinadora:",
-    input: "number",
-    inputPlaceholder: "Introduce el PIN de 4 dígitos",
-    inputAttributes: {
-      maxlength: "4",
-      autocapitalize: "off",
-      autocorrect: "off",
-    },
-    showCancelButton: true,
-    confirmButtonText: "Verificar",
-    cancelButtonText: "Cancelar",
-    confirmButtonColor: "#3085d6",
-    cancelButtonColor: "#d33",
-    inputValidator: (value) => {
-      if (!value) {
-        return "Debes introducir un PIN";
-      }
-      if (!/^\d{4}$/.test(value)) {
-        return "El PIN debe tener exactamente 4 dígitos";
-      }
-      return null;
-    },
-  });
-
-  if (!pin) return false;
-
-  try {
-    const response = await axiosInstance.post("check-pin-coordinadora", {
-      idTienda: selectedTienda.value.id,
-      pin: parseInt(pin),
-    });
-
-    if (response.data === true) {
-      return true;
-    } else {
-      Swal.fire({
-        icon: "error",
-        title: "PIN incorrecto",
-        text: "El PIN introducido no es válido. Inténtalo de nuevo.",
-        confirmButtonText: "Entendido",
-      });
-      return false;
-    }
-  } catch (error: any) {
-    console.error("Error al verificar PIN:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error de verificación",
-      text:
-        error.response?.data?.message ||
-        "Ha ocurrido un error al verificar el PIN. Inténtalo de nuevo.",
-      confirmButtonText: "Entendido",
-    });
-    return false;
-  }
-}
-
 async function abrirModalCopiarTurnos() {
+  // Validar PIN antes de abrir modal
   const pinValido = await validarPINCoordinadora();
   if (!pinValido) return;
 
   modalCopiarTurnos.value?.abrirModal();
+}
+
+async function abrirModalEditarTurno(trabajador: any, diaIndex: number) {
+  if (!selectedTienda.value) {
+    Swal.fire({
+      icon: "warning",
+      text: "No hay tienda seleccionada.",
+    });
+    return;
+  }
+
+  // Solo permitir edición si el modo edición está activo
+  if (!modoEdicionActivo.value) {
+    return; // No hacer nada si el modo edición no está activo
+  }
+
+  const fechaDia = selectedDate.value.plus({ days: diaIndex });
+
+  // Validar que no se puedan editar turnos de más de 3 semanas atrás
+  const hacesTresSemanas = DateTime.now().startOf("day").minus({ weeks: 3 });
+
+  if (fechaDia < hacesTresSemanas) {
+    Swal.fire({
+      icon: "warning",
+      title: "Edición no permitida",
+      text: "Solo se pueden editar turnos de las últimas 3 semanas.",
+      confirmButtonText: "Entendido",
+    });
+    return;
+  }
+
+  await modalEditarTurnoIndividual.value?.abrirModal(
+    trabajador.idTrabajador,
+    trabajador.nombre,
+    fechaDia,
+    selectedTienda.value,
+  );
+}
+
+async function abrirModalPlantillas() {
+  if (!selectedTienda.value?.id) {
+    Swal.fire({
+      icon: "warning",
+      text: "No hay tienda seleccionada.",
+    });
+    return;
+  }
+
+  plantillasModal.value?.abrirModal();
+}
+
+async function cargarPlantillasTurno() {
+  if (!selectedTienda.value?.id) return;
+
+  try {
+    const response = await axiosInstance.get("plantilla-turno", {
+      params: { idTienda: selectedTienda.value.id },
+    });
+
+    plantillasTurno.value = response.data || [];
+  } catch (error) {
+    console.error("Error al cargar plantillas:", error);
+    plantillasTurno.value = [];
+  }
+}
+
+// Funciones del modal de selección de tienda
+function abrirModalSeleccionTienda() {
+  modalSeleccionTienda.value = true;
+  busquedaTienda.value = "";
+  tiendasFiltradas.value = tiendas.value;
+
+  // Focus en el input después de abrir el modal
+  setTimeout(() => {
+    inputBusquedaTiendaModal.value?.focus();
+  }, 100);
+}
+
+function cerrarModalSeleccionTienda() {
+  modalSeleccionTienda.value = false;
+  busquedaTienda.value = "";
+}
+
+function filtrarTiendas() {
+  const busqueda = busquedaTienda.value.toLowerCase().trim();
+
+  if (!busqueda) {
+    tiendasFiltradas.value = tiendas.value;
+  } else {
+    tiendasFiltradas.value = tiendas.value.filter((tienda) =>
+      tienda.nombre.toLowerCase().includes(busqueda),
+    );
+  }
+}
+
+function seleccionarTiendaModal(tienda: TTienda) {
+  selectedTienda.value = tienda;
+  cerrarModalSeleccionTienda();
 }
 
 // Watchers
@@ -859,13 +996,128 @@ watch(selectedDate, () => {
 watch(selectedTienda, () => {
   if (selectedTienda.value) {
     reloadCuadrante();
+    cargarPlantillasTurno();
   }
 });
 
+// Watch para cuando se cargan las tiendas (solo para roles que no sean Supervisora)
+watch(
+  tiendas,
+  (newTiendas) => {
+    // Solo ejecutar este watcher si no es Supervisora (ya que Supervisora carga tiendas manualmente)
+    if (!hasRole("Supervisora") && !selectedTienda.value && newTiendas.length > 0) {
+      if (userStore.user.coordinadoraDeLaTienda) {
+        selectedTienda.value = userStore.user.coordinadoraDeLaTienda;
+      } else if (userStore.user.idTienda) {
+        const tiendaUsuario = newTiendas.find((t) => t.id === userStore.user.idTienda);
+        if (tiendaUsuario) {
+          selectedTienda.value = tiendaUsuario;
+        }
+      } else {
+        selectedTienda.value = newTiendas[0];
+      }
+    }
+  },
+  { immediate: true },
+);
+
 provide("reloadCuadrante", reloadCuadrante);
 
-onMounted(() => {
+async function loadTiendasBasedOnRole() {
+  if (loadingTiendas.value) return; // Prevenir múltiples llamadas simultáneas
+
+  try {
+    loadingTiendas.value = true;
+    let tiendasData = [];
+
+    if (hasRole("Super_Admin")) {
+      // Si es Super_Admin, usar las tiendas ya cargadas desde el store
+      tiendasData = tiendaStore.tiendas;
+
+      // Si no hay tiendas en el store, esperar a que se carguen
+      if (tiendasData.length === 0) {
+        console.log("Esperando a que se carguen las tiendas en el store...");
+        // Esperar un momento y volver a intentar
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        tiendasData = tiendaStore.tiendas;
+      }
+    } else if (hasRole("Supervisora")) {
+      // Si es Supervisora, cargar tiendas desde el endpoint específico
+      console.log("Cargando tiendas del supervisor...");
+      console.log("idSql del usuario:", userStore.user.idSql);
+
+      if (!userStore.user.idSql) {
+        throw new Error("No se encontró el ID del usuario para cargar las tiendas");
+      }
+
+      const response = await axiosInstance.get("get-tiendas-del-supervisor", {
+        params: { idSupervisor: userStore.user.idSql },
+      });
+
+      console.log("Respuesta del servidor:", response.data);
+
+      if (response.data && Array.isArray(response.data)) {
+        tiendasData = response.data;
+        // Actualizar el store con las tiendas del supervisor
+        tiendaStore.setTiendas(tiendasData);
+        console.log(`Tiendas del supervisor cargadas: ${tiendasData.length}`);
+
+        if (tiendasData.length === 0) {
+          console.warn("El supervisor no tiene tiendas asignadas");
+          Swal.fire({
+            icon: "info",
+            title: "Sin tiendas asignadas",
+            text: "No tienes tiendas asignadas como supervisor.",
+          });
+        }
+      } else {
+        console.warn("Respuesta inesperada del servidor:", response.data);
+        throw new Error("Formato de respuesta inválido del servidor");
+      }
+    } else {
+      // Para otros roles, usar las tiendas del store
+      tiendasData = tiendaStore.tiendas;
+    }
+
+    // Seleccionar tienda inicial después de cargar
+    if (tiendasData.length > 0) {
+      if (userStore.user.coordinadoraDeLaTienda?.id) {
+        const tiendaCoordinadora = tiendasData.find(
+          (t) => t.id === userStore.user.coordinadoraDeLaTienda?.id,
+        );
+        selectedTienda.value = tiendaCoordinadora || tiendasData[0];
+      } else if (userStore.user.idTienda) {
+        const tiendaUsuario = tiendasData.find((t) => t.id === userStore.user.idTienda);
+        selectedTienda.value = tiendaUsuario || tiendasData[0];
+      } else {
+        selectedTienda.value = tiendasData[0];
+      }
+
+      console.log(`Tienda seleccionada: ${selectedTienda.value?.nombre}`);
+    } else {
+      console.warn("No se encontraron tiendas disponibles");
+    }
+
+    return tiendasData;
+  } catch (error) {
+    console.error("Error al cargar tiendas basado en rol:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Error al cargar tiendas",
+      text: "No se pudieron cargar las tiendas disponibles. Por favor, inténtalo de nuevo.",
+    });
+    return [];
+  } finally {
+    loadingTiendas.value = false;
+  }
+}
+
+onMounted(async () => {
   handleVista();
+
+  // Cargar tiendas basado en el rol del usuario
+  await loadTiendasBasedOnRole();
+
   if (selectedTienda.value) {
     reloadCuadrante();
   }
@@ -880,10 +1132,10 @@ onMounted(() => {
 
 // Funciones para Timeline
 function calculateCoverageData() {
-  // Inicializar matriz 7x48 (7 días, 48 intervalos de 30min)
+  // Inicializar matriz 7x96 (7 días, 96 intervalos de 15min)
   coverageData.value = Array(7)
     .fill(null)
-    .map(() => Array(48).fill(0));
+    .map(() => Array(96).fill(0));
 
   // Iterar sobre todos los trabajadores y sus turnos
   arrayTurnos.value.forEach((trabajador) => {
@@ -895,14 +1147,14 @@ function calculateCoverageData() {
           const final = turno.final;
 
           if (inicio.isValid && final.isValid) {
-            // Convertir a intervalos de 30 minutos
-            const inicioIntervals = inicio.hour * 2 + Math.floor(inicio.minute / 30);
-            const finalIntervals = final.hour * 2 + Math.floor(final.minute / 30);
+            // Convertir a intervalos de 15 minutos
+            const inicioIntervals = inicio.hour * 4 + Math.floor(inicio.minute / 15);
+            const finalIntervals = final.hour * 4 + Math.floor(final.minute / 15);
 
-            // Incrementar contador para cada intervalo de 30min cubierto
+            // Incrementar contador para cada intervalo de 15min cubierto
             for (
               let interval = inicioIntervals;
-              interval < finalIntervals && interval < 48;
+              interval < finalIntervals && interval < 96;
               interval++
             ) {
               coverageData.value[dayIndex][interval]++;
@@ -939,11 +1191,11 @@ function getHourTooltip(dayIndex: number, intervalIndex: number): string {
   const count = getWorkerCount(dayIndex, intervalIndex);
   const dayName = selectedDate.value.plus({ days: dayIndex }).toFormat("EEEE", { locale: "es" });
 
-  // Convertir índice de intervalo a horas y minutos
-  const hour = Math.floor(intervalIndex / 2);
-  const minutes = (intervalIndex % 2) * 30;
-  const nextHour = Math.floor((intervalIndex + 1) / 2);
-  const nextMinutes = ((intervalIndex + 1) % 2) * 30;
+  // Convertir índice de intervalo a horas y minutos (15 minutos)
+  const hour = Math.floor(intervalIndex / 4);
+  const minutes = (intervalIndex % 4) * 15;
+  const nextHour = Math.floor((intervalIndex + 1) / 4);
+  const nextMinutes = ((intervalIndex + 1) % 4) * 15;
 
   const timeStart = `${String(hour).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
   const timeEnd = `${String(nextHour).padStart(2, "0")}:${String(nextMinutes).padStart(2, "0")}`;
@@ -959,12 +1211,109 @@ function getHourTooltip(dayIndex: number, intervalIndex: number): string {
 
 <style lang="scss" scoped>
 // Variables de diseño moderno
-$primary-color: #6366f1;
-$secondary-color: #8b5cf6;
+$primary-color: #e66c5a;
+$secondary-color: #333;
 $success-color: #10b981;
 $danger-color: #ef4444;
 $warning-color: #f59e0b;
 $neutral-50: #f9fafb;
+
+// Botones corporativos con color sólido
+:deep(.btn-corporate) {
+  background-color: $primary-color !important;
+  border-color: $primary-color !important;
+  color: white !important;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: darken($primary-color, 8%) !important;
+    border-color: darken($primary-color, 8%) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba($primary-color, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+:deep(.btn-nav-corporate) {
+  border-color: $primary-color !important;
+  color: $primary-color !important;
+  background-color: white !important;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: $primary-color !important;
+    color: white !important;
+    border-color: $primary-color !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba($primary-color, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// Botones secundarios corporativos (gris oscuro)
+:deep(.btn-secondary-corporate) {
+  border-color: $secondary-color !important;
+  color: $secondary-color !important;
+  background-color: white !important;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: $secondary-color !important;
+    color: white !important;
+    border-color: $secondary-color !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba($secondary-color, 0.3);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// Botones de modo de vista (Tabla/Línea temporal)
+:deep(.btn-view-mode) {
+  border-color: $secondary-color !important;
+  color: $secondary-color !important;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: $secondary-color !important;
+    color: white !important;
+    border-color: $secondary-color !important;
+  }
+
+  // Cuando está activo (checked)
+  &.active,
+  input:checked + & {
+    background-color: $secondary-color !important;
+    color: white !important;
+    border-color: $secondary-color !important;
+  }
+}
+
+// Botones de navegación de timeline
+:deep(.btn-timeline-nav) {
+  border-color: $secondary-color !important;
+  color: $secondary-color !important;
+
+  &:hover:not(:disabled) {
+    background-color: $secondary-color !important;
+    color: white !important;
+    border-color: $secondary-color !important;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
 $neutral-100: #f3f4f6;
 $neutral-200: #e5e7eb;
 $neutral-300: #d1d5db;
@@ -981,11 +1330,21 @@ $neutral-900: #111827;
   min-height: 100vh;
 }
 
+// Main content específico para cuadrantes
+.main-content-cuadrantes {
+  padding-bottom: 80px !important; // Más espacio para tablets/desktop
+  overflow-y: visible; // Usar scroll natural de la ventana
+  overflow-x: hidden; // Ocultar scroll horizontal
+  max-height: none; // Sin limitación de altura para usar scroll natural
+}
+
 // Contenedor de tabla moderno
 .modern-table-container {
-  height: 100%;
+  height: auto; // Altura automática
   display: flex;
   flex-direction: column;
+  min-height: 400px; // Altura mínima para evitar colapso
+  max-height: none; // Sin limitación de altura para usar scroll natural
 }
 
 // Sección de búsqueda
@@ -1039,6 +1398,7 @@ $neutral-900: #111827;
   flex: 1;
   display: flex;
   flex-direction: column;
+  margin-bottom: 40px; // Espacio adicional debajo de la tabla
 }
 
 // Tabla moderna
@@ -1176,7 +1536,7 @@ $neutral-900: #111827;
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: linear-gradient(135deg, $primary-color, $secondary-color);
+  background-color: $primary-color;
   color: white;
   display: flex;
   align-items: center;
@@ -1253,25 +1613,40 @@ $neutral-900: #111827;
 
 // Ausencias
 .ausencia-badge {
-  background: rgba($warning-color, 0.1);
-  color: $warning-color;
+  background: rgba($warning-color, 0.15);
+  color: darken($warning-color, 10%);
   padding: 0.25rem 0.5rem;
   border-radius: 6px;
   font-size: 0.6rem;
-  font-weight: 500;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
+  border: 1px solid rgba($warning-color, 0.3);
 
   .ausencia-tipo {
     font-size: 0.6rem;
     text-transform: uppercase;
     letter-spacing: 0.025em;
+    text-align: center;
   }
 
   .ausencia-horas {
     font-size: 0.7rem;
     opacity: 0.8;
+  }
+
+  // Estilo especial para fiestas
+  &.fiesta-badge-custom {
+    background: linear-gradient(135deg, rgba($success-color, 0.2) 0%, rgba($success-color, 0.15) 100%);
+    color: darken($success-color, 15%);
+    border: 1.5px solid rgba($success-color, 0.5);
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba($success-color, 0.15);
+
+    i {
+      color: $success-color;
+    }
   }
 }
 
@@ -1376,62 +1751,18 @@ $neutral-900: #111827;
   }
 }
 
-@media (max-width: 768px) {
-  .table-responsive {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .modern-table {
-    min-width: 1000px;
-  }
-
-  thead {
-    display: none;
-  }
-
-  tbody {
-    tr {
-      display: block;
-      margin-bottom: 1rem;
-      border: 1px solid $neutral-200;
-      border-radius: 12px;
-      padding: 1rem;
-      background: white;
-    }
-
-    td {
-      display: block;
-      text-align: left;
-      padding: 0.5rem 0;
-
-      &:before {
-        content: attr(data-th);
-        font-weight: 600;
-        color: $neutral-600;
-        display: block;
-        margin-bottom: 0.25rem;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-      }
-    }
-  }
-
-  .empleado-info {
-    justify-content: flex-start;
-    margin-bottom: 0.5rem;
-  }
-
-  .turno-container {
-    align-items: flex-start;
-  }
-}
+// Estilos móviles eliminados - solo tablet/desktop
 
 // Scrollbar personalizado
 .table-responsive {
+  overflow-y: visible; // Usar scroll natural de la ventana
+  overflow-x: auto; // Mantener scroll horizontal para tablas anchas
+  max-height: none; // Sin limitación de altura para usar scroll natural
+  border-radius: 16px; // Mantener bordes redondeados
+
   &::-webkit-scrollbar {
     height: 8px;
+    width: 8px; // También para scroll vertical
   }
 
   &::-webkit-scrollbar-track {
@@ -1521,6 +1852,8 @@ $neutral-900: #111827;
   background: $neutral-50;
   border-radius: 16px;
   border: 1px solid $neutral-200;
+  max-height: none; // Sin limitación de altura para usar scroll natural
+  overflow-y: visible; // Usar scroll natural de la ventana
 }
 
 .timeline-header {
@@ -1560,23 +1893,48 @@ $neutral-900: #111827;
   border-radius: 12px;
   padding: 1.5rem;
   border: 1px solid $neutral-200;
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  // Ocultar scrollbars pero mantener funcionalidad
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $neutral-300;
+    border-radius: 4px;
+
+    &:hover {
+      background: $neutral-400;
+    }
+  }
+
+  // Para Firefox
+  scrollbar-width: thin;
+  scrollbar-color: $neutral-300 transparent;
 
   .hour-labels {
     display: flex;
-    gap: 4px;
+    gap: 2px;
     margin-bottom: 1rem;
+    min-width: max-content;
 
     .hour-label {
-      flex: 1;
+      min-width: 50px;
       text-align: center;
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       color: $neutral-600;
       font-weight: 500;
       padding: 0.25rem 0;
 
-      // Estilo para intervalos de media hora
-      &.half-hour {
-        font-size: 0.6rem;
+      // Estilo para intervalos de 15 minutos (no en hora completa)
+      &.quarter-hour {
+        font-size: 0.55rem;
         color: $neutral-500;
         font-weight: 400;
       }
@@ -1585,12 +1943,13 @@ $neutral-900: #111827;
 
   .coverage-bars {
     display: flex;
-    gap: 4px;
+    gap: 2px;
     align-items: end;
     height: 200px;
+    min-width: max-content;
 
     .hour-bar {
-      flex: 1;
+      min-width: 50px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -1624,13 +1983,13 @@ $neutral-900: #111827;
       .worker-count {
         position: absolute;
         top: -25px;
-        font-size: 0.7rem;
+        font-size: 0.65rem;
         font-weight: 600;
         color: white;
         background: $primary-color;
         border-radius: 50%;
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1715,59 +2074,221 @@ $neutral-900: #111827;
   }
 }
 
-// Responsive para timeline
-@media (max-width: 768px) {
-  .timeline-container {
-    padding: 1rem;
+.fiesta-badge {
+  background: rgba($success-color, 0.1);
+  color: $success-color;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+// Celdas clickeables
+.clickeable-celda {
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: rgba($primary-color, 0.08) !important;
+    transform: scale(1.02);
+    box-shadow: 0 2px 8px rgba($primary-color, 0.15);
   }
 
-  .timeline-header {
-    .d-flex {
-      flex-direction: column;
-      gap: 1rem;
-      align-items: stretch !important;
+  &:active {
+    transform: scale(0.98);
+  }
+
+  .sin-turno {
+    color: $primary-color;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+
+    &:hover {
+      opacity: 1;
+    }
+  }
+}
+
+// Estilos del botón selector de tienda principal
+.btn-tienda-selector-main {
+  border: 2px solid $primary-color;
+  color: $primary-color;
+  background-color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+
+  &:hover:not(:disabled) {
+    background-color: rgba($primary-color, 0.05);
+    border-color: darken($primary-color, 8%);
+    color: darken($primary-color, 8%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba($primary-color, 0.2);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba($primary-color, 0.15);
+    border-color: $primary-color;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// Estilos del modal de selección de tienda
+.modal-seleccion-tienda-overlay {
+  z-index: 2060;
+}
+
+.modal-seleccion-tienda {
+  max-width: 500px;
+  border-radius: 12px;
+
+  .modal-header {
+    background: linear-gradient(90deg, $primary-color 0%, $secondary-color 100%);
+    color: white;
+    border-bottom: none;
+    padding: 1.25rem 1.5rem;
+    border-radius: 12px 12px 0 0;
+
+    .modal-title {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin: 0;
+    }
+
+    .btn-close {
+      filter: brightness(0) invert(1);
+      opacity: 0.8;
+
+      &:hover {
+        opacity: 1;
+      }
     }
   }
 
-  .day-navigation {
-    .current-day-display {
-      min-width: 100%;
-      justify-content: center;
-    }
-  }
+  .search-container {
+    background: #f8f9fa;
 
-  .horizontal-timeline {
-    padding: 1rem;
+    .search-wrapper {
+      position: relative;
 
-    .coverage-bars {
-      height: 120px; // Reducir altura en móviles
+      .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: $neutral-400;
+        z-index: 1;
+      }
 
-      .hour-bar {
-        .coverage-bar-horizontal {
-          height: 100px;
-        }
+      .form-control {
+        padding-left: 2.5rem;
+        border: 2px solid $neutral-200;
+        border-radius: 8px;
+        transition: all 0.3s ease;
 
-        .worker-count {
-          top: -20px;
-          width: 16px;
-          height: 16px;
-          font-size: 0.6rem;
+        &:focus {
+          border-color: $primary-color;
+          box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
         }
       }
     }
+  }
 
-    .hour-labels .hour-label {
-      font-size: 0.6rem;
+  .tiendas-list {
+    max-height: 400px;
+    overflow-y: auto;
 
-      &.half-hour {
-        font-size: 0.5rem;
+    // Scrollbar personalizado para la lista
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: $neutral-100;
+      border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: $neutral-300;
+      border-radius: 4px;
+
+      &:hover {
+        background: $neutral-400;
+      }
+    }
+
+    // Para Firefox
+    scrollbar-width: thin;
+    scrollbar-color: $neutral-300 $neutral-100;
+
+    .tienda-item {
+      padding: 1rem 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid $neutral-100;
+
+      &:hover {
+        background-color: rgba($primary-color, 0.05);
+      }
+
+      &.selected {
+        background-color: rgba($primary-color, 0.1);
+        border-left: 3px solid $primary-color;
+      }
+
+      .tienda-item-content {
+        display: flex;
+        align-items: center;
+        flex: 1;
+
+        .tienda-nombre {
+          font-size: 0.95rem;
+          color: #2d3748;
+          font-weight: 500;
+        }
+
+        i {
+          color: $primary-color;
+        }
+      }
+
+      i.fa-check-circle {
+        font-size: 1.2rem;
       }
     }
   }
+}
 
-  .timeline-legend .legend-items {
-    gap: 1rem;
-    justify-content: center;
-  }
+// Transiciones del modal
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.15s linear;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+.backdrop-fade-enter-active,
+.backdrop-fade-leave-active {
+  transition: opacity 0.15s linear;
+}
+
+.backdrop-fade-enter-from,
+.backdrop-fade-leave-to {
+  opacity: 0;
 }
 </style>

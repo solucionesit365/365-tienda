@@ -139,3 +139,30 @@ export function estaDiaEnPeriodoAusencia(
     return fecha >= inicioAusencia && fecha <= finAusencia
   })
 }
+
+/**
+ * Verifica si un trabajador es en realidad una tablet de tienda (T### o M###)
+ * @param nombre - Nombre del trabajador
+ * @returns true si el nombre coincide con el patrón T### o M### (donde # son dígitos)
+ */
+export function esTrabajadorTablet(nombre: string): boolean {
+  if (!nombre || typeof nombre !== 'string') return false
+
+  // Convertir a mayúsculas y eliminar espacios al inicio
+  const nombreUpper = nombre.trim().toUpperCase()
+
+  // Regex: Comienza con T o M, seguido de exactamente 3 dígitos
+  // Después de los 3 dígitos debe haber un no-dígito o fin de cadena
+  const regex = /^[TM]\d{3}(?!\d)/
+
+  return regex.test(nombreUpper)
+}
+
+/**
+ * Filtra trabajadores excluyendo tablets de tienda (T### o M###)
+ */
+export function filtrarTrabajadoresSinTablets<T extends { nombre: string }>(
+  trabajadores: T[]
+): T[] {
+  return trabajadores.filter((trabajador) => !esTrabajadorTablet(trabajador.nombre))
+}

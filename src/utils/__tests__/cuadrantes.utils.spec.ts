@@ -13,6 +13,8 @@ import {
   getHourTooltip,
   formatearDiferenciaHoras,
   estaDiaEnPeriodoAusencia,
+  esTrabajadorTablet,
+  filtrarTrabajadoresSinTablets,
 } from '../cuadrantes.utils'
 
 describe('cuadrantes.utils', () => {
@@ -407,6 +409,170 @@ describe('cuadrantes.utils', () => {
         },
       ]
       expect(estaDiaEnPeriodoAusencia(hoy, ausencias)).toBe(true)
+    })
+  })
+
+  describe('esTrabajadorTablet', () => {
+    it('debe retornar true para T seguido de 3 dígitos (mayúscula)', () => {
+      expect(esTrabajadorTablet('T200')).toBe(true)
+      expect(esTrabajadorTablet('T123')).toBe(true)
+      expect(esTrabajadorTablet('T999')).toBe(true)
+    })
+
+    it('debe retornar true para t seguido de 3 dígitos (minúscula)', () => {
+      expect(esTrabajadorTablet('t200')).toBe(true)
+      expect(esTrabajadorTablet('t123')).toBe(true)
+      expect(esTrabajadorTablet('t456')).toBe(true)
+    })
+
+    it('debe retornar true para M seguido de 3 dígitos (mayúscula)', () => {
+      expect(esTrabajadorTablet('M200')).toBe(true)
+      expect(esTrabajadorTablet('M123')).toBe(true)
+      expect(esTrabajadorTablet('M999')).toBe(true)
+    })
+
+    it('debe retornar true para m seguido de 3 dígitos (minúscula)', () => {
+      expect(esTrabajadorTablet('m200')).toBe(true)
+      expect(esTrabajadorTablet('m123')).toBe(true)
+      expect(esTrabajadorTablet('m456')).toBe(true)
+    })
+
+    it('debe retornar true para nombres con el patrón seguido de más texto', () => {
+      expect(esTrabajadorTablet('T200 Tienda Principal')).toBe(true)
+      expect(esTrabajadorTablet('M123 - Sucursal')).toBe(true)
+    })
+
+    it('debe ignorar espacios al inicio', () => {
+      expect(esTrabajadorTablet('  T200')).toBe(true)
+      expect(esTrabajadorTablet('   M123')).toBe(true)
+    })
+
+    it('debe retornar false para nombres normales', () => {
+      expect(esTrabajadorTablet('Juan')).toBe(false)
+      expect(esTrabajadorTablet('María García')).toBe(false)
+      expect(esTrabajadorTablet('Pedro López')).toBe(false)
+    })
+
+    it('debe retornar false para T/M con menos de 3 dígitos', () => {
+      expect(esTrabajadorTablet('T20')).toBe(false)
+      expect(esTrabajadorTablet('T2')).toBe(false)
+      expect(esTrabajadorTablet('M1')).toBe(false)
+      expect(esTrabajadorTablet('M12')).toBe(false)
+    })
+
+    it('debe retornar false para T/M con más de 3 dígitos', () => {
+      expect(esTrabajadorTablet('T2000')).toBe(false)
+      expect(esTrabajadorTablet('M12345')).toBe(false)
+    })
+
+    it('debe retornar false para otras letras seguidas de números', () => {
+      expect(esTrabajadorTablet('A200')).toBe(false)
+      expect(esTrabajadorTablet('B123')).toBe(false)
+      expect(esTrabajadorTablet('X999')).toBe(false)
+    })
+
+    it('debe retornar false para números seguidos de T/M', () => {
+      expect(esTrabajadorTablet('200T')).toBe(false)
+      expect(esTrabajadorTablet('123M')).toBe(false)
+    })
+
+    it('debe retornar false para solo números', () => {
+      expect(esTrabajadorTablet('123')).toBe(false)
+      expect(esTrabajadorTablet('200')).toBe(false)
+    })
+
+    it('debe retornar false para string vacío', () => {
+      expect(esTrabajadorTablet('')).toBe(false)
+    })
+
+    it('debe retornar false para null o undefined', () => {
+      expect(esTrabajadorTablet(null as any)).toBe(false)
+      expect(esTrabajadorTablet(undefined as any)).toBe(false)
+    })
+
+    it('debe manejar correctamente mayúsculas/minúsculas mezcladas', () => {
+      expect(esTrabajadorTablet('t200')).toBe(true)
+      expect(esTrabajadorTablet('T200')).toBe(true)
+      expect(esTrabajadorTablet('m123')).toBe(true)
+      expect(esTrabajadorTablet('M123')).toBe(true)
+    })
+  })
+
+  describe('filtrarTrabajadoresSinTablets', () => {
+    const trabajadores = [
+      { id: 1, nombre: 'T200', apellidos: 'Tienda' },
+      { id: 2, nombre: 'Juan', apellidos: 'Pérez' },
+      { id: 3, nombre: 'M123', apellidos: 'Tienda' },
+      { id: 4, nombre: 'María', apellidos: 'García' },
+      { id: 5, nombre: 't456', apellidos: 'Tienda' },
+      { id: 6, nombre: 'Pedro', apellidos: 'López' },
+    ]
+
+    it('debe filtrar trabajadores que son tablets', () => {
+      const resultado = filtrarTrabajadoresSinTablets(trabajadores)
+      expect(resultado).toHaveLength(3)
+      expect(resultado.map(t => t.nombre)).toEqual(['Juan', 'María', 'Pedro'])
+    })
+
+    it('debe retornar todos los trabajadores si no hay tablets', () => {
+      const trabajadoresNormales = [
+        { id: 1, nombre: 'Juan', apellidos: 'Pérez' },
+        { id: 2, nombre: 'María', apellidos: 'García' },
+      ]
+      const resultado = filtrarTrabajadoresSinTablets(trabajadoresNormales)
+      expect(resultado).toHaveLength(2)
+    })
+
+    it('debe retornar array vacío si todos son tablets', () => {
+      const soloTablets = [
+        { id: 1, nombre: 'T200', apellidos: 'Tienda' },
+        { id: 2, nombre: 'M123', apellidos: 'Tienda' },
+      ]
+      const resultado = filtrarTrabajadoresSinTablets(soloTablets)
+      expect(resultado).toHaveLength(0)
+    })
+
+    it('debe retornar array vacío si el array de entrada está vacío', () => {
+      const resultado = filtrarTrabajadoresSinTablets([])
+      expect(resultado).toHaveLength(0)
+    })
+
+    it('debe filtrar correctamente con nombres en minúsculas', () => {
+      const trabajadoresMinusculas = [
+        { id: 1, nombre: 't200', apellidos: 'Tienda' },
+        { id: 2, nombre: 'm123', apellidos: 'Tienda' },
+        { id: 3, nombre: 'Ana', apellidos: 'López' },
+      ]
+      const resultado = filtrarTrabajadoresSinTablets(trabajadoresMinusculas)
+      expect(resultado).toHaveLength(1)
+      expect(resultado[0].nombre).toBe('Ana')
+    })
+
+    it('debe mantener el orden de los trabajadores que no son tablets', () => {
+      const resultado = filtrarTrabajadoresSinTablets(trabajadores)
+      expect(resultado[0].nombre).toBe('Juan')
+      expect(resultado[1].nombre).toBe('María')
+      expect(resultado[2].nombre).toBe('Pedro')
+    })
+
+    it('debe funcionar con objetos que tienen más propiedades', () => {
+      const trabajadoresExtendidos = [
+        { id: 1, nombre: 'T200', apellidos: 'Tienda', email: 't200@test.com' },
+        { id: 2, nombre: 'Juan', apellidos: 'Pérez', email: 'juan@test.com' },
+      ]
+      const resultado = filtrarTrabajadoresSinTablets(trabajadoresExtendidos)
+      expect(resultado).toHaveLength(1)
+      expect(resultado[0].email).toBe('juan@test.com')
+    })
+
+    it('debe filtrar tablets con espacios al inicio del nombre', () => {
+      const trabajadoresEspacios = [
+        { id: 1, nombre: '  T200', apellidos: 'Tienda' },
+        { id: 2, nombre: 'Juan', apellidos: 'Pérez' },
+      ]
+      const resultado = filtrarTrabajadoresSinTablets(trabajadoresEspacios)
+      expect(resultado).toHaveLength(1)
+      expect(resultado[0].nombre).toBe('Juan')
     })
   })
 })

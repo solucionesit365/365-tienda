@@ -511,6 +511,7 @@ import ModalEditarTurnoIndividual from "@/components/ModalEditarTurnoIndividual.
 import PlantillasTurnoModal from "@/components/ModalPlantillasTurno.vue";
 import { estructurarTurnosConTrabajador } from "@/components/auxCuadrantes";
 import { Turno } from "@/components/kernel/Turno";
+import { filtrarTrabajadoresSinTablets } from "@/utils/cuadrantes.utils";
 
 const userStore = useUserStore();
 const tiendaStore = useTiendaStore();
@@ -698,8 +699,8 @@ async function reloadCuadrante() {
         esDelEquipo: false, // Marcar como externo
       }));
 
-    // Combinar ambos arrays
-    arrayTurnos.value = [...trabajadoresEquipo, ...trabajadoresExternos];
+    // Combinar ambos arrays y filtrar tablets de tienda
+    arrayTurnos.value = filtrarTrabajadoresSinTablets([...trabajadoresEquipo, ...trabajadoresExternos]);
 
     // Ordenar para que el usuario actual aparezca primero
     ordenarCuadrante(arrayTurnos.value);

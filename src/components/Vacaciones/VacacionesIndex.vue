@@ -431,10 +431,7 @@ async function getSolicitudesPendientes(year: number) {
   hayResultados.value = true;
   const uidGuardado = localStorage.getItem("uidCoordinadora");
   const uidParaConsultar = uidGuardado || userStore.getUid;
-  // const idsqlGuardado = localStorage.getItem("idSqlCoordinadora");
-  // const idSqlParaConsultar = Number(
-  //   idsqlGuardado || currentUser.value.idSql
-  // );
+
   try {
     const resSolicitudesEquipo = await axiosInstance.get(
       "solicitud-vacaciones/solicitudesSubordinados",

@@ -344,15 +344,13 @@ async function getSubordinados() {
   // Recuperar UID de Coordinadora desde localStorage si existe
   const uidGuardado = localStorage.getItem("uidCoordinadora");
   const uidParaConsultar = uidGuardado || currentUser.value.uid;
-  console.log("uidParaConsultar:", uidParaConsultar);
+
   try {
     const { data } = await axiosInstance.get("trabajadores/getSubordinados", {
       params: { uid: uidParaConsultar },
     });
-    console.log("Datos de subordinados:", data);
 
     if (!data.ok || !Array.isArray(data.data) || data.data.length === 0) {
-      console.log("Respuesta de subordinados:", data);
       throw new Error("No tienes personas a tu cargo");
     }
 
@@ -370,22 +368,67 @@ async function consultarFichajes() {
   await getFichajesValidados(semanaActual.value.weekNumber, añoActual.value.year);
 }
 
+// async function getFichajesValidados(semana: any, año: any) {
+//   datos.value = [];
+//   loading.value = true;
+
+//   if (arraySubordinados.value.length > 0) {
+//     try {
+//       for (const element of arraySubordinados.value) {
+//         console.log(element);
+
+//         const respValidados = await axiosInstance.get("/fichajes-validados/getFichajesValidados", {
+//           params: {
+//             idTrabajador: element.id,
+//           },
+//         });
+
+//         if (respValidados.data.ok) {
+//           const datosFiltrados = respValidados.data.data.filter((validado: any) => {
+//             // Filtrar por semana y año
+//             const fechaFichaje = new Date(validado.fichajeEntrada);
+//             return fechaFichaje.getUTCFullYear() === año && getWeekNumber(fechaFichaje) === semana;
+//           });
+
+//           datosFiltrados.forEach((validado: any) => {
+//             datos.value.push(validado);
+//           });
+//         }
+//       }
+
+//       // Ordeno de manera descendente
+//       datos.value.sort((a, b) => {
+//         const fechaA: any = new Date(a.fichajeEntrada);
+//         const fechaB: any = new Date(b.fichajeEntrada);
+//         return fechaB - fechaA;
+//       });
+
+//       loading.value = false;
+//     } catch (error) {
+//       console.log(error);
+//     }
+//   } else {
+//     Swal.fire("Oops...", "No tienes subordinados a cargo", "error");
+//   }
+// }
+
 async function getFichajesValidados(semana: any, año: any) {
   datos.value = [];
   loading.value = true;
 
   if (arraySubordinados.value.length > 0) {
     try {
-      for (const element of arraySubordinados.value) {
-        console.log(element);
+      // Crear un array de promesas para todas las peticiones
+      const promesas = arraySubordinados.value.map((element) =>
+        axiosInstance.get("/fichajes-validados/getFichajesValidados", {
+          params: { idTrabajador: element.id },
+        }),
+      );
 
-        const respValidados = await axiosInstance.get("/fichajes-validados/getFichajesValidados", {
-          params: {
-            idTrabajador: element.id,
-          },
-        });
-        console.log("Respuesta de fichajes:", respValidados.data);
+      // Esperar a que terminen
+      const respuestas = await Promise.all(promesas);
 
+      for (const respValidados of respuestas) {
         if (respValidados.data.ok) {
           const datosFiltrados = respValidados.data.data.filter((validado: any) => {
             // Filtrar por semana y año
@@ -393,23 +436,22 @@ async function getFichajesValidados(semana: any, año: any) {
             return fechaFichaje.getUTCFullYear() === año && getWeekNumber(fechaFichaje) === semana;
           });
 
-          console.log("Datos filtrados para la semana y año:", datosFiltrados);
           datosFiltrados.forEach((validado: any) => {
             datos.value.push(validado);
           });
         }
       }
 
-      // Ordeno de manera descendente
+      // 🔹 Ordenar
       datos.value.sort((a, b) => {
         const fechaA: any = new Date(a.fichajeEntrada);
         const fechaB: any = new Date(b.fichajeEntrada);
         return fechaB - fechaA;
       });
-
-      loading.value = false;
     } catch (error) {
-      console.log(error);
+      console.error("Error al cargar fichajes:", error);
+    } finally {
+      loading.value = false;
     }
   } else {
     Swal.fire("Oops...", "No tienes subordinados a cargo", "error");

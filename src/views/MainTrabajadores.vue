@@ -572,6 +572,8 @@ async function validarCodigoEmpleado() {
 
         localStorage.setItem("uidCoordinadora", usuario.uid ?? "");
         localStorage.setItem("idSqlCoordinadora", String(usuario.idSql ?? ""));
+        localStorage.setItem("uidCoordinadora2", usuario.uid2 ?? "");
+        localStorage.setItem("idSqlCoordinadora2", String(usuario.idSql2 ?? ""));
       } else {
         console.warn("⚠️ No se encontró detalle de la coordinadora validada.");
       }

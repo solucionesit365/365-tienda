@@ -522,13 +522,6 @@ async function getSubordinados() {
       throw new Error("No tienes personas a tu cargo");
     }
 
-    // const promesasDNI = lista.map(async (subordinado) => {
-    //   subordinado.antiguedadDias = calcularAntiguedad(subordinado.contratos[0]?.fechaAntiguedad);
-    //   subordinado.nPerceptor = subordinado.nPerceptor;
-    //   // subordinado.dni = await obtenerDniPorIdTrabajador(subordinado.id);
-    //   return subordinado;
-    // });
-
     arraySubordinados.value = lista.map((sub) => ({
       ...sub,
       antiguedadDias: calcularAntiguedad(sub.contratos[0]?.fechaAntiguedad),

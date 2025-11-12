@@ -553,122 +553,87 @@ const modoEdicionActivo = ref(false);
 const restarSemana = () => (selectedDate.value = selectedDate.value.minus({ weeks: 1 }));
 const sumarSemana = () => (selectedDate.value = selectedDate.value.plus({ weeks: 1 }));
 
-// async function reloadCuadrante() {
-//   try {
-//     if (!selectedTienda.value?.id) {
-//       Swal.fire({
-//         icon: "warning",
-//         title: "Selecciona una tienda",
-//         text: "Debes seleccionar una tienda para ver los cuadrantes.",
-//       });
-//       return;
-//     }
+async function toggleModoEdicion() {
+  if (modoEdicionActivo.value) {
+    // El usuario quiere activar la edición, validar PIN
+    const pinValido = await validarPINCoordinadora();
+    if (!pinValido) {
+      // Si el PIN no es válido, desactivar el switch
+      modoEdicionActivo.value = false;
+    }
+  }
+  // Si se desactiva, no hace falta validar nada
+}
 
-//     loadingCuadrantes.value = true;
+async function validarPINCoordinadora(): Promise<boolean> {
+  if (!selectedTienda.value) {
+    Swal.fire({
+      icon: "warning",
+      title: "Selecciona una tienda",
+      text: "Debes seleccionar una tienda primero.",
+    });
+    return false;
+  }
 
-//     // Primero obtener el equipo de la tienda
-//     const resEquipo = await axiosInstance.get("get-equipo-coordinadora-por-tienda", {
-//       params: { idTienda: selectedTienda.value.id },
-//     });
+  const { value: pin } = await Swal.fire({
+    title: "Verificación de PIN",
+    text: "Introduce tu PIN de coordinadora:",
+    input: "number",
+    inputPlaceholder: "Introduce el PIN de 4 dígitos",
+    inputAttributes: {
+      maxlength: "4",
+      autocapitalize: "off",
+      autocorrect: "off",
+    },
+    showCancelButton: true,
+    confirmButtonText: "Verificar",
+    cancelButtonText: "Cancelar",
+    confirmButtonColor: "#3085d6",
+    cancelButtonColor: "#d33",
+    inputValidator: (value) => {
+      if (!value) {
+        return "Debes introducir un PIN";
+      }
+      if (!/^\d{4}$/.test(value)) {
+        return "El PIN debe tener exactamente 4 dígitos";
+      }
+      return null;
+    },
+  });
 
-//     // Luego obtener los turnos usando el método de Turno
-//     const turnosEquipo = await Turno.getTurnosEquipoCoordinadoraDeLaTienda(
-//       selectedTienda.value.id,
-//       selectedDate.value,
-//     );
+  if (!pin) return false;
 
-//     // Si no hay turnos, continuar con array vacío
-//     if (!turnosEquipo || turnosEquipo.length === 0) {
-//       console.log("No se encontraron turnos para esta tienda y fecha");
-//     }
+  try {
+    const response = await axiosInstance.post("check-pin-coordinadora", {
+      idTienda: selectedTienda.value.id,
+      pin: parseInt(pin),
+    });
 
-//     // Estructurar los turnos usando la nueva función que maneja información del trabajador
-//     const turnosEstructurados = estructurarTurnosConTrabajador(
-//       turnosEquipo,
-//       selectedDate.value.startOf("week"),
-//     );
+    if (response.data === true) {
+      return true;
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "PIN incorrecto",
+        text: "El PIN introducido no es válido. Inténtalo de nuevo.",
+        confirmButtonText: "Entendido",
+      });
+      return false;
+    }
+  } catch (error: any) {
+    console.error("Error al verificar PIN:", error);
+    Swal.fire({
+      icon: "error",
+      title: "Error de verificación",
+      text:
+        error.response?.data?.message ||
+        "Ha ocurrido un error al verificar el PIN. Inténtalo de nuevo.",
+      confirmButtonText: "Entendido",
+    });
+    return false;
+  }
+}
 
-//     // Crear un mapa de turnos por trabajador ID
-//     const turnosPorTrabajador = new Map();
-//     turnosEstructurados.forEach((turno) => {
-//       turnosPorTrabajador.set(turno.idTrabajador, turno);
-//     });
-
-//     // Crear un conjunto de IDs de trabajadores del equipo
-//     const trabajadoresDelEquipo = new Set(resEquipo.data.map((emp: any) => emp.id));
-
-//     // Crear array con todos los empleados del equipo
-//     const trabajadoresEquipo = resEquipo.data.map((empleado: any) => {
-//       const turnosEmpleado = turnosPorTrabajador.get(empleado.id);
-
-//       if (turnosEmpleado) {
-//         return {
-//           ...turnosEmpleado,
-//           esDelEquipo: true, // Marcar como del equipo
-//         };
-//       } else {
-//         // Si no tiene turnos, crear estructura vacía
-//         return {
-//           idTrabajador: empleado.id,
-//           nombre: empleado.nombreApellidos,
-//           esDelEquipo: true, // Marcar como del equipo
-//           turnos: Array(7)
-//             .fill(null)
-//             .map(() => []),
-//         };
-//       }
-//     });
-
-//     // Agregar trabajadores externos que tienen turnos pero no están en el equipo
-//     const trabajadoresExternos = turnosEstructurados
-//       .filter((turno) => !trabajadoresDelEquipo.has(turno.idTrabajador))
-//       .map((turno) => ({
-//         ...turno,
-//         esDelEquipo: false, // Marcar como externo
-//       }));
-
-//     // Combinar ambos arrays
-//     arrayTurnos.value = [...trabajadoresEquipo, ...trabajadoresExternos];
-
-//     // Ordenar para que el usuario actual aparezca primero
-//     ordenarCuadrante(arrayTurnos.value);
-
-//     // Calcular datos de cobertura para timeline
-//     calculateCoverageData();
-
-//     return turnosEquipo;
-//   } catch (error) {
-//     if (
-//       typeof error === "object" &&
-//       error !== null &&
-//       "response" in error &&
-//       typeof (error as any).response === "object" &&
-//       (error as any).response !== null &&
-//       "data" in (error as any).response &&
-//       typeof (error as any).response.data === "object" &&
-//       (error as any).response.data !== null &&
-//       "code" in (error as any).response.data &&
-//       (error as any).response.data.code == "SIN_COORDINADORA"
-//     ) {
-//       Swal.fire({
-//         icon: "warning",
-//         title: "Sin coordinadora asignada",
-//         text: "No hay coordinadora asignada a esta tienda.",
-//       });
-//       return;
-//     }
-
-//     console.error("Error al recargar el cuadrante:", error);
-
-//     Swal.fire({
-//       icon: "error",
-//       title: "Error al recargar el cuadrante",
-//       text: "Por favor, inténtalo de nuevo más tarde.",
-//     });
-//   } finally {
-//     loadingCuadrantes.value = false;
-//   }
-// }
 async function reloadCuadrante() {
   try {
     if (!selectedTienda.value?.id) {
@@ -824,7 +789,6 @@ async function reloadCuadrante() {
     loadingCuadrantes.value = false;
   }
 }
-
 function handleVista() {
   if (hasRole("Tienda") || userStore.user.idSql == 3608) {
     const tienda = tiendas.value.find((t) => t.id === userStore.user.idTienda);

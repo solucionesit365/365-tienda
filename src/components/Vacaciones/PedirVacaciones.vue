@@ -341,7 +341,7 @@ async function finalizarPeticion() {
       enviado: false,
       year: parseInt(year.value),
       idAppResponsable: uidParaConsultar,
-      idAppResponsbaleB: uidParaConsultar2,
+      idAppResponsableB: uidParaConsultar2,
     });
 
     if (resVacaciones.data.ok) {

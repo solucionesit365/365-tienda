@@ -29,5 +29,9 @@
     "titleBar.inactiveBackground": "#9b34eb99",
     "titleBar.inactiveForeground": "#e7e7e799"
   },
-  "peacock.color": "#9b34eb"
+  "peacock.color": "#9b34eb",
+  "sonarlint.connectedMode.project": {
+    "connectionId": "solucionesit365-1",
+    "projectKey": "solucionesit365_365-tienda"
+  }
 }

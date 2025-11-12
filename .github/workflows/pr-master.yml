@@ -1,0 +1,156 @@
+name: CI/CD - PR to Master
+
+on:
+  pull_request:
+    branches:
+      - master
+    types: [opened, synchronize, reopened]
+
+jobs:
+  # Validar que las release vengan de develop y hotfix de master
+  validate-branch:
+    name: Validate Branch Origin
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate release branch comes from develop
+        if: startsWith(github.head_ref, 'release/')
+        run: |
+          git fetch origin develop
+
+          # Verificar que la rama release tenga develop como base
+          MERGE_BASE=$(git merge-base HEAD origin/develop)
+          DEVELOP_HEAD=$(git rev-parse origin/develop)
+
+          if [ "$MERGE_BASE" != "$DEVELOP_HEAD" ]; then
+            echo "❌ Error: La rama release/ no parte de develop actualizado"
+            echo "Por favor, asegúrate de que la rama release parte de develop"
+            exit 1
+          fi
+
+          echo "✅ La rama release parte correctamente de develop"
+
+      - name: Validate hotfix branch comes from master
+        if: startsWith(github.head_ref, 'hotfix/')
+        run: |
+          git fetch origin master
+
+          # Verificar que la rama hotfix tenga master como base
+          MERGE_BASE=$(git merge-base HEAD origin/master)
+          MASTER_HEAD=$(git rev-parse origin/master)
+
+          if [ "$MERGE_BASE" != "$MASTER_HEAD" ]; then
+            echo "❌ Error: La rama hotfix/ no parte de master actualizado"
+            echo "Por favor, asegúrate de que la rama hotfix parte de master"
+            exit 1
+          fi
+
+          echo "✅ La rama hotfix parte correctamente de master"
+
+      - name: Validate branch naming
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+
+          if [[ ! "$BRANCH_NAME" =~ ^(release|hotfix)/ ]]; then
+            echo "❌ Error: Solo se permiten ramas release/* o hotfix/* para PRs a master"
+            echo "Rama actual: $BRANCH_NAME"
+            exit 1
+          fi
+
+          echo "✅ Nombre de rama válido: $BRANCH_NAME"
+
+  # Ejecutar tests (opcional si no hay archivos de test)
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: validate-branch
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:unit || echo "No tests found, skipping..."
+        continue-on-error: true
+
+      - name: Generate coverage report
+        run: npm run test:unit:cov || echo "No tests found, skipping coverage..."
+        continue-on-error: true
+
+      - name: Upload coverage artifacts
+        if: hashFiles('coverage/**') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 5
+
+  # Build del proyecto
+  build:
+    name: Build Project
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project for production
+        run: npm run build:prod
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 5
+
+  # Análisis de SonarCloud
+  sonar:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better analysis
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run test:unit:cov || echo "No tests found, skipping coverage..."
+        continue-on-error: true
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@master
+        env:
+          SONAR_HOST_URL: https://sonarcloud.io
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

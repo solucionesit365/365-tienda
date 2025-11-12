@@ -652,6 +652,17 @@ async function reloadCuadrante() {
       params: { idTienda: selectedTienda.value.id },
     });
 
+    // Verificar si la respuesta tiene la estructura esperada
+    if (!resEquipo.data || !resEquipo.data.subordinados || !resEquipo.data.coordinadoras) {
+      console.error("Respuesta inesperada de la API:", resEquipo);
+      Swal.fire({
+        icon: "error",
+        title: "Error al cargar equipo",
+        text: "No se pudo obtener la información del equipo.",
+      });
+      return;
+    }
+
     // Luego obtener los turnos usando el método de Turno
     const turnosEquipo = await Turno.getTurnosEquipoCoordinadoraDeLaTienda(
       selectedTienda.value.id,
@@ -675,30 +686,55 @@ async function reloadCuadrante() {
       turnosPorTrabajador.set(turno.idTrabajador, turno);
     });
 
-    // Crear un conjunto de IDs de trabajadores del equipo
-    const trabajadoresDelEquipo = new Set(resEquipo.data.map((emp: any) => emp.id));
+    // Crear un conjunto de IDs de trabajadores del equipo (subordinados + coordinadoras)
+    const trabajadoresDelEquipo = new Set([
+      ...resEquipo.data.subordinados.map((emp: any) => emp.id),
+      ...resEquipo.data.coordinadoras.map((coordinadora: any) => coordinadora.id),
+    ]);
 
-    // Crear array con todos los empleados del equipo
-    const trabajadoresEquipo = resEquipo.data.map((empleado: any) => {
-      const turnosEmpleado = turnosPorTrabajador.get(empleado.id);
+    // Crear array con todos los empleados del equipo (subordinados + coordinadoras)
+    const trabajadoresEquipo = [
+      ...resEquipo.data.subordinados.map((empleado: any) => {
+        const turnosEmpleado = turnosPorTrabajador.get(empleado.id);
 
-      if (turnosEmpleado) {
-        return {
-          ...turnosEmpleado,
-          esDelEquipo: true, // Marcar como del equipo
-        };
-      } else {
-        // Si no tiene turnos, crear estructura vacía
-        return {
-          idTrabajador: empleado.id,
-          nombre: empleado.nombreApellidos,
-          esDelEquipo: true, // Marcar como del equipo
-          turnos: Array(7)
-            .fill(null)
-            .map(() => []),
-        };
-      }
-    });
+        if (turnosEmpleado) {
+          return {
+            ...turnosEmpleado,
+            esDelEquipo: true, // Marcar como del equipo
+          };
+        } else {
+          // Si no tiene turnos, crear estructura vacía
+          return {
+            idTrabajador: empleado.id,
+            nombre: empleado.nombreApellidos,
+            esDelEquipo: true, // Marcar como del equipo
+            turnos: Array(7)
+              .fill(null)
+              .map(() => []),
+          };
+        }
+      }),
+      ...resEquipo.data.coordinadoras.map((coordinadora: any) => {
+        const turnosEmpleado = turnosPorTrabajador.get(coordinadora.id);
+
+        if (turnosEmpleado) {
+          return {
+            ...turnosEmpleado,
+            esDelEquipo: true, // Marcar como del equipo
+          };
+        } else {
+          // Si no tiene turnos, crear estructura vacía
+          return {
+            idTrabajador: coordinadora.id,
+            nombre: coordinadora.nombreApellidos,
+            esDelEquipo: true, // Marcar como del equipo
+            turnos: Array(7)
+              .fill(null)
+              .map(() => []),
+          };
+        }
+      }),
+    ];
 
     // Agregar trabajadores externos que tienen turnos pero no están en el equipo
     const trabajadoresExternos = turnosEstructurados
@@ -753,7 +789,6 @@ async function reloadCuadrante() {
     loadingCuadrantes.value = false;
   }
 }
-
 function handleVista() {
   if (hasRole("Tienda") || userStore.user.idSql == 3608) {
     const tienda = tiendas.value.find((t) => t.id === userStore.user.idTienda);

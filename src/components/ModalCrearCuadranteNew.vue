@@ -753,6 +753,62 @@ async function getPlantillasTurno(idTienda: number) {
 }
 
 // Necesitamos cargar la lista del equipo en el select
+// async function getEquipoCoordinadoraDeLaTienda() {
+//   try {
+//     equipoCoordinadora.value = [];
+
+//     if (!props.selectedTienda || !props.selectedTienda.id) throw new Error();
+
+//     const resEquipo = await axiosInstance.get("get-equipo-coordinadora-por-tienda", {
+//       params: { idTienda: props.selectedTienda.id },
+//     });
+
+//     equipoCoordinadora.value = resEquipo.data.map((trabajador: TTrabajador) => ({
+//       dni: trabajador.dni!,
+//       emails: trabajador.emails!,
+//       excedencia: trabajador.excedencia,
+//       id: trabajador.id,
+//       llevaEquipo: trabajador.llevaEquipo,
+//       nombreApellidos: trabajador.nombreApellidos,
+//       tipoTrabajador: trabajador.tipoTrabajador,
+//     }));
+
+//     if (
+//       currentUser.value.llevaEquipo &&
+//       currentUser.value.idTienda &&
+//       !equipoCoordinadora.value.some((t) => t.id === currentUser.value.idSql)
+//     ) {
+//       if (currentUser.value.displayName && currentUser.value.idSql)
+//         equipoCoordinadora.value.push({
+//           dni: currentUser.value.dni!,
+//           emails: currentUser.value.email!,
+//           excedencia: false,
+//           id: currentUser.value.idSql,
+//           llevaEquipo: currentUser.value.llevaEquipo,
+//           nombreApellidos: currentUser.value.displayName!,
+//           tipoTrabajador: "COORDINADORA",
+//         });
+//     }
+//   } catch (e) {
+//     const error = e as AxiosError;
+
+//     if (
+//       error.response?.data &&
+//       typeof error.response.data === "object" &&
+//       "code" in error.response.data
+//     ) {
+//       if (error.response.data.code == "SIN_COORDINADORA") {
+//         Swal.fire("Oops...", "La tienda no tiene coordinadora", "error").then(() => {
+//           modalCrearCuadrante.value = false;
+//         });
+//       } else {
+//         Swal.fire("Oops...", "Ha habido un error", "error");
+//         console.log(e);
+//       }
+//     }
+//   }
+// }
+
 async function getEquipoCoordinadoraDeLaTienda() {
   try {
     equipoCoordinadora.value = [];
@@ -763,7 +819,8 @@ async function getEquipoCoordinadoraDeLaTienda() {
       params: { idTienda: props.selectedTienda.id },
     });
 
-    equipoCoordinadora.value = resEquipo.data.map((trabajador: TTrabajador) => ({
+    // Primero agregar los subordinados
+    equipoCoordinadora.value = resEquipo.data.subordinados.map((trabajador: TTrabajador) => ({
       dni: trabajador.dni!,
       emails: trabajador.emails!,
       excedencia: trabajador.excedencia,
@@ -773,6 +830,25 @@ async function getEquipoCoordinadoraDeLaTienda() {
       tipoTrabajador: trabajador.tipoTrabajador,
     }));
 
+    // Luego agregar la coordinadora principal y las adicionales, asegurando que no se repitan
+    const coordinadoras = resEquipo.data.coordinadoras.map((coordinadora: TTrabajador) => ({
+      dni: coordinadora.dni!,
+      emails: coordinadora.emails!,
+      excedencia: coordinadora.excedencia,
+      id: coordinadora.id,
+      llevaEquipo: coordinadora.llevaEquipo,
+      nombreApellidos: coordinadora.nombreApellidos,
+      tipoTrabajador: "COORDINADORA", // Marcamos a los coordinadores como "COORDINADORA"
+    }));
+
+    // Evitar duplicados: si la coordinadora principal ya está en los subordinados, no la agregamos
+    coordinadoras.forEach((coordinadora: any) => {
+      if (!equipoCoordinadora.value.some((trabajador) => trabajador.id === coordinadora.id)) {
+        equipoCoordinadora.value.push(coordinadora);
+      }
+    });
+
+    // Si el usuario actual es coordinador y no está en la lista, agregarlo
     if (
       currentUser.value.llevaEquipo &&
       currentUser.value.idTienda &&

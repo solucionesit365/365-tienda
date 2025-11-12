@@ -474,8 +474,39 @@ function mostrarBotonAprendiz() {
   );
 }
 
+// async function getSubordinados() {
+//   arraySubordinados.value = [];
+//   // Recuperar UID de Coordinadora desde localStorage si existe
+//   const uidGuardado = localStorage.getItem("uidCoordinadora");
+//   const uidParaConsultar = uidGuardado || currentUser.uid;
+
+//   try {
+//     const subordinados = await axiosInstance.get("trabajadores/getSubordinados", {
+//       params: { uid: uidParaConsultar },
+//     });
+
+//     console.log(subordinados);
+
+//     if (subordinados.data.ok) {
+//       const promesasDNI = subordinados.data.data.map(async (subordinado: any) => {
+//         subordinado.antiguedadDias = calcularAntiguedad(subordinado.contratos[0].fechaAntiguedad);
+//         subordinado.nPerceptor = subordinado.nPerceptor;
+
+//         // subordinado.dni = await obtenerDniPorIdTrabajador(subordinado.id);
+//         return subordinado;
+//       });
+
+//       arraySubordinados.value = await Promise.all(promesasDNI);
+//     } else throw new Error("No tienes personas a tu cargo");
+//   } catch (err) {
+//     console.log(err);
+//     Swal.fire("Oops...", "Ha habido un error", "error");
+//   }
+// }
+
 async function getSubordinados() {
   arraySubordinados.value = [];
+
   // Recuperar UID de Coordinadora desde localStorage si existe
   const uidGuardado = localStorage.getItem("uidCoordinadora");
   const uidParaConsultar = uidGuardado || currentUser.uid;
@@ -485,20 +516,20 @@ async function getSubordinados() {
       params: { uid: uidParaConsultar },
     });
 
-    if (subordinados.data.ok) {
-      const promesasDNI = subordinados.data.data.map(async (subordinado: any) => {
-        subordinado.antiguedadDias = calcularAntiguedad(subordinado.contratos[0].fechaAntiguedad);
-        subordinado.nPerceptor = subordinado.nPerceptor;
+    const lista = subordinados.data.data;
 
-        // subordinado.dni = await obtenerDniPorIdTrabajador(subordinado.id);
-        return subordinado;
-      });
+    if (!Array.isArray(lista) || lista.length === 0) {
+      throw new Error("No tienes personas a tu cargo");
+    }
 
-      arraySubordinados.value = await Promise.all(promesasDNI);
-    } else throw new Error("No tienes personas a tu cargo");
+    arraySubordinados.value = lista.map((sub) => ({
+      ...sub,
+      antiguedadDias: calcularAntiguedad(sub.contratos[0]?.fechaAntiguedad),
+    }));
+    console.log(arraySubordinados);
   } catch (err) {
-    console.log(err);
-    Swal.fire("Oops...", "Ha habido un error", "error");
+    console.error("Error al obtener subordinados:", err);
+    Swal.fire("Oops...", "Ha habido un error al cargar subordinados", "error");
   }
 }
 

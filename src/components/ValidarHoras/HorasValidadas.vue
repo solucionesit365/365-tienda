@@ -318,30 +318,99 @@ function parseFecha2(fecha: any) {
   }
 }
 
+// async function getSubordinados() {
+//   arraySubordinados.value = [];
+//   // Recuperar UID de Coordinadora desde localStorage si existe
+//   const uidGuardado = localStorage.getItem("uidCoordinadora");
+//   const uidParaConsultar = uidGuardado || currentUser.value.uid;
+//   try {
+//     const subordinados = await axiosInstance.get("trabajadores/getSubordinados", {
+//       params: {
+//         uid: uidParaConsultar,
+//       },
+//     });
+//     if (subordinados.data.ok) {
+//       arraySubordinados.value = subordinados.data.data;
+//     } else throw Error("No tienes personas a tu cargo");
+//   } catch (err) {
+//     console.log(err);
+//     Swal.fire("Oops...", "Ha habido un error", "error");
+//   }
+// }
+
 async function getSubordinados() {
   arraySubordinados.value = [];
+
   // Recuperar UID de Coordinadora desde localStorage si existe
   const uidGuardado = localStorage.getItem("uidCoordinadora");
   const uidParaConsultar = uidGuardado || currentUser.value.uid;
+
   try {
-    const subordinados = await axiosInstance.get("trabajadores/getSubordinados", {
-      params: {
-        uid: uidParaConsultar,
-      },
+    const { data } = await axiosInstance.get("trabajadores/getSubordinados", {
+      params: { uid: uidParaConsultar },
     });
-    if (subordinados.data.ok) {
-      arraySubordinados.value = subordinados.data.data;
-    } else throw Error("No tienes personas a tu cargo");
+
+    if (!data.ok || !Array.isArray(data.data) || data.data.length === 0) {
+      throw new Error("No tienes personas a tu cargo");
+    }
+
+    // ✅ Solo guardamos los subordinados tal cual vienen del backend
+    arraySubordinados.value = data.data;
   } catch (err) {
-    console.log(err);
-    Swal.fire("Oops...", "Ha habido un error", "error");
+    console.error("❌ Error al obtener subordinados:", err);
+    Swal.fire("Oops...", "Ha habido un error al cargar subordinados", "error");
   }
 }
 
 async function consultarFichajes() {
   if (loading.value) return;
+  await getSubordinados();
   await getFichajesValidados(semanaActual.value.weekNumber, añoActual.value.year);
 }
+
+// async function getFichajesValidados(semana: any, año: any) {
+//   datos.value = [];
+//   loading.value = true;
+
+//   if (arraySubordinados.value.length > 0) {
+//     try {
+//       for (const element of arraySubordinados.value) {
+//         console.log(element);
+
+//         const respValidados = await axiosInstance.get("/fichajes-validados/getFichajesValidados", {
+//           params: {
+//             idTrabajador: element.id,
+//           },
+//         });
+
+//         if (respValidados.data.ok) {
+//           const datosFiltrados = respValidados.data.data.filter((validado: any) => {
+//             // Filtrar por semana y año
+//             const fechaFichaje = new Date(validado.fichajeEntrada);
+//             return fechaFichaje.getUTCFullYear() === año && getWeekNumber(fechaFichaje) === semana;
+//           });
+
+//           datosFiltrados.forEach((validado: any) => {
+//             datos.value.push(validado);
+//           });
+//         }
+//       }
+
+//       // Ordeno de manera descendente
+//       datos.value.sort((a, b) => {
+//         const fechaA: any = new Date(a.fichajeEntrada);
+//         const fechaB: any = new Date(b.fichajeEntrada);
+//         return fechaB - fechaA;
+//       });
+
+//       loading.value = false;
+//     } catch (error) {
+//       console.log(error);
+//     }
+//   } else {
+//     Swal.fire("Oops...", "No tienes subordinados a cargo", "error");
+//   }
+// }
 
 async function getFichajesValidados(semana: any, año: any) {
   datos.value = [];
@@ -349,13 +418,17 @@ async function getFichajesValidados(semana: any, año: any) {
 
   if (arraySubordinados.value.length > 0) {
     try {
-      for (const element of arraySubordinados.value) {
-        const respValidados = await axiosInstance.get("/fichajes-validados/getFichajesValidados", {
-          params: {
-            idTrabajador: element.id,
-          },
-        });
+      // Crear un array de promesas para todas las peticiones
+      const promesas = arraySubordinados.value.map((element) =>
+        axiosInstance.get("/fichajes-validados/getFichajesValidados", {
+          params: { idTrabajador: element.id },
+        }),
+      );
 
+      // Esperar a que terminen
+      const respuestas = await Promise.all(promesas);
+
+      for (const respValidados of respuestas) {
         if (respValidados.data.ok) {
           const datosFiltrados = respValidados.data.data.filter((validado: any) => {
             // Filtrar por semana y año
@@ -369,16 +442,16 @@ async function getFichajesValidados(semana: any, año: any) {
         }
       }
 
-      // Ordeno de manera descendente
+      // 🔹 Ordenar
       datos.value.sort((a, b) => {
         const fechaA: any = new Date(a.fichajeEntrada);
         const fechaB: any = new Date(b.fichajeEntrada);
         return fechaB - fechaA;
       });
-
-      loading.value = false;
     } catch (error) {
-      console.log(error);
+      console.error("Error al cargar fichajes:", error);
+    } finally {
+      loading.value = false;
     }
   } else {
     Swal.fire("Oops...", "No tienes subordinados a cargo", "error");

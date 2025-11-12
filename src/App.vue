@@ -48,7 +48,7 @@ function antiLag() {
 async function initializeAuthListener() {
   // Primero manejamos el resultado del redirect de Microsoft
   await handleRedirectResult();
-  
+
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       try {
@@ -98,6 +98,8 @@ async function initializeAuthListener() {
 function limpiarCoordinadora() {
   localStorage.removeItem("uidCoordinadora");
   localStorage.removeItem("idSqlCoordinadora");
+  localStorage.removeItem("uidCoordinadora2");
+  localStorage.removeItem("idSqlCoordinadora2");
 }
 
 async function loadTiendas() {

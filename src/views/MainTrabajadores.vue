@@ -392,8 +392,8 @@ const reposicionModalRef = ref(null);
 const tiendas = ref<{ value: number; text: string; idExterno: string } | null>(null);
 const codigoEmpleado = ref("");
 const accionPendiente = ref("");
-const uidCoordinadora = ref(null);
-const idsqlCoordinadora = ref(null);
+const uidCoordinadora = ref<string | null>(null);
+const idsqlCoordinadora = ref<number | null>(null);
 const codigoEmpleadoModal = ref(false);
 const codigoEmpleadoModalRef = ref(null);
 const codigoEmpleadoModalInstance = ref<Modal | null>(null);
@@ -452,12 +452,94 @@ async function authCoordi(accion: any) {
 }
 
 // Validar código del empleado en el backend
+// async function validarCodigoEmpleado() {
+//   if (!codigoEmpleado.value) {
+//     Swal.fire("Error", "Debe ingresar un código de empleado", "error");
+//     return;
+//   }
+//   // Mostrar loading
+//   Swal.fire({
+//     title: "Validando...",
+//     text: "Por favor, espere",
+//     allowOutsideClick: false,
+//     didOpen: () => {
+//       Swal.showLoading();
+//     },
+//   });
+
+//   try {
+//     // const response = await axiosInstance.post("trabajadores/validarCodigo", {
+//     //   codigoEmpleado: codigoEmpleado.value,
+//     // });
+//     const response = await axiosInstance.post("check-pin-coordinadora", {
+//       idTienda: currentUser.value.idTienda,
+//       pin: parseInt(codigoEmpleado.value),
+//     });
+
+//     Swal.close();
+
+//     if (response.data.ok) {
+//       const usuario = response.data.usuario;
+
+//       if (usuario.rol === "Coordinadora_A") {
+//         uidCoordinadora.value = usuario.uid;
+//         idsqlCoordinadora.value = usuario.idsql;
+//         localStorage.setItem("uidCoordinadora", usuario.uid);
+//         localStorage.setItem("idSqlCoordinadora", usuario.idSql);
+
+//         if (codigoEmpleadoModalInstance.value) {
+//           // Ocultar el modal
+//           codigoEmpleadoModalInstance.value.hide();
+
+//           // Esperar que se oculte completamente
+//           setTimeout(() => {
+//             try {
+//               codigoEmpleadoModalInstance.value?.dispose();
+//             } catch (e) {
+//               console.warn("Error al hacer dispose del modal:", e);
+//             }
+
+//             codigoEmpleadoModalInstance.value = null;
+
+//             // Limpiar clases/backdrop si quedaron
+//             document.body.classList.remove("modal-open");
+//             document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+
+//             // Redirigir después de cerrar el modal
+//             Swal.fire({
+//               icon: "success",
+//               title: "Acceso concedido",
+//               text: "Redirigiendo...",
+//               showConfirmButton: false,
+//               timer: 1500,
+//               timerProgressBar: true,
+//             }).then(() => {
+//               if (accionPendiente.value === "Validar horas") {
+//                 router.push("/validar-horas");
+//               } else if (accionPendiente.value === "vacaciones") {
+//                 router.push("/vacaciones");
+//               }
+//             });
+//           }, 350);
+//         }
+//       } else {
+//         Swal.fire("Acceso denegado", "No tienes permisos", "error");
+//       }
+//     } else {
+//       Swal.fire("Código incorrecto", response.data.message, "error");
+//     }
+//   } catch (error) {
+//     Swal.fire("Error", "Hubo un problema en la validación", "error");
+//     console.log(error);
+//   }
+// }
+
 async function validarCodigoEmpleado() {
   if (!codigoEmpleado.value) {
     Swal.fire("Error", "Debe ingresar un código de empleado", "error");
     return;
   }
-  // Mostrar loading
+
   Swal.fire({
     title: "Validando...",
     text: "Por favor, espere",
@@ -468,64 +550,73 @@ async function validarCodigoEmpleado() {
   });
 
   try {
-    const response = await axiosInstance.post("trabajadores/validarCodigo", {
-      codigoEmpleado: codigoEmpleado.value,
+    // 🔹 Validar el PIN contra el backend
+    const response = await axiosInstance.post("check-pin-coordinadora", {
+      idTienda: currentUser.value.idTienda,
+      pin: parseInt(codigoEmpleado.value),
     });
+
     Swal.close();
+    console.log("Respuesta del backend:", response.data);
 
-    if (response.data.ok) {
-      const usuario = response.data.usuario;
+    if (response.data === true) {
+      // ✅ El PIN pertenece a la coordinadora correcta de esta tienda
 
-      if (usuario.rol === "Coordinadora_A") {
+      // 🔹 Hacemos una segunda llamada para obtener los datos de la coordinadora validada
+      const detalleResponse = await axiosInstance.get("check-pin-coordinadora/detalle");
+      const usuario = detalleResponse.data;
+
+      if (usuario) {
         uidCoordinadora.value = usuario.uid;
-        idsqlCoordinadora.value = usuario.idsql;
-        localStorage.setItem("uidCoordinadora", usuario.uid);
-        localStorage.setItem("idSqlCoordinadora", usuario.idSql);
+        idsqlCoordinadora.value = usuario.idSql;
 
-        if (codigoEmpleadoModalInstance.value) {
-          // Ocultar el modal
-          codigoEmpleadoModalInstance.value.hide();
-
-          // Esperar que se oculte completamente
-          setTimeout(() => {
-            try {
-              codigoEmpleadoModalInstance.value?.dispose();
-            } catch (e) {
-              console.warn("Error al hacer dispose del modal:", e);
-            }
-
-            codigoEmpleadoModalInstance.value = null;
-
-            // Limpiar clases/backdrop si quedaron
-            document.body.classList.remove("modal-open");
-            document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
-
-            // Redirigir después de cerrar el modal
-            Swal.fire({
-              icon: "success",
-              title: "Acceso concedido",
-              text: "Redirigiendo...",
-              showConfirmButton: false,
-              timer: 1500,
-              timerProgressBar: true,
-            }).then(() => {
-              if (accionPendiente.value === "Validar horas") {
-                router.push("/validar-horas");
-              } else if (accionPendiente.value === "vacaciones") {
-                router.push("/vacaciones");
-              }
-            });
-          }, 350);
-        }
+        localStorage.setItem("uidCoordinadora", usuario.uid ?? "");
+        localStorage.setItem("idSqlCoordinadora", String(usuario.idSql ?? ""));
+        localStorage.setItem("uidCoordinadora2", usuario.uid2 ?? "");
+        localStorage.setItem("idSqlCoordinadora2", String(usuario.idSql2 ?? ""));
       } else {
-        Swal.fire("Acceso denegado", "No tienes permisos", "error");
+        console.warn("⚠️ No se encontró detalle de la coordinadora validada.");
+      }
+
+      // 🔹 Cerrar el modal y redirigir
+      if (codigoEmpleadoModalInstance.value) {
+        codigoEmpleadoModalInstance.value.hide();
+
+        setTimeout(() => {
+          try {
+            codigoEmpleadoModalInstance.value?.dispose();
+          } catch (e) {
+            console.warn("Error al hacer dispose del modal:", e);
+          }
+
+          codigoEmpleadoModalInstance.value = null;
+          document.body.classList.remove("modal-open");
+          document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+
+          Swal.fire({
+            icon: "success",
+            title: "Acceso concedido",
+            text: "Redirigiendo...",
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true,
+          }).then(() => {
+            if (accionPendiente.value === "Validar horas") {
+              router.push("/validar-horas");
+            } else if (accionPendiente.value === "vacaciones") {
+              router.push("/vacaciones");
+            }
+          });
+        }, 350);
       }
     } else {
-      Swal.fire("Código incorrecto", response.data.message, "error");
+      // ❌ PIN incorrecto
+      Swal.fire("Código incorrecto", "El PIN ingresado no es válido.", "error");
     }
   } catch (error) {
+    Swal.close();
+    console.error("Error al validar el código:", error);
     Swal.fire("Error", "Hubo un problema en la validación", "error");
-    console.log(error);
   }
 }
 

@@ -732,6 +732,10 @@ async function getHorasValidar() {
         if (subordinado) {
           element.antiguedadDias = subordinado.antiguedadDias;
         }
+        const nPerceptor = arraySubordinados.value.find((s) => s.id === element.idTrabajador);
+        if (nPerceptor) {
+          element.nPerceptor = nPerceptor.nPerceptor;
+        }
         datos.value.push(element);
       });
 

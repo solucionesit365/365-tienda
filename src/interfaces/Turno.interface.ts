@@ -18,7 +18,7 @@ export interface TTurnoFrontend {
   final: DateTime; // ISO string
   tiendaId: number | null;
   idTrabajador: number;
-  borrable: boolean;
+  borrable?: boolean; // Opcional - Todos los turnos son borrables por defecto
   // plantillaSelected?: TPlantilla;
 }
 
@@ -28,5 +28,5 @@ export interface TTurnoBackend {
   final: string; // ISO string
   tiendaId: number;
   idTrabajador: number;
-  borrable: boolean;
+  borrable?: boolean; // Opcional - Todos los turnos son borrables por defecto
 }

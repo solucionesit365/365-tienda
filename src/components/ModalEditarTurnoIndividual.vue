@@ -117,7 +117,6 @@
                         size="sm"
                         icon="trash"
                         @click.stop="eliminarTurno(index)"
-                        v-if="turno.borrable !== false"
                       />
                     </div>
                   </div>
@@ -673,7 +672,6 @@ function agregarNuevoTurno() {
     inicio: fechaDia.value.set({ hour: 9, minute: 0 }),
     final: fechaDia.value.set({ hour: 17, minute: 0 }),
     tiendaId: tiendaSeleccionada.value.id,
-    borrable: true,
   };
 
   turnosDelDia.value.push(nuevoTurno);
@@ -858,7 +856,6 @@ async function guardarCambios() {
         inicioISO: turno.inicio.toISO(),
         finalISO: turno.final.toISO(),
         tiendaId: turno.tiendaId,
-        borrable: turno.borrable ?? true,
       })),
     };
 

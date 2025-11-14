@@ -222,4 +222,9 @@ router.beforeEach(async (to, from, next) => {
   }
 });
 
+router.afterEach((to) => {
+  // Usa el name de la ruta como título
+  document.title = to.name?.toString() || "365 Tienda";
+});
+
 export default router;

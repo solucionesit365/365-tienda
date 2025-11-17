@@ -29,7 +29,7 @@
       />
       <ItemMenuDesktop
         v-if="hasPermission('VerKPI')"
-        color="#14babd"
+        color="#090909"
         titulo="KPI"
         icono="fas fa-chart-line"
         link="/kpiTiendaIndex"
@@ -120,10 +120,16 @@
         link="/abrir-incidencia"
       />
       <ItemMenuDesktop
-        color="#648fe0"
+        color="rgb(4, 172, 172)"
         titulo="Inspeccion Fichajes"
-        icono="fas fa-question-circle"
+        icono="fas fa-clipboard-check"
         link="/inspectorIndex"
+      />
+      <ItemMenuDesktop
+        color="rgb(255, 131, 0)"
+        titulo="Estándares"
+        icono="fas fa-exclamation-circle"
+        link="/estandares"
       />
     </div>
   </div>

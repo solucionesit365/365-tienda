@@ -206,6 +206,14 @@ const router = createRouter({
       },
       component: () => import("../components/InspecciónFichajes/InepectorIndexComponent.vue"),
     },
+    {
+      path: "/estandares",
+      name: "Estándares",
+      meta: {
+        requiresAuth: false,
+      },
+      component: () => import("../components/StandardsView.vue"),
+    },
   ],
 });
 

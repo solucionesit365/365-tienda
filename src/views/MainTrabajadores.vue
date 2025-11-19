@@ -56,12 +56,15 @@
         icono="fas fa-film"
         link="/videoFormacion"
       />
+
       <ItemMenuDesktop
         color="#05c2d5"
         titulo="Notas informativas"
         icono="fas fa-circle-info"
         link="/notasInformativas"
+        :badge="notasInformativasCount"
       />
+
       <ItemMenuDesktop
         color="#994ef4"
         titulo="Calendario de Pluses"
@@ -400,6 +403,7 @@ const codigoEmpleadoModalInstance = ref<Modal | null>(null);
 const reposicionModalInstance = ref<Modal | null>(null);
 const router = useRouter();
 const mostrar = ref(false);
+const notasInformativasCount = ref(0);
 
 defineEmits(["update:user", "toggleFooter"]);
 
@@ -533,6 +537,24 @@ async function authCoordi(accion: any) {
 //     console.log(error);
 //   }
 // }
+
+async function getNotasInformativasCount() {
+  try {
+    const res = await axiosInstance.get("notas-informativas/getNotasInformativas", {
+      params: {
+        idTienda: currentUser.value.idTienda,
+      },
+    });
+
+    if (res.data?.ok) {
+      const notas = res.data.data as Array<{ seen: boolean }>;
+      notasInformativasCount.value = notas.filter((n) => !n.seen).length;
+      // notasInformativasCount.value = res.data.data.length;
+    }
+  } catch (error) {
+    console.log(error);
+  }
+}
 
 async function validarCodigoEmpleado() {
   if (!codigoEmpleado.value) {
@@ -698,6 +720,7 @@ function abrirOutlook() {
 onMounted(() => {
   getDistribucionMensajes();
   getTiendas();
+  getNotasInformativasCount();
 });
 </script>
 

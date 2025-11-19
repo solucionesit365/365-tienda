@@ -727,14 +727,42 @@ async function getHorasValidar() {
         });
       });
 
-      fichajesUnificados.forEach((element: any) => {
-        const subordinado = arraySubordinados.value.find((s) => s.id === element.idTrabajador);
-        if (subordinado) {
-          element.antiguedadDias = subordinado.antiguedadDias;
+      // Identificar trabajadores que no están en subordinados
+      const idsSubordinados = new Set(arraySubordinados.value.map((s: any) => s.id));
+      const idsTrabajadoresExternos = Array.from(
+        new Set(
+          fichajesUnificados
+            .map((element: any) => element.idTrabajador)
+            .filter((id: number) => !idsSubordinados.has(id))
+        )
+      );
+
+      // Obtener información de trabajadores externos si hay alguno
+      let trabajadoresExternos: any[] = [];
+      if (idsTrabajadoresExternos.length > 0) {
+        try {
+          const respExternos = await axiosInstance.post("trabajadores/getTrabajadoresByIds", {
+            ids: idsTrabajadoresExternos,
+          });
+          if (respExternos.data.ok) {
+            trabajadoresExternos = respExternos.data.data.map((trab: any) => ({
+              ...trab,
+              antiguedadDias: calcularAntiguedad(trab.contratos[0]?.fechaAntiguedad),
+            }));
+          }
+        } catch (error) {
+          console.error("Error al obtener información de trabajadores externos:", error);
         }
-        const nPerceptor = arraySubordinados.value.find((s) => s.id === element.idTrabajador);
-        if (nPerceptor) {
-          element.nPerceptor = nPerceptor.nPerceptor;
+      }
+
+      // Combinar información de subordinados y externos
+      const todosLosTrabajadores = [...arraySubordinados.value, ...trabajadoresExternos];
+
+      fichajesUnificados.forEach((element: any) => {
+        const trabajador = todosLosTrabajadores.find((t: any) => t.id === element.idTrabajador);
+        if (trabajador) {
+          element.antiguedadDias = trabajador.antiguedadDias;
+          element.nPerceptor = trabajador.nPerceptor;
         }
         datos.value.push(element);
       });

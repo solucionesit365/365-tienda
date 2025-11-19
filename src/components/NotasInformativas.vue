@@ -229,7 +229,6 @@ async function mostrarPDF(notas: any) {
     notas.url = fileUrls.join(",");
     notasInformativasMostrar.value = notas;
     modalDatos.value = true;
-    notas.seen = true;
     await guardarNotaComoVista(notas);
   } else {
     console.log("No se encontraron archivos válidos.");
@@ -238,7 +237,7 @@ async function mostrarPDF(notas: any) {
 
 async function guardarNotaComoVista(nota: NotaInformativa) {
   try {
-    await axiosInstance.post("notas-informativas/update-note", { idNota: nota._id });
+    await axiosInstance.post(`notas-informativas/update-note/${nota._id}`, { seen: true });
   } catch (error) {
     console.error("Error guardando estado visto:", error);
   }

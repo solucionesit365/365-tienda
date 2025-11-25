@@ -2,7 +2,7 @@
   <div class="card mt-2">
     <div class="card-body cardDocs">
       <div class="row">
-        <div class="col-4 mb-2" v-if="hasPermission('ValidarHoras')">
+        <div class="text-start col-4 mb-2" v-if="hasPermission('ValidarHoras')">
           <BsButton
             class="w-100"
             :class="{
@@ -38,16 +38,17 @@
             PAGOS
           </BsButton>
         </div>
-        <div v-if="hasPermission('ResumenHorasValidadas')" class="text-start col-4 mb-2">
+        <!-- No olvidarme de poner el has permission -->
+        <div class="text-start col-4 mb-2">
           <BsButton
             class="w-100"
             :class="{
-              colorActive: resumen == true,
-              colorInactive: resumen == false,
+              colorActive: hoursExtraordinary == true,
+              colorInactive: hoursExtraordinary == false,
             }"
-            @click="moverMenu('resumen')"
+            @click="moverMenu('hoursExtraordinary')"
           >
-            RESUMEN
+            HORAS EXTRAORDINARIAS
           </BsButton>
         </div>
       </div>
@@ -197,9 +198,9 @@
           <ValidarPagosComponent ref="validarPagosComponentRef" />
         </template>
 
-        <!-- RESUMEN DE HORAS PACTADAS VS REALES -->
-        <template v-if="resumen">
-          <ResumenHoras ref="resumenHorasRef" @cambiarMenu="moverMenu" />
+        <!-- Hours extraordinary -->
+        <template v-if="hoursExtraordinary">
+          <HoursExtraordinary ref="hoursExtraordinaryHorasRef" @cambiarMenu="moverMenu" />
         </template>
       </div>
 
@@ -300,6 +301,73 @@
                     </button>
                   </div>
                 </div>
+
+                <!-- Trade Union hours -->
+                <div class="col-5 mt-4">Sindicales:</div>
+                <div class="col-7 mt-4">
+                  <div class="input-group">
+                    <button
+                      type="button"
+                      @click="tarjetaEditar.tradeUnionHours = tarjetaEditar.tradeUnionHours - 0.25"
+                      :disabled="aprendizClicked"
+                      class="input-group-text bg-warning text-light"
+                    >
+                      <i class="fas fa-minus"></i>
+                    </button>
+
+                    <input
+                      type="number"
+                      class="form-control"
+                      v-model="tarjetaEditar.tradeUnionHours"
+                      :step="0.25"
+                      aria-label="Amount (to the nearest dollar)"
+                      disabled
+                    />
+
+                    <button
+                      type="button"
+                      @click="tarjetaEditar.tradeUnionHours = tarjetaEditar.tradeUnionHours + 0.25"
+                      :disabled="aprendizClicked"
+                      class="input-group-text bg-success text-light"
+                    >
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Training hours -->
+                <div class="col-5 mt-4">Formación:</div>
+
+                <div class="col-7 mt-4">
+                  <div class="input-group">
+                    <button
+                      type="button"
+                      @click="tarjetaEditar.trainingHours = tarjetaEditar.trainingHours - 0.25"
+                      :disabled="aprendizClicked"
+                      class="input-group-text bg-warning text-light"
+                    >
+                      <i class="fas fa-minus"></i>
+                    </button>
+
+                    <input
+                      type="number"
+                      class="form-control"
+                      v-model="tarjetaEditar.trainingHours"
+                      :step="0.25"
+                      aria-label="Amount (to the nearest dollar)"
+                      disabled
+                    />
+
+                    <button
+                      type="button"
+                      @click="tarjetaEditar.trainingHours = tarjetaEditar.trainingHours + 0.25"
+                      :disabled="aprendizClicked"
+                      class="input-group-text bg-success text-light"
+                    >
+                      <i class="fas fa-plus"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -337,18 +405,18 @@ import Swal from "sweetalert2";
 import { DateTime } from "luxon";
 import HorasValidadasComponent from "../ValidarHoras/HorasValidadas.vue";
 import ValidarPagosComponent from "../ValidarHoras/ValidarPagos.vue";
-import ResumenHoras from "../ValidarHoras/ResumenHoras.vue";
 import router from "@/router";
 import { hasPermission } from "@/components/rolesPermisos";
 import { useUserStore } from "@/stores/user";
 import BsSpinner from "../365/BsSpinner.vue";
+import HoursExtraordinary from "./HoursExtraordinary.vue";
 
 const userStore = useUserStore();
 const currentUser = userStore.user;
 const aprobadas = ref(false);
 const validar = ref(true);
 const pagos = ref(false);
-const resumen = ref(false);
+const hoursExtraordinary = ref(false);
 const arraySubordinados: Ref<any[]> = ref([]);
 const tarjetaEditar: Ref<any> = ref(null);
 const modalEditarHoras = ref(false);
@@ -356,7 +424,7 @@ const horasValidadasComponentRef: Ref<any> = ref(null);
 const validarPagosComponentRef: Ref<any> = ref(null);
 const loading = ref(true);
 const datos: Ref<any[]> = ref([]);
-const resumenHorasRef: Ref<any> = ref(null);
+const hoursExtraordinaryHorasRef: Ref<any> = ref(null);
 const aprendizClicked = ref(false);
 
 function convertDecimalToFormattedHours(decimalTime: number) {
@@ -435,22 +503,22 @@ function moverMenu(opcion: string) {
       validar.value = true;
       aprobadas.value = false;
       pagos.value = false;
-      resumen.value = false;
+      hoursExtraordinary.value = false;
       break;
     case "validadas":
       aprobadas.value = true;
       pagos.value = false;
       validar.value = false;
-      resumen.value = false;
+      hoursExtraordinary.value = false;
       break;
     case "pagos":
       aprobadas.value = false;
       pagos.value = true;
       validar.value = false;
-      resumen.value = false;
+      hoursExtraordinary.value = false;
       break;
-    case "resumen":
-      resumen.value = true;
+    case "hoursExtraordinary":
+      hoursExtraordinary.value = true;
       aprobadas.value = false;
       pagos.value = false;
       validar.value = false;
@@ -716,6 +784,8 @@ async function getHorasValidar() {
             horasExtra: 0,
             horasAprendiz: 0,
             horasCoordinacion: 0,
+            tradeUnionHours: 0,
+            trainingHours: 0,
             aprendiz: aprendizClicked,
             aPagar: fichajes.aPagar,
             pagado: fichajes.pagado,
@@ -819,6 +889,8 @@ function cancelarAjuste() {
   // tarjetaEditar.value.horasAprendiz = 0;
   tarjetaEditar.value.horasCoordinacion = 0;
   tarjetaEditar.value.horasExtra = 0;
+  tarjetaEditar.value.tradeUnionHours = 0;
+  tarjetaEditar.value.trainingHours = 0;
   aprendizClicked.value = false;
   modalEditarHoras.value = false;
 }
@@ -905,6 +977,8 @@ function validarAjustes(item: any) {
   const totalAjustado =
     tarjetaEditar.value.horasFichaje +
     tarjetaEditar.value.horasExtra +
+    tarjetaEditar.value.tradeUnionHours +
+    tarjetaEditar.value.trainingHours +
     tarjetaEditar.value.horasCoordinacion;
   const fechaObjeto = DateTime.fromISO(tarjetaEditar.value.fichajeEntrada);
   const fechaActual = DateTime.now();

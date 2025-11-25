@@ -1,0 +1,20 @@
+services:
+  playwright:
+    build: .
+    container_name: playwright-e2e
+    # IPC host is crucial for browser stability in Docker
+    ipc: host
+    # Mount the current directory so you can edit tests locally
+    volumes:
+      - .:/app
+      - /app/node_modules
+    # Environment variables for cross-platform consistency
+    environment:
+      - CI=true
+    # Network configuration (optional, but good for linking to other services)
+    networks:
+      - e2e-network
+
+networks:
+  e2e-network:
+    driver: bridge

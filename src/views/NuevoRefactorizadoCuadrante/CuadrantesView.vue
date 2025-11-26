@@ -521,8 +521,10 @@ import PlantillasTurnoModal from "@/components/ModalPlantillasTurno.vue";
 import { estructurarTurnosConTrabajador } from "@/components/auxCuadrantes";
 import { Turno } from "@/components/kernel/Turno";
 import { filtrarTrabajadoresSinTablets } from "@/utils/cuadrantes.utils";
+import { useAnalytics } from "@/composables/useAnalytics";
 
 const userStore = useUserStore();
+const { trackAction } = useAnalytics();
 const tiendaStore = useTiendaStore();
 const modalCopiarTurnos = ref<InstanceType<typeof ModalCopiarTurnosSemana> | null>(null);
 const modalEditarTurnoIndividual = ref<InstanceType<typeof ModalEditarTurnoIndividual> | null>(
@@ -550,8 +552,25 @@ const inputBusquedaTiendaModal = ref<HTMLInputElement | null>(null);
 // Variables para modo edición con PIN
 const modoEdicionActivo = ref(false);
 
-const restarSemana = () => (selectedDate.value = selectedDate.value.minus({ weeks: 1 }));
-const sumarSemana = () => (selectedDate.value = selectedDate.value.plus({ weeks: 1 }));
+const restarSemana = () => {
+  selectedDate.value = selectedDate.value.minus({ weeks: 1 });
+  trackAction('click', 'admin_portal_schedules', 'CuadrantesView', {
+    context: {
+      target: 'previous_week',
+      filter_used: `Semana ${selectedDate.value.weekNumber} - ${selectedDate.value.year}`
+    }
+  });
+};
+
+const sumarSemana = () => {
+  selectedDate.value = selectedDate.value.plus({ weeks: 1 });
+  trackAction('click', 'admin_portal_schedules', 'CuadrantesView', {
+    context: {
+      target: 'next_week',
+      filter_used: `Semana ${selectedDate.value.weekNumber} - ${selectedDate.value.year}`
+    }
+  });
+};
 
 async function toggleModoEdicion() {
   if (modoEdicionActivo.value) {
@@ -610,8 +629,24 @@ async function validarPINCoordinadora(): Promise<boolean> {
     });
 
     if (response.data === true) {
+      // Track successful PIN validation
+      trackAction('verify_auth', 'admin_portal_schedules', 'CuadrantesView', {
+        context: {
+          target: selectedTienda.value?.nombre || String(selectedTienda.value?.id),
+          status: 'success',
+          method: 'pin'
+        }
+      });
       return true;
     } else {
+      // Track failed PIN validation
+      trackAction('verify_auth', 'admin_portal_schedules', 'CuadrantesView', {
+        context: {
+          target: selectedTienda.value?.nombre || String(selectedTienda.value?.id),
+          status: 'error',
+          method: 'pin'
+        }
+      });
       Swal.fire({
         icon: "error",
         title: "PIN incorrecto",
@@ -622,6 +657,13 @@ async function validarPINCoordinadora(): Promise<boolean> {
     }
   } catch (error: any) {
     console.error("Error al verificar PIN:", error);
+    // Track PIN verification error
+    trackAction('app_exception', 'admin_portal_schedules', 'CuadrantesView', {
+      context: {
+        target: 'pin_verification',
+        status: 'error'
+      }
+    });
     Swal.fire({
       icon: "error",
       title: "Error de verificación",
@@ -756,6 +798,16 @@ async function reloadCuadrante() {
     // Calcular datos de cobertura para timeline
     calculateCoverageData();
 
+    // Track successful schedule view
+    trackAction('view_item_list', 'admin_portal_schedules', 'CuadrantesView', {
+      context: {
+        target: selectedTienda.value?.nombre || String(selectedTienda.value?.id),
+        status: 'success',
+        value: arrayTurnos.value.length,
+        filter_used: `Semana ${selectedDate.value.weekNumber} - ${selectedDate.value.year}`
+      }
+    });
+
     return turnosEquipo;
   } catch (error) {
     if (
@@ -779,6 +831,14 @@ async function reloadCuadrante() {
     }
 
     console.error("Error al recargar el cuadrante:", error);
+
+    // Track error loading schedules
+    trackAction('app_exception', 'admin_portal_schedules', 'CuadrantesView', {
+      context: {
+        target: selectedTienda.value?.nombre || String(selectedTienda.value?.id),
+        status: 'error'
+      }
+    });
 
     Swal.fire({
       icon: "error",
@@ -908,6 +968,8 @@ function ordenarCuadrante(resTurnos: any) {
   }
 }
 
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
 function searchByName() {
   const tabla = document.getElementById("tabla") as HTMLTableElement;
   if (!tabla) return;
@@ -926,12 +988,34 @@ function searchByName() {
       }
     }
   }
+
+  // Track search with debounce to avoid excessive events
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+  if (searchText.value.length >= 2) {
+    searchDebounceTimer = setTimeout(() => {
+      trackAction('search', 'admin_portal_schedules', 'CuadrantesView', {
+        context: {
+          target: 'employee_search',
+          filter_used: searchText.value
+        }
+      });
+    }, 500);
+  }
 }
 
 async function abrirModalCopiarTurnos() {
   // Validar PIN antes de abrir modal
   const pinValido = await validarPINCoordinadora();
   if (!pinValido) return;
+
+  // Track opening copy shifts modal
+  trackAction('manage_schedule', 'admin_portal_schedules', 'ModalCopiarTurnosSemana', {
+    context: {
+      target: selectedTienda.value?.nombre || String(selectedTienda.value?.id),
+      status: 'pending',
+      method: 'copy'
+    }
+  });
 
   modalCopiarTurnos.value?.abrirModal();
 }
@@ -964,6 +1048,15 @@ async function abrirModalEditarTurno(trabajador: any, diaIndex: number) {
     });
     return;
   }
+
+  // Track opening shift edit modal
+  trackAction('manage_schedule', 'admin_portal_schedules', 'ModalEditarTurnoIndividual', {
+    context: {
+      target: String(trabajador.idTrabajador),
+      status: 'pending',
+      filter_used: fechaDia.toFormat('dd/MM/yyyy')
+    }
+  });
 
   await modalEditarTurnoIndividual.value?.abrirModal(
     trabajador.idTrabajador,
@@ -1030,6 +1123,14 @@ function filtrarTiendas() {
 }
 
 function seleccionarTiendaModal(tienda: TTienda) {
+  // Track store selection
+  trackAction('select_content', 'admin_portal_schedules', 'ModalSeleccionTienda', {
+    context: {
+      target: tienda.nombre || String(tienda.id),
+      status: 'success'
+    }
+  });
+
   selectedTienda.value = tienda;
   cerrarModalSeleccionTienda();
 }

@@ -203,6 +203,7 @@ async function getTiendas() {
 
 async function mostrarPDF(notas: any) {
   const fileUrls = [];
+  
   if (typeof notas.pdfNotainformativa === "string") {
     try {
       const url = await obtenerUrlImagen(notas.pdfNotainformativa);

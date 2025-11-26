@@ -156,9 +156,11 @@ import { useUserStore } from "@/stores/user";
 // Variables
 const punteroFecha = ref(DateTime.now().startOf("week").setLocale("es"));
 interface NotaInformativa {
+  _id: string;
   titulo: string;
   pdfNotainformativa: string | string[];
   url?: string;
+  seen: boolean;
 }
 
 const cargandoNotas = ref(false);
@@ -201,7 +203,7 @@ async function getTiendas() {
 
 async function mostrarPDF(notas: any) {
   const fileUrls = [];
-
+  
   if (typeof notas.pdfNotainformativa === "string") {
     try {
       const url = await obtenerUrlImagen(notas.pdfNotainformativa);
@@ -228,8 +230,17 @@ async function mostrarPDF(notas: any) {
     notas.url = fileUrls.join(",");
     notasInformativasMostrar.value = notas;
     modalDatos.value = true;
+    await guardarNotaComoVista(notas);
   } else {
     console.log("No se encontraron archivos válidos.");
+  }
+}
+
+async function guardarNotaComoVista(nota: NotaInformativa) {
+  try {
+    await axiosInstance.post(`notas-informativas/update-note/${nota._id}`, { seen: true });
+  } catch (error) {
+    console.error("Error guardando estado visto:", error);
   }
 }
 

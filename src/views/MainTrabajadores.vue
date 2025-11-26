@@ -351,7 +351,13 @@
                 </div>
               </h4>
               <div class="input-group mt-4">
-                <input id="inputCodigo" type="text" class="form-control" v-model="codigoEmpleado" />
+                <input
+                  id="inputCodigo"
+                  type="text"
+                  class="form-control"
+                  v-model="codigoEmpleado"
+                  autocomplete="off"
+                />
               </div>
             </div>
           </div>

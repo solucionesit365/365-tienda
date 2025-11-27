@@ -11,7 +11,7 @@
   <!-- Diseño Home para escritorio y tabletas -->
   <div class="d-none d-sm-none d-md-block mb-8">
     <div class="row row-cols-2 justify-content-center mt-4">
-      <ItemMenuDesktop color="#EF5350" titulo="Cultura" icono="fas fa-atlas" link="/videoCultura" />
+      <ItemMenuDesktop color="#EF5350" titulo="Cultura" icono="fas fa-atlas" link="/videoCulture" />
 
       <ItemMenuDesktop
         color="#3381bd"
@@ -56,12 +56,15 @@
         icono="fas fa-film"
         link="/videoFormacion"
       />
+
       <ItemMenuDesktop
         color="#05c2d5"
         titulo="Notas informativas"
         icono="fas fa-circle-info"
         link="/notasInformativas"
+        :badge="notasInformativasCount"
       />
+
       <ItemMenuDesktop
         color="#994ef4"
         titulo="Calendario de Pluses"
@@ -131,7 +134,7 @@
   <!-- Diseño Home para movil -->
   <div class="d-block d-sm-block d-md-none mb-8">
     <div class="row row-cols-3 justify-content-center mt-4">
-      <ItemMenuMobile color="#EF5350" titulo="Cultura" icono="fas fa-atlas" link="/videoCultura" />
+      <ItemMenuMobile color="#EF5350" titulo="Cultura" icono="fas fa-atlas" link="/videoCulture" />
       <ItemMenuMobile color="#3381bd" titulo="Cuadrantes" icono="fas fa-clock" link="/cuadrantes" />
 
       <ItemMenuMobile
@@ -287,20 +290,20 @@
         <div
           class="modal-body d-flex flex-column justify-content-center align-items-center text-center"
         >
-          <div class="alert alert-warning" role="alert">
+          <!-- <div class="alert alert-warning" role="alert">
             <h4 class="alert-heading mb-2">⚠️ Funcionalidad deshabilitada temporalmente</h4>
             <p class="mb-0">
               Por favor, realice los pedidos directamente a través del <strong>TPV</strong>.
             </p>
-          </div>
+          </div> -->
 
-          <!-- <iframe
+          <iframe
             :src="reposicionUrl"
             width="100%"
             height="100%"
             frameborder="0"
             allowfullscreen
-          ></iframe> -->
+          ></iframe>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
@@ -348,7 +351,13 @@
                 </div>
               </h4>
               <div class="input-group mt-4">
-                <input id="inputCodigo" type="text" class="form-control" v-model="codigoEmpleado" />
+                <input
+                  id="inputCodigo"
+                  type="text"
+                  class="form-control"
+                  v-model="codigoEmpleado"
+                  autocomplete="off"
+                />
               </div>
             </div>
           </div>
@@ -388,7 +397,7 @@ const mensaje = ref(null);
 const currentUser = computed(() => userStore.user);
 const reposicionModal = ref(false);
 const reposicionModalRef = ref(null);
-// const reposicionUrl = ref("");
+const reposicionUrl = ref("");
 const tiendas = ref<{ value: number; text: string; idExterno: string } | null>(null);
 const codigoEmpleado = ref("");
 const accionPendiente = ref("");
@@ -400,6 +409,7 @@ const codigoEmpleadoModalInstance = ref<Modal | null>(null);
 const reposicionModalInstance = ref<Modal | null>(null);
 const router = useRouter();
 const mostrar = ref(false);
+const notasInformativasCount = ref(0);
 
 defineEmits(["update:user", "toggleFooter"]);
 
@@ -534,6 +544,23 @@ async function authCoordi(accion: any) {
 //   }
 // }
 
+async function getNotasInformativasCount() {
+  try {
+    const res = await axiosInstance.get("notas-informativas/getNotasInformativas", {
+      params: {
+        idTienda: currentUser.value.idTienda,
+      },
+    });
+
+    if (res.data?.ok && Array.isArray(res.data.data)) {
+      const notas = res.data.data as Array<{ seen: boolean }>;
+      notasInformativasCount.value = notas.filter((n) => !n.seen).length;
+    }
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 async function validarCodigoEmpleado() {
   if (!codigoEmpleado.value) {
     Swal.fire("Error", "Debe ingresar un código de empleado", "error");
@@ -621,16 +648,16 @@ async function validarCodigoEmpleado() {
 }
 
 async function repocision() {
-  // if (tiendas.value) {
-  //   reposicionUrl.value = `https://hitsystems.cloud/TpvWebReposicion.asp?modo=MENU&codiBotiga=${tiendas.value.idExterno}`;
-  reposicionModal.value = true;
-  //   await nextTick();
-  if (!reposicionModalInstance.value && reposicionModalRef.value) {
-    reposicionModalInstance.value = new Modal(reposicionModalRef.value);
+  if (tiendas.value) {
+    reposicionUrl.value = `https://hitsystems.cloud/TpvWebReposicion.asp?modo=MENU&codiBotiga=${tiendas.value.idExterno}`;
+    reposicionModal.value = true;
+    await nextTick();
+    if (!reposicionModalInstance.value && reposicionModalRef.value) {
+      reposicionModalInstance.value = new Modal(reposicionModalRef.value);
+    }
+    reposicionModalInstance.value?.show();
+    //   console.log(tiendas.value.idExterno);
   }
-  reposicionModalInstance.value?.show();
-  //   console.log(tiendas.value.idExterno);
-  // }
 }
 
 //Obtener el idExterno de las tiendas
@@ -698,6 +725,7 @@ function abrirOutlook() {
 onMounted(() => {
   getDistribucionMensajes();
   getTiendas();
+  getNotasInformativasCount();
 });
 </script>
 

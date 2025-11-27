@@ -79,12 +79,12 @@ const router = createRouter({
       component: () => import("../views/TablonAnuncios.vue"),
     },
     {
-      path: "/videoCultura",
+      path: "/videoCulture",
       name: "Cultura 365",
       meta: {
         requiresAuth: true,
       },
-      component: () => import("../views/CulturaView.vue"),
+      component: () => import("../views/CultureView.vue"),
     },
     {
       path: "/encargosview",

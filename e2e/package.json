@@ -1,0 +1,32 @@
+{
+    "name": "playwright-docker-mcp-suite",
+    "version": "1.0.0",
+    "description": "E2E testing suite using Playwright in Docker with MCP support",
+    "main": "index.js",
+    "scripts": {
+        "test": "podman exec playwright-e2e npx playwright test"
+    },
+    "keywords": [
+        "playwright",
+        "e2e",
+        "docker",
+        "mcp",
+        "testing"
+    ],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@playwright/test": "^1.48.0",
+        "@types/node": "^20.12.0",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.4.0"
+    },
+    "dependencies": {
+        "playwright": "latest",
+        "@playwright/mcp": "latest"    
+    },
+    "directories": {
+        "test": "tests"
+    },
+    "type": "commonjs"
+}

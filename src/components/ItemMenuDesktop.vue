@@ -5,6 +5,13 @@
         <div class="card-content">
           <div class="icon-container">
             <i :class="props.icono"></i>
+            <span
+              v-if="props.badge !== undefined && props.badge > 0"
+              class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+              style="font-size: 0.7rem; z-index: 50"
+            >
+              {{ props.badge }}
+            </span>
           </div>
           <div class="title-container">
             <h5 class="card-title">{{ props.titulo }}</h5>
@@ -23,6 +30,7 @@ interface Props {
   titulo: string;
   icono: string;
   link: string;
+  badge?: number | undefined;
 }
 
 const props = defineProps<Props>();

@@ -1,294 +1,270 @@
 <template>
-  <!-- <div class="d-inline-flex mt-2 mb-4">
-      <span class="fs-6 ms-1 me-1">Semana </span>
-      <span class="me-1" style="font-weight: bold"
-        >{{ punteroFecha.weekNumber }}
-      </span>
-      de
-      {{ punteroFecha.year }}
-      <MDBBtn
-        class="btn-responsive"
-        size="lg"
-        color="secondary"
-        @click="restarSemana()"
-        >-</MDBBtn
-      >
-      <MDBBtn
-        class="btn-responsive"
-        size="lg"
-        color="secondary"
-        @click="sumarSemana()"
-        >+</MDBBtn
-      >
-      <MDBBtn
-        class="btn-responsive"
-        size="lg"
-        color="primary"
-        @click="buscarKPI()"
-        >Buscar</MDBBtn
-      >
-    </div> -->
-  <div class="card mt-2">
-    <div class="card-body cardDocs">
-      <div class="row mb-3">
-        <div class="col">
-          <button
-            type="button"
-            class="btn w-100"
-            :class="datosView ? 'colorActive' : 'colorInactive'"
-            @click="moverMenu('PDF')"
-          >
-            PDF
-          </button>
-        </div>
-        <div class="col">
-          <button
-            type="button"
-            class="btn w-100"
-            :class="videosView ? 'colorActive' : 'colorInactive'"
-            @click="moverMenu('Video')"
-          >
-            VIDEO
-          </button>
-        </div>
-      </div>
-      <div v-if="datosView == true">
-        <template v-if="datosPDF && datosPDF.length > 0">
-          <div v-for="pdf in datosPDF" :key="pdf._id" class="card mt-3">
-            <div class="card-header">
-              <h5>Nota informativa :</h5>
-              <span>{{ pdf.titulo }}</span>
+  <div class="row mt-3">
+    <div class="col-12">
+      <div class="card border-top">
+        <div class="card-content">
+          <div class="card-body">
+            <div v-if="cargandoNotas" class="row text-center mt-2">
+              <div><BsSpinner style="width: 5rem; height: 5rem" /></div>
             </div>
-            <div class="card-body">
-              <div v-if="pdf.url && pdf.url.length > 0">
-                <iframe
-                  v-for="url in pdf.url"
-                  :key="url"
-                  :src="url"
-                  width="100%"
-                  height="500px"
-                  frameborder="0"
-                  allowfullscreen
-                ></iframe>
-              </div>
-              <div v-else class="row justify-content-center">
-                <div class="col-xl-6 col-xs-12 col-12 col-lg-6 text-center">
-                  <figure class="figure">
-                    <img
-                      src="@/assets/img/nodata.png"
-                      class="rounded mx-auto d-block mt-3 img-fluid"
-                      alt="..."
-                      style="width: 70%"
-                    />
-                    <figcaption class="figure-caption text-center">
-                      <h4>
-                        No hay ninguna nota informativa para la semana
-                        {{ punteroFecha.weekNumber }}
-                      </h4>
-                    </figcaption>
-                  </figure>
+            <div v-if="datosPDFRef.length !== 0">
+              <div class="row g-3">
+                <div
+                  class="col-12 col-sm-6 col-md-4 col-lg-3 col-xl-2"
+                  v-for="(notasInformativas, index) in datosPDFRef"
+                  :key="index"
+                >
+                  <div class="card nota-card shadow-sm border-0 h-100">
+                    <div class="card-body d-flex flex-column">
+                      <div class="d-flex align-items-start mb-2">
+                        <div
+                          class="nota-icon rounded-circle d-flex align-items-center justify-content-center me-2"
+                        >
+                          <i class="fa-solid fa-file-pdf"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                          <span class="text-muted small d-block mb-1">
+                            {{ getTypeFiles(notasInformativas) }}
+                          </span>
+                          <h6
+                            class="mb-0 text-truncate nota-title"
+                            :title="notasInformativas.titulo"
+                          >
+                            {{ notasInformativas.titulo }}
+                          </h6>
+                        </div>
+                      </div>
+
+                      <div class="align-items-right mt-auto d-flex justify-content-end">
+                        <BsButton
+                          @click="mostrarPDF(notasInformativas)"
+                          color="primary"
+                          size="sm"
+                          floating
+                          title="Ver PDF"
+                        >
+                          <i class="fa-solid fa-eye"></i>
+                        </BsButton>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </template>
-        <template v-else>
-          <div class="row justify-content-center">
-            <div class="col-xl-6 col-xs-12 col-12 col-lg-6 text-center">
-              <figure class="figure">
-                <img
-                  src="@/assets/img/nodata.png"
-                  class="rounded mx-auto d-block mt-3 img-fluid"
-                  alt="..."
-                  style="width: 80%"
-                />
-                <figcaption class="figure-caption text-center">
-                  No hay ninguna nota informativa para esta semana
-                </figcaption>
-              </figure>
-            </div>
-          </div>
-        </template>
-      </div>
-      <!-- Parte para mostrar los videos en nota informativa como video precargado .mp4  -->
-      <div v-else>
-        <template v-if="datosVideo && datosVideo.length > 0">
-          <div v-for="video in datosVideo" :key="video._id" class="card mt-3">
-            <div class="card-header">
-              <h5>Nota informativa :</h5>
-              <span>{{ video.titulo }}</span>
-            </div>
-            <div class="card-body">
-              <iframe
-                v-if="video.url"
-                :src="video.url"
-                width="100%"
-                height="500px"
-                frameborder="0"
-                allowfullscreen
-              ></iframe>
-              <div v-else class="row justify-content-center">
-                <div class="col-xl-6 col-xs-12 col-12 col-lg-6 text-center">
-                  <figure class="figure">
-                    <img
-                      src="@/assets/img/nodata.png"
-                      class="rounded mx-auto d-block mt-3 img-fluid"
-                      alt="..."
-                      style="width: 70%"
-                    />
-                    <figcaption class="figure-caption text-center">
-                      <h4>
-                        No hay ninguna nota informativa para la semana
-                        {{ punteroFecha.weekNumber }}
-                      </h4>
-                    </figcaption>
-                  </figure>
-                </div>
+            <div v-else class="row justify-content-center">
+              <div class="col-12 col-sm-10 col-md-8 col-lg-6 text-center">
+                <figure class="figure">
+                  <img
+                    src="@/assets/img/nodata.png"
+                    class="rounded mx-auto d-block mt-3 img-fluid"
+                    alt="..."
+                    style="width: 70%"
+                  />
+                  <figcaption class="figure-caption text-center">
+                    <h4>
+                      No hay ninguna nota informativa para la semana
+                      {{ punteroFecha.weekNumber }}
+                    </h4>
+                  </figcaption>
+                </figure>
               </div>
             </div>
           </div>
-        </template>
-        <template v-else>
-          <div class="row justify-content-center">
-            <div class="col-xl-6 col-xs-12 col-12 col-lg-6 text-center">
-              <figure class="figure">
-                <img
-                  src="@/assets/img/nodata.png"
-                  class="rounded mx-auto d-block mt-3 img-fluid"
-                  alt="..."
-                  style="width: 80%"
-                />
-                <figcaption class="figure-caption text-center">
-                  No hay ninguna nota informativa para esta semana
-                </figcaption>
-              </figure>
-            </div>
-          </div>
-        </template>
+        </div>
       </div>
     </div>
   </div>
+
+  <BsModal
+    id="modalDatos"
+    tabindex="-1"
+    labelledby="modalDatosTitle"
+    v-model="modalDatos"
+    staticBackdropS
+    centered
+    scrollable
+    fullscreen
+  >
+    <BsModalHeader>
+      <BsModalTitle id="modalDatosTitle">
+        Nota informativa
+        {{ notasInformativasMostrar?.titulo }}
+      </BsModalTitle>
+      <button
+        type="button"
+        class="btn-close"
+        @click="modalDatos = false"
+        aria-label="Close"
+      ></button>
+    </BsModalHeader>
+    <BsModalBody>
+      <div v-if="notasInformativasMostrar?.url">
+        <div
+          v-for="(url, index) in notasInformativasMostrar.url.split(',')"
+          :key="index"
+          class="mb-3"
+        >
+          <iframe
+            v-if="url"
+            :src="url"
+            width="100%"
+            height="600px"
+            frameborder="0"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </div>
+      <div v-else class="row justify-content-center">
+        <div class="col-12 col-sm-10 col-md-8 col-lg-6 text-center">
+          <figure class="figure">
+            <img
+              src="@/assets/img/nodata.png"
+              class="rounded mx-auto d-block mt-3 img-fluid"
+              alt="..."
+              style="width: 70%"
+            />
+            <figcaption class="figure-caption text-center">
+              <h4>
+                No hay ninguna nota informativa para la semana
+                {{ punteroFecha.weekNumber }}
+              </h4>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </BsModalBody>
+    <BsModalFooter>
+      <BsButton color="secondary" @click="modalDatos = false"> Cancelar </BsButton>
+    </BsModalFooter>
+  </BsModal>
 </template>
 
 <script setup lang="ts">
+import BsButton from "@/components/365/BsButton.vue";
 import { DateTime } from "luxon";
-import { ref, onMounted, computed, type Ref } from "vue";
-import { obtenerUrlImagen } from "@/components/firebase/storage";
-// import { MDBBtn } from "mdb-vue-ui-kit";
+import { ref, onMounted, computed } from "vue";
 import { axiosInstance } from "@/components/axios/axios";
+import { obtenerUrlImagen } from "@/components/firebase/storage";
+import BsModal from "@/components/365/BsModal.vue";
+import BsModalHeader from "@/components/365/BsModalHeader.vue";
+import BsModalTitle from "@/components/365/BsModalTitle.vue";
+import BsModalBody from "@/components/365/BsModalBody.vue";
+import BsModalFooter from "@/components/365/BsModalFooter.vue";
+import BsSpinner from "@/components/365/BsSpinner.vue";
 import { useUserStore } from "@/stores/user";
 
+// Variables
 const punteroFecha = ref(DateTime.now().startOf("week").setLocale("es"));
-const datosView = ref(true);
-const videosView = ref(false);
-const datosPDF: Ref<any[]> = ref([]);
-const datosVideo: Ref<any[]> = ref([]);
+interface NotaInformativa {
+  _id: string;
+  titulo: string;
+  pdfNotainformativa: string | string[];
+  url?: string;
+  seen: boolean;
+}
+
+const cargandoNotas = ref(false);
+const datosPDFRef = ref<NotaInformativa[]>([]);
+const tiendas = ref([]);
+const modalDatos = ref(false);
+const notasInformativasMostrar = ref<{ titulo: string; url?: string } | null>(null);
 const userStore = useUserStore();
 const currentUser = computed(() => userStore.user);
 
-// function restarSemana() {
-//   punteroFecha.value = punteroFecha.value.minus({ days: 7 });
-// }
+//Funciones
 
-// function sumarSemana() {
-//   punteroFecha.value = punteroFecha.value.plus({ days: 7 });
-// }
-
-function moverMenu(menu: string) {
-  switch (menu) {
-    case "PDF":
-      datosView.value = true;
-      videosView.value = false;
-      break;
-    case "Video":
-      datosView.value = false;
-      videosView.value = true;
-      break;
-    default:
-      break;
+async function getAllNotasInformativas() {
+  try {
+    cargandoNotas.value = true;
+    const res = await axiosInstance.get("notas-informativas/getNotasInformativas", {
+      params: {
+        idTienda: currentUser.value.idTienda,
+      },
+    });
+    if (res.data?.ok) {
+      datosPDFRef.value = res.data.data;
+    }
+  } catch (error) {
+    console.log(error);
+  } finally {
+    cargandoNotas.value = false;
   }
 }
 
-async function getPDF() {
+async function getTiendas() {
   try {
-    await axiosInstance
-      .get("notas-informativas/getNotasInformativas", {
-        params: {
-          idTienda: currentUser.value.idTienda,
-        },
-      })
-      .then((response) => {
-        if (response.data.ok) {
-          datosPDF.value = response.data.data.filter((item: any) => item.categoria === "pdf");
-          datosVideo.value = response.data.data.filter((item: any) => item.categoria === "video");
-          console.log("mostrar archivos");
-        } else {
-          console.log("error");
-        }
-      });
+    const res = await axiosInstance.get("tiendas");
+
+    tiendas.value = res.data;
   } catch (error) {
     console.log(error);
   }
 }
 
-async function mostrarPDF() {
-  if (!datosPDF.value) {
-    return;
-  }
-  if (!datosVideo.value) {
-    return;
-  }
-
-  for (let i = 0; i < datosPDF.value.length; i++) {
-    const item = datosPDF.value[i];
-    if (item.pdfNotainformativa) {
-      if (typeof item.pdfNotainformativa === "string") {
-        // Si es una cadena, procesar como cadena
-        const url = await obtenerUrlImagen(item.pdfNotainformativa);
-        item.url = [url];
-      } else if (Array.isArray(item.pdfNotainformativa)) {
-        // Si es un array, procesar cada elemento
-        const urls = await Promise.all(
-          item.pdfNotainformativa.map((ruta: any) => obtenerUrlImagen(ruta)),
-        );
-        item.url = urls;
-      } else {
-        console.error("pdfNotainformativa no es ni un string ni un array.");
+async function mostrarPDF(notas: any) {
+  const fileUrls = [];
+  
+  if (typeof notas.pdfNotainformativa === "string") {
+    try {
+      const url = await obtenerUrlImagen(notas.pdfNotainformativa);
+      fileUrls.push(url);
+    } catch (error) {
+      console.log(error);
+    }
+  } else if (Array.isArray(notas.pdfNotainformativa)) {
+    for (const file of notas.pdfNotainformativa) {
+      try {
+        const url = await obtenerUrlImagen(file);
+        fileUrls.push(url);
+      } catch (error) {
+        console.log(error);
       }
     }
+  } else {
+    console.log(
+      "pdfNotainformativa no es una cadena válida ni un array:",
+      notas.pdfNotainformativa,
+    );
   }
-
-  for (let i = 0; i < datosVideo.value.length; i++) {
-    const item2 = datosVideo.value[i];
-    if (typeof item2.pdfNotainformativa === "string") {
-      const url = await obtenerUrlImagen(item2.pdfNotainformativa);
-      item2.url = [url];
-    } else if (Array.isArray(item2.pdfNotainformativa)) {
-      const urls = await Promise.all(
-        item2.pdfNotainformativa.map((ruta: any) => obtenerUrlImagen(ruta)),
-      );
-      item2.url = urls;
-    } else {
-      console.error("pdfNotainformativa en video no es ni un string ni un array.");
-    }
+  if (fileUrls.length > 0) {
+    notas.url = fileUrls.join(",");
+    notasInformativasMostrar.value = notas;
+    modalDatos.value = true;
+    await guardarNotaComoVista(notas);
+  } else {
+    console.log("No se encontraron archivos válidos.");
   }
 }
 
-onMounted(() => {
-  getPDF().then(() => {
-    mostrarPDF();
-  });
+async function guardarNotaComoVista(nota: NotaInformativa) {
+  try {
+    await axiosInstance.post(`notas-informativas/update-note/${nota._id}`, { seen: true });
+  } catch (error) {
+    console.error("Error guardando estado visto:", error);
+  }
+}
+
+const getTypeFiles = (note: NotaInformativa): string => {
+  const files = Array.isArray(note.pdfNotainformativa)
+    ? note.pdfNotainformativa
+    : [note.pdfNotainformativa];
+
+  const name = (files[0] || "").toLowerCase();
+
+  if (name.endsWith(".pdf")) return "PDF";
+
+  if (name.match(/\.(mp4|mov|avi|mkv|webm|wmv)$/)) return "Vídeo";
+
+  return "Nota informativa";
+};
+
+onMounted(async () => {
+  await getTiendas();
+  getAllNotasInformativas();
 });
 </script>
 
-<style scoped>
-.colorIconGreen {
-  background-color: #63ceb0;
-  color: white;
-}
-.cardDocs {
-  background-color: #ffffff;
-}
+<style lang="scss" scoped>
 .card {
   padding: 0.5em 0.5em;
   border-radius: 1em;
@@ -296,46 +272,48 @@ onMounted(() => {
   box-shadow: 0 5px 17px rgba(0, 0, 0, 0.2);
 }
 
-.colorActive {
-  background-color: #e66c5a !important;
-  color: #fff !important;
-  font-weight: bold;
-  border: none;
-  box-shadow: 0 2px 8px rgba(230, 108, 90, 0.08);
+.nota-card {
   transition:
-    background 0.2s,
-    color 0.2s;
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+  border-radius: 0.75rem;
+}
+
+.nota-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0.75rem 1.5rem rgba(15, 23, 42, 0.12);
+}
+
+.nota-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(220, 53, 69, 0.1); /* rojo suave tipo PDF */
+  font-size: 1.1rem;
+  color: #dc3545;
+}
+
+.nota-title {
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.bg-primary-subtle {
+  background-color: rgba(13, 110, 253, 0.08);
+}
+
+.colorActive {
+  background-color: #ff9800;
+  color: black;
+  padding: 0.6rem;
 }
 
 .colorInactive {
-  background-color: #d7d9e7 !important;
-  color: #777 !important;
+  background-color: #d7d9e7;
+  color: rgb(119, 119, 119);
 }
 
-.accordion-button {
-  font-weight: bold;
-}
-
-.accordion-button:not(.collapsed) {
-  background-color: #fff !important;
-  color: #212529;
-  box-shadow: none;
-}
-
-.list-group-item {
-  font-size: 1rem;
-}
-.btn-encargo {
-  background-color: #e66c5a !important;
-  color: #fff !important;
-}
-
-.form-control:focus,
-.form-select:focus,
-.btn:focus,
-.accordion-button:focus {
-  box-shadow: 0 0 0 0.2rem #d7d9e7 !important;
-  border-color: #d7d9e7 !important;
-  outline: none !important;
+.colorIconGreen {
+  background-color: #63ceb0;
+  color: white;
 }
 </style>

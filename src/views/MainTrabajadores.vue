@@ -11,7 +11,7 @@
   <!-- Diseño Home para escritorio y tabletas -->
   <div class="d-none d-sm-none d-md-block mb-8">
     <div class="row row-cols-2 justify-content-center mt-4">
-      <ItemMenuDesktop color="#EF5350" titulo="Cultura" icono="fas fa-atlas" link="/videoCultura" />
+      <ItemMenuDesktop color="#EF5350" titulo="Cultura" icono="fas fa-atlas" link="/videoCulture" />
 
       <ItemMenuDesktop
         color="#3381bd"
@@ -56,12 +56,15 @@
         icono="fas fa-film"
         link="/videoFormacion"
       />
+
       <ItemMenuDesktop
         color="#05c2d5"
         titulo="Notas informativas"
         icono="fas fa-circle-info"
         link="/notasInformativas"
+        :badge="notasInformativasCount"
       />
+
       <ItemMenuDesktop
         color="#994ef4"
         titulo="Calendario de Pluses"
@@ -131,7 +134,7 @@
   <!-- Diseño Home para movil -->
   <div class="d-block d-sm-block d-md-none mb-8">
     <div class="row row-cols-3 justify-content-center mt-4">
-      <ItemMenuMobile color="#EF5350" titulo="Cultura" icono="fas fa-atlas" link="/videoCultura" />
+      <ItemMenuMobile color="#EF5350" titulo="Cultura" icono="fas fa-atlas" link="/videoCulture" />
       <ItemMenuMobile color="#3381bd" titulo="Cuadrantes" icono="fas fa-clock" link="/cuadrantes" />
 
       <ItemMenuMobile
@@ -284,7 +287,16 @@
             aria-label="Close"
           ></button>
         </div>
-        <div class="modal-body">
+        <div
+          class="modal-body d-flex flex-column justify-content-center align-items-center text-center"
+        >
+          <!-- <div class="alert alert-warning" role="alert">
+            <h4 class="alert-heading mb-2">⚠️ Funcionalidad deshabilitada temporalmente</h4>
+            <p class="mb-0">
+              Por favor, realice los pedidos directamente a través del <strong>TPV</strong>.
+            </p>
+          </div> -->
+
           <iframe
             :src="reposicionUrl"
             width="100%"
@@ -339,7 +351,13 @@
                 </div>
               </h4>
               <div class="input-group mt-4">
-                <input id="inputCodigo" type="text" class="form-control" v-model="codigoEmpleado" />
+                <input
+                  id="inputCodigo"
+                  type="text"
+                  class="form-control"
+                  v-model="codigoEmpleado"
+                  autocomplete="off"
+                />
               </div>
             </div>
           </div>
@@ -383,14 +401,15 @@ const reposicionUrl = ref("");
 const tiendas = ref<{ value: number; text: string; idExterno: string } | null>(null);
 const codigoEmpleado = ref("");
 const accionPendiente = ref("");
-const uidCoordinadora = ref(null);
-const idsqlCoordinadora = ref(null);
+const uidCoordinadora = ref<string | null>(null);
+const idsqlCoordinadora = ref<number | null>(null);
 const codigoEmpleadoModal = ref(false);
 const codigoEmpleadoModalRef = ref(null);
 const codigoEmpleadoModalInstance = ref<Modal | null>(null);
 const reposicionModalInstance = ref<Modal | null>(null);
 const router = useRouter();
 const mostrar = ref(false);
+const notasInformativasCount = ref(0);
 
 defineEmits(["update:user", "toggleFooter"]);
 
@@ -443,12 +462,111 @@ async function authCoordi(accion: any) {
 }
 
 // Validar código del empleado en el backend
+// async function validarCodigoEmpleado() {
+//   if (!codigoEmpleado.value) {
+//     Swal.fire("Error", "Debe ingresar un código de empleado", "error");
+//     return;
+//   }
+//   // Mostrar loading
+//   Swal.fire({
+//     title: "Validando...",
+//     text: "Por favor, espere",
+//     allowOutsideClick: false,
+//     didOpen: () => {
+//       Swal.showLoading();
+//     },
+//   });
+
+//   try {
+//     // const response = await axiosInstance.post("trabajadores/validarCodigo", {
+//     //   codigoEmpleado: codigoEmpleado.value,
+//     // });
+//     const response = await axiosInstance.post("check-pin-coordinadora", {
+//       idTienda: currentUser.value.idTienda,
+//       pin: parseInt(codigoEmpleado.value),
+//     });
+
+//     Swal.close();
+
+//     if (response.data.ok) {
+//       const usuario = response.data.usuario;
+
+//       if (usuario.rol === "Coordinadora_A") {
+//         uidCoordinadora.value = usuario.uid;
+//         idsqlCoordinadora.value = usuario.idsql;
+//         localStorage.setItem("uidCoordinadora", usuario.uid);
+//         localStorage.setItem("idSqlCoordinadora", usuario.idSql);
+
+//         if (codigoEmpleadoModalInstance.value) {
+//           // Ocultar el modal
+//           codigoEmpleadoModalInstance.value.hide();
+
+//           // Esperar que se oculte completamente
+//           setTimeout(() => {
+//             try {
+//               codigoEmpleadoModalInstance.value?.dispose();
+//             } catch (e) {
+//               console.warn("Error al hacer dispose del modal:", e);
+//             }
+
+//             codigoEmpleadoModalInstance.value = null;
+
+//             // Limpiar clases/backdrop si quedaron
+//             document.body.classList.remove("modal-open");
+//             document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+
+//             // Redirigir después de cerrar el modal
+//             Swal.fire({
+//               icon: "success",
+//               title: "Acceso concedido",
+//               text: "Redirigiendo...",
+//               showConfirmButton: false,
+//               timer: 1500,
+//               timerProgressBar: true,
+//             }).then(() => {
+//               if (accionPendiente.value === "Validar horas") {
+//                 router.push("/validar-horas");
+//               } else if (accionPendiente.value === "vacaciones") {
+//                 router.push("/vacaciones");
+//               }
+//             });
+//           }, 350);
+//         }
+//       } else {
+//         Swal.fire("Acceso denegado", "No tienes permisos", "error");
+//       }
+//     } else {
+//       Swal.fire("Código incorrecto", response.data.message, "error");
+//     }
+//   } catch (error) {
+//     Swal.fire("Error", "Hubo un problema en la validación", "error");
+//     console.log(error);
+//   }
+// }
+
+async function getNotasInformativasCount() {
+  try {
+    const res = await axiosInstance.get("notas-informativas/getNotasInformativas", {
+      params: {
+        idTienda: currentUser.value.idTienda,
+      },
+    });
+
+    if (res.data?.ok && Array.isArray(res.data.data)) {
+      const notas = res.data.data as Array<{ seen: boolean }>;
+      notasInformativasCount.value = notas.filter((n) => !n.seen).length;
+    }
+  } catch (error) {
+    console.log(error);
+  }
+}
+
 async function validarCodigoEmpleado() {
   if (!codigoEmpleado.value) {
     Swal.fire("Error", "Debe ingresar un código de empleado", "error");
     return;
   }
-  // Mostrar loading
+
   Swal.fire({
     title: "Validando...",
     text: "Por favor, espere",
@@ -459,64 +577,73 @@ async function validarCodigoEmpleado() {
   });
 
   try {
-    const response = await axiosInstance.post("trabajadores/validarCodigo", {
-      codigoEmpleado: codigoEmpleado.value,
+    // 🔹 Validar el PIN contra el backend
+    const response = await axiosInstance.post("check-pin-coordinadora", {
+      idTienda: currentUser.value.idTienda,
+      pin: parseInt(codigoEmpleado.value),
     });
+
     Swal.close();
+    console.log("Respuesta del backend:", response.data);
 
-    if (response.data.ok) {
-      const usuario = response.data.usuario;
+    if (response.data === true) {
+      // ✅ El PIN pertenece a la coordinadora correcta de esta tienda
 
-      if (usuario.rol === "Coordinadora_A") {
+      // 🔹 Hacemos una segunda llamada para obtener los datos de la coordinadora validada
+      const detalleResponse = await axiosInstance.get("check-pin-coordinadora/detalle");
+      const usuario = detalleResponse.data;
+
+      if (usuario) {
         uidCoordinadora.value = usuario.uid;
-        idsqlCoordinadora.value = usuario.idsql;
-        localStorage.setItem("uidCoordinadora", usuario.uid);
-        localStorage.setItem("idSqlCoordinadora", usuario.idSql);
+        idsqlCoordinadora.value = usuario.idSql;
 
-        if (codigoEmpleadoModalInstance.value) {
-          // Ocultar el modal
-          codigoEmpleadoModalInstance.value.hide();
-
-          // Esperar que se oculte completamente
-          setTimeout(() => {
-            try {
-              codigoEmpleadoModalInstance.value?.dispose();
-            } catch (e) {
-              console.warn("Error al hacer dispose del modal:", e);
-            }
-
-            codigoEmpleadoModalInstance.value = null;
-
-            // Limpiar clases/backdrop si quedaron
-            document.body.classList.remove("modal-open");
-            document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
-
-            // Redirigir después de cerrar el modal
-            Swal.fire({
-              icon: "success",
-              title: "Acceso concedido",
-              text: "Redirigiendo...",
-              showConfirmButton: false,
-              timer: 1500,
-              timerProgressBar: true,
-            }).then(() => {
-              if (accionPendiente.value === "Validar horas") {
-                router.push("/validar-horas");
-              } else if (accionPendiente.value === "vacaciones") {
-                router.push("/vacaciones");
-              }
-            });
-          }, 350);
-        }
+        localStorage.setItem("uidCoordinadora", usuario.uid ?? "");
+        localStorage.setItem("idSqlCoordinadora", String(usuario.idSql ?? ""));
+        localStorage.setItem("uidCoordinadora2", usuario.uid2 ?? "");
+        localStorage.setItem("idSqlCoordinadora2", String(usuario.idSql2 ?? ""));
       } else {
-        Swal.fire("Acceso denegado", "No tienes permisos", "error");
+        console.warn("⚠️ No se encontró detalle de la coordinadora validada.");
+      }
+
+      // 🔹 Cerrar el modal y redirigir
+      if (codigoEmpleadoModalInstance.value) {
+        codigoEmpleadoModalInstance.value.hide();
+
+        setTimeout(() => {
+          try {
+            codigoEmpleadoModalInstance.value?.dispose();
+          } catch (e) {
+            console.warn("Error al hacer dispose del modal:", e);
+          }
+
+          codigoEmpleadoModalInstance.value = null;
+          document.body.classList.remove("modal-open");
+          document.querySelectorAll(".modal-backdrop").forEach((el) => el.remove());
+
+          Swal.fire({
+            icon: "success",
+            title: "Acceso concedido",
+            text: "Redirigiendo...",
+            showConfirmButton: false,
+            timer: 1500,
+            timerProgressBar: true,
+          }).then(() => {
+            if (accionPendiente.value === "Validar horas") {
+              router.push("/validar-horas");
+            } else if (accionPendiente.value === "vacaciones") {
+              router.push("/vacaciones");
+            }
+          });
+        }, 350);
       }
     } else {
-      Swal.fire("Código incorrecto", response.data.message, "error");
+      // ❌ PIN incorrecto
+      Swal.fire("Código incorrecto", "El PIN ingresado no es válido.", "error");
     }
   } catch (error) {
+    Swal.close();
+    console.error("Error al validar el código:", error);
     Swal.fire("Error", "Hubo un problema en la validación", "error");
-    console.log(error);
   }
 }
 
@@ -529,8 +656,7 @@ async function repocision() {
       reposicionModalInstance.value = new Modal(reposicionModalRef.value);
     }
     reposicionModalInstance.value?.show();
-
-    console.log(tiendas.value.idExterno);
+    //   console.log(tiendas.value.idExterno);
   }
 }
 
@@ -599,6 +725,7 @@ function abrirOutlook() {
 onMounted(() => {
   getDistribucionMensajes();
   getTiendas();
+  getNotasInformativasCount();
 });
 </script>
 

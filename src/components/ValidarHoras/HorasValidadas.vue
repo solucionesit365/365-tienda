@@ -87,21 +87,21 @@
                   @click="verSolicitud(item)"
                   color="warning"
                 >
-                  Solicitud: {{ item.horasPagar.total }}H
+                  Pendiente: {{ item.horasPagar.total }}H
                 </BsButton>
                 <BsButton
                   v-if="item.horasPagar.estadoValidado == 'RECHAZADAS'"
                   @click="verSolicitud(item)"
                   color="danger"
                 >
-                  Solicitud: {{ item.horasPagar.total }}H
+                  Denegada: {{ item.horasPagar.total }}H
                 </BsButton>
                 <BsButton
                   v-if="item.horasPagar.estadoValidado == 'APROBADAS'"
                   @click="verSolicitud(item)"
                   color="success"
                 >
-                  Solicitud: {{ item.horasPagar.total }}H
+                  Aprobada: {{ item.horasPagar.total }}H
                 </BsButton>
               </div>
             </div>
@@ -238,9 +238,52 @@
               {{ tarjetaPagar.horasPagar.estadoValidado }}
             </span>
           </div>
+          <div class="row" v-if="tarjetaPagar.horasPagar.estadoValidado !== 'APROBADAS'">
+            <div class="mt-4">Editar:</div>
+            <div class="col-6 mt-4">¿Cuántas horas propones a pagar?</div>
+            <div class="col-6 mt-4">
+              <div class="input-group">
+                <button
+                  class="input-group-text bg-warning text-light"
+                  @click="tarjetaPagar.horasPagar.total -= 0.25"
+                >
+                  <i class="fas fa-minus"></i>
+                </button>
+                <input
+                  type="number"
+                  class="form-control"
+                  v-model="tarjetaPagar.horasPagar.total"
+                  step="0.25"
+                  disabled
+                />
+                <button
+                  class="input-group-text bg-success text-light"
+                  @click="tarjetaPagar.horasPagar.total += 0.25"
+                >
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="col-12 mt-4">
+              Comentario:
+              <select class="form-select mt-2" v-model="tarjetaPagar.horasPagar.comentario">
+                <option disabled value="">Selecciona un comentario</option>
+                <option v-for="opt in options1" :key="opt.value" :value="opt.value">
+                  {{ opt.text }}
+                </option>
+              </select>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <BsButton color="secondary" @click="modalVerSolicitud = false">Cerrar</BsButton>
+          <BsButton
+            color="primary"
+            v-if="tarjetaPagar.horasPagar.estadoValidado !== 'APROBADAS'"
+            @click="enviarPropuesta()"
+            >Proponer</BsButton
+          >
         </div>
       </div>
     </div>
@@ -318,30 +361,99 @@ function parseFecha2(fecha: any) {
   }
 }
 
+// async function getSubordinados() {
+//   arraySubordinados.value = [];
+//   // Recuperar UID de Coordinadora desde localStorage si existe
+//   const uidGuardado = localStorage.getItem("uidCoordinadora");
+//   const uidParaConsultar = uidGuardado || currentUser.value.uid;
+//   try {
+//     const subordinados = await axiosInstance.get("trabajadores/getSubordinados", {
+//       params: {
+//         uid: uidParaConsultar,
+//       },
+//     });
+//     if (subordinados.data.ok) {
+//       arraySubordinados.value = subordinados.data.data;
+//     } else throw Error("No tienes personas a tu cargo");
+//   } catch (err) {
+//     console.log(err);
+//     Swal.fire("Oops...", "Ha habido un error", "error");
+//   }
+// }
+
 async function getSubordinados() {
   arraySubordinados.value = [];
+
   // Recuperar UID de Coordinadora desde localStorage si existe
   const uidGuardado = localStorage.getItem("uidCoordinadora");
   const uidParaConsultar = uidGuardado || currentUser.value.uid;
+
   try {
-    const subordinados = await axiosInstance.get("trabajadores/getSubordinados", {
-      params: {
-        uid: uidParaConsultar,
-      },
+    const { data } = await axiosInstance.get("trabajadores/getSubordinados", {
+      params: { uid: uidParaConsultar },
     });
-    if (subordinados.data.ok) {
-      arraySubordinados.value = subordinados.data.data;
-    } else throw Error("No tienes personas a tu cargo");
+
+    if (!data.ok || !Array.isArray(data.data) || data.data.length === 0) {
+      throw new Error("No tienes personas a tu cargo");
+    }
+
+    // ✅ Solo guardamos los subordinados tal cual vienen del backend
+    arraySubordinados.value = data.data;
   } catch (err) {
-    console.log(err);
-    Swal.fire("Oops...", "Ha habido un error", "error");
+    console.error("❌ Error al obtener subordinados:", err);
+    Swal.fire("Oops...", "Ha habido un error al cargar subordinados", "error");
   }
 }
 
 async function consultarFichajes() {
   if (loading.value) return;
+  await getSubordinados();
   await getFichajesValidados(semanaActual.value.weekNumber, añoActual.value.year);
 }
+
+// async function getFichajesValidados(semana: any, año: any) {
+//   datos.value = [];
+//   loading.value = true;
+
+//   if (arraySubordinados.value.length > 0) {
+//     try {
+//       for (const element of arraySubordinados.value) {
+//         console.log(element);
+
+//         const respValidados = await axiosInstance.get("/fichajes-validados/getFichajesValidados", {
+//           params: {
+//             idTrabajador: element.id,
+//           },
+//         });
+
+//         if (respValidados.data.ok) {
+//           const datosFiltrados = respValidados.data.data.filter((validado: any) => {
+//             // Filtrar por semana y año
+//             const fechaFichaje = new Date(validado.fichajeEntrada);
+//             return fechaFichaje.getUTCFullYear() === año && getWeekNumber(fechaFichaje) === semana;
+//           });
+
+//           datosFiltrados.forEach((validado: any) => {
+//             datos.value.push(validado);
+//           });
+//         }
+//       }
+
+//       // Ordeno de manera descendente
+//       datos.value.sort((a, b) => {
+//         const fechaA: any = new Date(a.fichajeEntrada);
+//         const fechaB: any = new Date(b.fichajeEntrada);
+//         return fechaB - fechaA;
+//       });
+
+//       loading.value = false;
+//     } catch (error) {
+//       console.log(error);
+//     }
+//   } else {
+//     Swal.fire("Oops...", "No tienes subordinados a cargo", "error");
+//   }
+// }
 
 async function getFichajesValidados(semana: any, año: any) {
   datos.value = [];
@@ -349,13 +461,17 @@ async function getFichajesValidados(semana: any, año: any) {
 
   if (arraySubordinados.value.length > 0) {
     try {
-      for (const element of arraySubordinados.value) {
-        const respValidados = await axiosInstance.get("/fichajes-validados/getFichajesValidados", {
-          params: {
-            idTrabajador: element.id,
-          },
-        });
+      // Crear un array de promesas para todas las peticiones
+      const promesas = arraySubordinados.value.map((element) =>
+        axiosInstance.get("/fichajes-validados/getFichajesValidados", {
+          params: { idTrabajador: element.id },
+        }),
+      );
 
+      // Esperar a que terminen
+      const respuestas = await Promise.all(promesas);
+
+      for (const respValidados of respuestas) {
         if (respValidados.data.ok) {
           const datosFiltrados = respValidados.data.data.filter((validado: any) => {
             // Filtrar por semana y año
@@ -369,16 +485,16 @@ async function getFichajesValidados(semana: any, año: any) {
         }
       }
 
-      // Ordeno de manera descendente
+      // 🔹 Ordenar
       datos.value.sort((a, b) => {
         const fechaA: any = new Date(a.fichajeEntrada);
         const fechaB: any = new Date(b.fichajeEntrada);
         return fechaB - fechaA;
       });
-
-      loading.value = false;
     } catch (error) {
-      console.log(error);
+      console.error("Error al cargar fichajes:", error);
+    } finally {
+      loading.value = false;
     }
   } else {
     Swal.fire("Oops...", "No tienes subordinados a cargo", "error");

@@ -38,18 +38,6 @@
             PAGOS
           </BsButton>
         </div>
-        <div v-if="hasPermission('ResumenHorasValidadas')" class="text-start col-4 mb-2">
-          <BsButton
-            class="w-100"
-            :class="{
-              colorActive: resumen == true,
-              colorInactive: resumen == false,
-            }"
-            @click="moverMenu('resumen')"
-          >
-            RESUMEN
-          </BsButton>
-        </div>
       </div>
 
       <div class="row">
@@ -196,11 +184,6 @@
         <template v-if="pagos">
           <ValidarPagosComponent ref="validarPagosComponentRef" />
         </template>
-
-        <!-- RESUMEN DE HORAS PACTADAS VS REALES -->
-        <template v-if="resumen">
-          <ResumenHoras ref="resumenHorasRef" @cambiarMenu="moverMenu" />
-        </template>
       </div>
 
       <!-- Modal editar horas -->
@@ -337,7 +320,6 @@ import Swal from "sweetalert2";
 import { DateTime } from "luxon";
 import HorasValidadasComponent from "../ValidarHoras/HorasValidadas.vue";
 import ValidarPagosComponent from "../ValidarHoras/ValidarPagos.vue";
-import ResumenHoras from "../ValidarHoras/ResumenHoras.vue";
 import router from "@/router";
 import { hasPermission } from "@/components/rolesPermisos";
 import { useUserStore } from "@/stores/user";
@@ -356,7 +338,6 @@ const horasValidadasComponentRef: Ref<any> = ref(null);
 const validarPagosComponentRef: Ref<any> = ref(null);
 const loading = ref(true);
 const datos: Ref<any[]> = ref([]);
-const resumenHorasRef: Ref<any> = ref(null);
 const aprendizClicked = ref(false);
 
 function convertDecimalToFormattedHours(decimalTime: number) {
@@ -449,12 +430,6 @@ function moverMenu(opcion: string) {
       validar.value = false;
       resumen.value = false;
       break;
-    case "resumen":
-      resumen.value = true;
-      aprobadas.value = false;
-      pagos.value = false;
-      validar.value = false;
-      break;
     default:
       break;
   }
@@ -474,8 +449,39 @@ function mostrarBotonAprendiz() {
   );
 }
 
+// async function getSubordinados() {
+//   arraySubordinados.value = [];
+//   // Recuperar UID de Coordinadora desde localStorage si existe
+//   const uidGuardado = localStorage.getItem("uidCoordinadora");
+//   const uidParaConsultar = uidGuardado || currentUser.uid;
+
+//   try {
+//     const subordinados = await axiosInstance.get("trabajadores/getSubordinados", {
+//       params: { uid: uidParaConsultar },
+//     });
+
+//     console.log(subordinados);
+
+//     if (subordinados.data.ok) {
+//       const promesasDNI = subordinados.data.data.map(async (subordinado: any) => {
+//         subordinado.antiguedadDias = calcularAntiguedad(subordinado.contratos[0].fechaAntiguedad);
+//         subordinado.nPerceptor = subordinado.nPerceptor;
+
+//         // subordinado.dni = await obtenerDniPorIdTrabajador(subordinado.id);
+//         return subordinado;
+//       });
+
+//       arraySubordinados.value = await Promise.all(promesasDNI);
+//     } else throw new Error("No tienes personas a tu cargo");
+//   } catch (err) {
+//     console.log(err);
+//     Swal.fire("Oops...", "Ha habido un error", "error");
+//   }
+// }
+
 async function getSubordinados() {
   arraySubordinados.value = [];
+
   // Recuperar UID de Coordinadora desde localStorage si existe
   const uidGuardado = localStorage.getItem("uidCoordinadora");
   const uidParaConsultar = uidGuardado || currentUser.uid;
@@ -485,19 +491,20 @@ async function getSubordinados() {
       params: { uid: uidParaConsultar },
     });
 
-    if (subordinados.data.ok) {
-      const promesasDNI = subordinados.data.data.map(async (subordinado: any) => {
-        subordinado.antiguedadDias = calcularAntiguedad(subordinado.contratos[0].fechaAntiguedad);
+    const lista = subordinados.data.data;
 
-        // subordinado.dni = await obtenerDniPorIdTrabajador(subordinado.id);
-        return subordinado;
-      });
+    if (!Array.isArray(lista) || lista.length === 0) {
+      throw new Error("No tienes personas a tu cargo");
+    }
 
-      arraySubordinados.value = await Promise.all(promesasDNI);
-    } else throw new Error("No tienes personas a tu cargo");
+    arraySubordinados.value = lista.map((sub) => ({
+      ...sub,
+      antiguedadDias: calcularAntiguedad(sub.contratos[0]?.fechaAntiguedad),
+    }));
+    console.log(arraySubordinados);
   } catch (err) {
-    console.log(err);
-    Swal.fire("Oops...", "Ha habido un error", "error");
+    console.error("Error al obtener subordinados:", err);
+    Swal.fire("Oops...", "Ha habido un error al cargar subordinados", "error");
   }
 }
 
@@ -695,10 +702,42 @@ async function getHorasValidar() {
         });
       });
 
+      // Identificar trabajadores que no están en subordinados
+      const idsSubordinados = new Set(arraySubordinados.value.map((s: any) => s.id));
+      const idsTrabajadoresExternos = Array.from(
+        new Set(
+          fichajesUnificados
+            .map((element: any) => element.idTrabajador)
+            .filter((id: number) => !idsSubordinados.has(id)),
+        ),
+      );
+
+      // Obtener información de trabajadores externos si hay alguno
+      let trabajadoresExternos: any[] = [];
+      if (idsTrabajadoresExternos.length > 0) {
+        try {
+          const respExternos = await axiosInstance.post("trabajadores/getTrabajadoresByIds", {
+            ids: idsTrabajadoresExternos,
+          });
+          if (respExternos.data.ok) {
+            trabajadoresExternos = respExternos.data.data.map((trab: any) => ({
+              ...trab,
+              antiguedadDias: calcularAntiguedad(trab.contratos[0]?.fechaAntiguedad),
+            }));
+          }
+        } catch (error) {
+          console.error("Error al obtener información de trabajadores externos:", error);
+        }
+      }
+
+      // Combinar información de subordinados y externos
+      const todosLosTrabajadores = [...arraySubordinados.value, ...trabajadoresExternos];
+
       fichajesUnificados.forEach((element: any) => {
-        const subordinado = arraySubordinados.value.find((s) => s.id === element.idTrabajador);
-        if (subordinado) {
-          element.antiguedadDias = subordinado.antiguedadDias;
+        const trabajador = todosLosTrabajadores.find((t: any) => t.id === element.idTrabajador);
+        if (trabajador) {
+          element.antiguedadDias = trabajador.antiguedadDias;
+          element.nPerceptor = trabajador.nPerceptor;
         }
         datos.value.push(element);
       });

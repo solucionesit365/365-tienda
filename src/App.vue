@@ -23,6 +23,7 @@ import BackButton from "./components/BackButton.vue";
 import { onAuthStateChanged, getAuth, getIdTokenResult, type IdTokenResult } from "firebase/auth";
 import { app } from "@/components/firebase/index.js";
 import { handleRedirectResult, linkWithMicrosoft } from "@/components/firebase/authentication";
+import { initializeFCM } from "@/components/firebase/messaging";
 import { useUserStore } from "./stores/user";
 import { useTiendaStore } from "./stores/tienda";
 import Swal from "sweetalert2";
@@ -46,9 +47,11 @@ function antiLag() {
 }
 
 async function initializeAuthListener() {
-  // Primero manejamos el resultado del redirect de Microsoft
-  await handleRedirectResult();
-  
+  // Solo manejar redirect en producción (cuando NO usamos popup)
+  if (import.meta.env.MODE !== "development") {
+    await handleRedirectResult();
+  }
+
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       try {
@@ -98,6 +101,8 @@ async function initializeAuthListener() {
 function limpiarCoordinadora() {
   localStorage.removeItem("uidCoordinadora");
   localStorage.removeItem("idSqlCoordinadora");
+  localStorage.removeItem("uidCoordinadora2");
+  localStorage.removeItem("idSqlCoordinadora2");
 }
 
 async function loadTiendas() {
@@ -198,6 +203,7 @@ function handleCancelLinkMicrosoft() {
 
 onMounted(() => {
   initializeAuthListener();
+  initializeFCM();
 });
 </script>
 

@@ -79,12 +79,12 @@ const router = createRouter({
       component: () => import("../views/TablonAnuncios.vue"),
     },
     {
-      path: "/videoCultura",
+      path: "/videoCulture",
       name: "Cultura 365",
       meta: {
         requiresAuth: true,
       },
-      component: () => import("../views/CulturaView.vue"),
+      component: () => import("../views/CultureView.vue"),
     },
     {
       path: "/encargosview",
@@ -228,6 +228,11 @@ router.beforeEach(async (to, from, next) => {
   } else {
     next();
   }
+});
+
+router.afterEach((to) => {
+  // Usa el name de la ruta como título
+  document.title = to.name?.toString() || "365 Tienda";
 });
 
 export default router;

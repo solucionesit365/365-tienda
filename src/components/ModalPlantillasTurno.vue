@@ -266,7 +266,7 @@ async function loadPlantillas() {
       title: "Error",
       text: "No se pudieron cargar las plantillas",
       icon: "error",
-      confirmButtonColor: "#3b82f6",
+      confirmButtonColor: "#e66c5a",
     });
   } finally {
     loading.value = false;
@@ -280,7 +280,7 @@ async function createPlantilla() {
       title: "Campo requerido",
       text: "El nombre de la plantilla es obligatorio",
       icon: "warning",
-      confirmButtonColor: "#3b82f6",
+      confirmButtonColor: "#e66c5a",
     });
   }
 
@@ -290,7 +290,7 @@ async function createPlantilla() {
       title: "Horario inválido",
       text: "La hora de inicio y fin no pueden ser iguales",
       icon: "warning",
-      confirmButtonColor: "#3b82f6",
+      confirmButtonColor: "#e66c5a",
     });
   }
 
@@ -336,7 +336,7 @@ async function createPlantilla() {
       title: "Error",
       text: "No se pudo crear la plantilla",
       icon: "error",
-      confirmButtonColor: "#3b82f6",
+      confirmButtonColor: "#e66c5a",
     });
   } finally {
     creating.value = false;
@@ -378,7 +378,7 @@ async function deletePlantilla(id: number) {
       title: "Error",
       text: "No se pudo eliminar la plantilla",
       icon: "error",
-      confirmButtonColor: "#3b82f6",
+      confirmButtonColor: "#e66c5a",
     });
   }
 }
@@ -392,6 +392,10 @@ defineExpose({ abrirModal });
 </script>
 
 <style scoped>
+/* Variables corporativas */
+$primary-color: #e66c5a;
+$secondary-color: #333;
+
 .plantilla-container {
   padding: 1.5rem;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
@@ -405,10 +409,10 @@ defineExpose({ abrirModal });
   gap: 1rem;
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #e66c5a 0%, #333 100%);
   border-radius: 16px;
   color: white;
-  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 10px 25px rgba(230, 108, 90, 0.3);
 }
 
 .header-icon {
@@ -471,7 +475,7 @@ defineExpose({ abrirModal });
 }
 
 .form-header i {
-  color: #3b82f6;
+  color: #e66c5a;
 }
 
 .modern-form {
@@ -521,9 +525,9 @@ defineExpose({ abrirModal });
 
 .form-input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: #e66c5a;
   background: white;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(230, 108, 90, 0.1);
 }
 
 .form-input.error {
@@ -543,9 +547,9 @@ defineExpose({ abrirModal });
 }
 
 .time-selector:focus-within {
-  border-color: #3b82f6;
+  border-color: #e66c5a;
   background: white;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(230, 108, 90, 0.1);
 }
 
 .time-input {
@@ -654,12 +658,12 @@ defineExpose({ abrirModal });
 }
 
 .list-header i {
-  color: #3b82f6;
+  color: #e66c5a;
 }
 
 .count-badge {
-  background: #e0f2fe;
-  color: #0369a1;
+  background: rgba(230, 108, 90, 0.1);
+  color: #e66c5a;
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
   font-size: 0.8rem;
@@ -723,13 +727,13 @@ defineExpose({ abrirModal });
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(90deg, #e66c5a, #333);
 }
 
 .plantilla-card:hover {
   transform: translateY(-4px);
-  border-color: #3b82f6;
-  box-shadow: 0 12px 24px rgba(59, 130, 246, 0.15);
+  border-color: #e66c5a;
+  box-shadow: 0 12px 24px rgba(230, 108, 90, 0.15);
 }
 
 .card-content {
@@ -754,8 +758,8 @@ defineExpose({ abrirModal });
 }
 
 .order-badge {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: rgba(230, 108, 90, 0.15);
+  color: #333;
   padding: 0.25rem 0.5rem;
   border-radius: 8px;
   font-size: 0.75rem;

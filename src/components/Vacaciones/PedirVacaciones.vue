@@ -1,199 +1,199 @@
 <template>
-    <div class="card mt-2">
+  <div class="card mt-2">
     <div class="card-body cardDocs">
-  <h5 class="mt-4 fw-bold textColor">Vacaciones de:</h5>
-  <BsSelect
-    v-model:selected="trabajadorSelect"
-    v-model:options="trabajadores"
-    :filter="true"
-    :preselect="false"
-    :select-all="false"
-    :search-placeholder="'Buscar trabajador...'"
-    :placeholder="'Selecciona un trabajador...'"
-    text-key="nombreApellidos"
-    value-key="id"
-    class="mb-3"
-  />
+      <h5 class="mt-4 fw-bold textColor">Vacaciones de:</h5>
+      <BsSelect
+        v-model:selected="trabajadorSelect"
+        v-model:options="trabajadores"
+        :filter="true"
+        :preselect="false"
+        :select-all="false"
+        :search-placeholder="'Buscar trabajador...'"
+        :placeholder="'Selecciona un trabajador...'"
+        text-key="nombreApellidos"
+        value-key="id"
+        class="mb-3"
+      />
 
-  <!-- Saldo vacaciones -->
-  <div v-if="trabajadorSelect">
-    <div v-if="!loading" class="row justify-content-center">
-      <div class="col-xl-8 col-sm-12 col-12">
-        <div class="card shadow-sm mt-3 border-0">
-          <div class="card-body">
-            <div class="fs-6 text-dark">
-              <div class="row g-3 align-items-center">
-                <div class="col-10">
-                  <i class="fas fa-calendar-day text-success me-2"></i> Días aprobados
-                </div>
-                <div class="col-2 fw-bold text-end">
-                  {{ diasAprobados }}
-                </div>
+      <!-- Saldo vacaciones -->
+      <div v-if="trabajadorSelect">
+        <div v-if="!loading" class="row justify-content-center">
+          <div class="col-xl-8 col-sm-12 col-12">
+            <div class="card shadow-sm mt-3 border-0">
+              <div class="card-body">
+                <div class="fs-6 text-dark">
+                  <div class="row g-3 align-items-center">
+                    <div class="col-10">
+                      <i class="fas fa-calendar-day text-success me-2"></i> Días aprobados
+                    </div>
+                    <div class="col-2 fw-bold text-end">
+                      {{ diasAprobados }}
+                    </div>
 
-                <div class="col-10">
-                  <i class="fas fa-calendar-minus text-warning me-2"></i> Ptes de aprobación
-                </div>
-                <div class="col-2 fw-bold text-end">
-                  {{ ptesAprobacion }}
-                </div>
+                    <div class="col-10">
+                      <i class="fas fa-calendar-minus text-warning me-2"></i> Ptes de aprobación
+                    </div>
+                    <div class="col-2 fw-bold text-end">
+                      {{ ptesAprobacion }}
+                    </div>
 
-                <div class="col-10">
-                  <i class="fas fa-calendar-check text-secondary me-2"></i> Días disponibles
-                  {{ currentYear2 }}
-                </div>
-                <div class="col-2 fw-bold text-end">
-                  {{ diasDisponibles }}
-                </div>
+                    <div class="col-10">
+                      <i class="fas fa-calendar-check text-secondary me-2"></i> Días disponibles
+                      {{ currentYear2 }}
+                    </div>
+                    <div class="col-2 fw-bold text-end">
+                      {{ diasDisponibles }}
+                    </div>
 
-                <div class="col-10">
-                  <i class="fas fa-calendar-check text-secondary me-2"></i> Días disponibles
-                  {{ parseInt(currentYear2) - 1 }}
-                </div>
-                <div class="col-2 fw-bold text-end">
-                  {{ diasDisponiblesAñoAnterior }}
-                </div>
+                    <div class="col-10">
+                      <i class="fas fa-calendar-check text-secondary me-2"></i> Días disponibles
+                      {{ parseInt(currentYear2) - 1 }}
+                    </div>
+                    <div class="col-2 fw-bold text-end">
+                      {{ diasDisponiblesAñoAnterior }}
+                    </div>
 
-                <div class="col-10 text-muted pt-3 border-top">Año {{ currentYear2 }}</div>
-                <div class="col-2 fw-bold pt-3 border-top text-end">
-                  {{ vacacionesDisp }}
-                </div>
+                    <div class="col-10 text-muted pt-3 border-top">Año {{ currentYear2 }}</div>
+                    <div class="col-2 fw-bold pt-3 border-top text-end">
+                      {{ vacacionesDisp }}
+                    </div>
 
-                <div class="col-10 text-muted">Total días disponibles</div>
-                <div class="col-2 fw-bold text-end">
-                  {{ diasDisponibles + diasDisponiblesAñoAnterior }}
+                    <div class="col-10 text-muted">Total días disponibles</div>
+                    <div class="col-2 fw-bold text-end">
+                      {{ diasDisponibles + diasDisponiblesAñoAnterior }}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
+        <div v-else class="row justify-content-center mt-3">
+          <BsSpinner style="width: 5rem; height: 5rem" />
+        </div>
       </div>
-    </div>
 
-    <div v-else class="row justify-content-center mt-3">
-      <BsSpinner style="width: 5rem; height: 5rem" />
-    </div>
-  </div>
+      <!-- Selección de fechas -->
+      <div v-if="!stop">
+        <h5 class="mt-4 fw-bold textColor">Selecciona las fechas</h5>
 
-  <!-- Selección de fechas -->
-  <div v-if="!stop">
-    <h5 class="mt-4 fw-bold textColor">Selecciona las fechas</h5>
+        <div class="d-flex gap-2 mb-3">
+          <button
+            class="btn"
+            :class="VacacionesAÑo ? 'btn-outline-primary active' : 'btn-outline-secondary'"
+            @click="chucha(currentYear2)"
+          >
+            {{ currentYear2 }}
+          </button>
+          <button
+            class="btn"
+            :class="!VacacionesAÑo ? 'btn-outline-primary active' : 'btn-outline-secondary'"
+            @click="chucha(parseInt(currentYear2) - 1)"
+          >
+            {{ currentYear2 - 1 }}
+          </button>
+        </div>
 
-    <div class="d-flex gap-2 mb-3">
-      <button
-        class="btn"
-        :class="VacacionesAÑo ? 'btn-outline-primary active' : 'btn-outline-secondary'"
-        @click="chucha(currentYear2)"
+        <div class="row g-3">
+          <div class="col-md-6">
+            <BsDatepicker
+              v-model="fechaInicio"
+              input-toggle
+              label="Inicio"
+              class="w-100"
+              placeholder="Inicio"
+              :months-full="mesesFull"
+              :months-short="mesesShort"
+              :weekdays-full="diasFull"
+              :weekdays-short="diasShort"
+              :weekdays-narrow="inicialesDias"
+              :clear-btn-text="'Reset'"
+              :cancel-btn-text="'Cancelar'"
+              :start-day="1"
+            />
+          </div>
+
+          <div class="col-md-6">
+            <BsDatepicker
+              v-model="fechaFinal"
+              input-toggle
+              label="Fin"
+              class="w-100"
+              placeholder="Fin"
+              :months-full="mesesFull"
+              :months-short="mesesShort"
+              :weekdays-full="diasFull"
+              :weekdays-short="diasShort"
+              :weekdays-narrow="inicialesDias"
+              :clear-btn-text="'Reset'"
+              :cancel-btn-text="'Cancelar'"
+              :start-day="1"
+            />
+          </div>
+        </div>
+
+        <!-- Observaciones -->
+        <div class="mt-4">
+          <textarea
+            v-model="observaciones"
+            class="form-control"
+            rows="3"
+            placeholder="Si lo necesitas, escribe un comentario..."
+          />
+        </div>
+
+        <div class="col-xl-12 col-sm-12 col-12 text-center mt-4 mb-4">
+          <BsButton color="success" @click="mostrarModal()"> Comprobar </BsButton>
+        </div>
+        <!-- Abrir modal con datos de las vacaciones -->
+      </div>
+      <BsModal
+        id="exampleModalCenter"
+        tabindex="-1"
+        labelledby="exampleModalCenterTitle"
+        v-model="modalVacaciones"
+        centered
       >
-        {{ currentYear2 }}
-      </button>
-      <button
-        class="btn"
-        :class="!VacacionesAÑo ? 'btn-outline-primary active' : 'btn-outline-secondary'"
-        @click="chucha(parseInt(currentYear2) - 1)"
-      >
-        {{ currentYear2 - 1 }}
-      </button>
+        <BsModalHeader @close="modalVacaciones = false">
+          <BsModalTitle id="exampleModalCenterTitle">
+            Vacaciones de: {{ nombreTrabajadorSelect }}
+          </BsModalTitle>
+        </BsModalHeader>
+        <BsModalBody>
+          <div>
+            <span> Fecha inicio: {{ fechaInicio }}</span>
+          </div>
+          <div>
+            <span> Fecha final: {{ fechaFinal }}</span>
+          </div>
+          <div>
+            <span>Fecha incorporación: {{ fechaIncorporacion }} </span>
+          </div>
+          <div>
+            <span>Observacion: {{ observaciones }}</span>
+          </div>
+          <div>
+            <span>Total de dias: {{ totalDias }}</span>
+          </div>
+        </BsModalBody>
+        <BsModalFooter>
+          <!-- Enviar solicitut -->
+          <div class="col-xl-12 col-sm-12 col-12 text-center mt-4 mb-4">
+            <BsButton color="success" :class="{ disabled: guardando }" @click="finalizarPeticion()">
+              <span
+                v-if="guardando"
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span
+              >Enviar solicitud</BsButton
+            >
+          </div>
+        </BsModalFooter>
+      </BsModal>
     </div>
-
-    <div class="row g-3">
-      <div class="col-md-6">
-        <BsDatepicker
-          v-model="fechaInicio"
-          input-toggle
-          label="Inicio"
-          class="w-100"
-          placeholder="Inicio"
-          :months-full="mesesFull"
-          :months-short="mesesShort"
-          :weekdays-full="diasFull"
-          :weekdays-short="diasShort"
-          :weekdays-narrow="inicialesDias"
-          :clear-btn-text="'Reset'"
-          :cancel-btn-text="'Cancelar'"
-          :start-day="1"
-        />
-      </div>
-
-      <div class="col-md-6">
-        <BsDatepicker
-          v-model="fechaFinal"
-          input-toggle
-          label="Fin"
-          class="w-100"
-          placeholder="Fin"
-          :months-full="mesesFull"
-          :months-short="mesesShort"
-          :weekdays-full="diasFull"
-          :weekdays-short="diasShort"
-          :weekdays-narrow="inicialesDias"
-          :clear-btn-text="'Reset'"
-          :cancel-btn-text="'Cancelar'"
-          :start-day="1"
-        />
-      </div>
-    </div>
-
-    <!-- Observaciones -->
-    <div class="mt-4">
-      <textarea
-        v-model="observaciones"
-        class="form-control"
-        rows="3"
-        placeholder="Si lo necesitas, escribe un comentario..."
-      />
-    </div>
-
-    <div class="col-xl-12 col-sm-12 col-12 text-center mt-4 mb-4">
-      <BsButton color="success" @click="mostrarModal()"> Comprobar </BsButton>
-    </div>
-    <!-- Abrir modal con datos de las vacaciones -->
   </div>
-  <BsModal
-    id="exampleModalCenter"
-    tabindex="-1"
-    labelledby="exampleModalCenterTitle"
-    v-model="modalVacaciones"
-    centered
-  >
-    <BsModalHeader @close="modalVacaciones = false">
-      <BsModalTitle id="exampleModalCenterTitle">
-        Vacaciones de: {{ nombreTrabajadorSelect }}
-      </BsModalTitle>
-    </BsModalHeader>
-    <BsModalBody>
-      <div>
-        <span> Fecha inicio: {{ fechaInicio }}</span>
-      </div>
-      <div>
-        <span> Fecha final: {{ fechaFinal }}</span>
-      </div>
-      <div>
-        <span>Fecha incorporación: {{ fechaIncorporacion }} </span>
-      </div>
-      <div>
-        <span>Observacion: {{ observaciones }}</span>
-      </div>
-      <div>
-        <span>Total de dias: {{ totalDias }}</span>
-      </div>
-    </BsModalBody>
-    <BsModalFooter>
-      <!-- Enviar solicitut -->
-      <div class="col-xl-12 col-sm-12 col-12 text-center mt-4 mb-4">
-        <BsButton color="success" :class="{ disabled: guardando }" @click="finalizarPeticion()">
-          <span
-            v-if="guardando"
-            class="spinner-border spinner-border-sm"
-            role="status"
-            aria-hidden="true"
-          ></span
-          >Enviar solicitud</BsButton
-        >
-      </div>
-    </BsModalFooter>
-  </BsModal>
-  </div>
-</div>
 </template>
 
 <script setup lang="ts">
@@ -292,6 +292,8 @@ async function finalizarPeticion() {
 
   const uidGuardado = localStorage.getItem("uidCoordinadora");
   const uidParaConsultar = uidGuardado || currentUser.uid;
+  const uidGuardado2 = localStorage.getItem("uidCoordinadora2");
+  const uidParaConsultar2 = uidGuardado2;
   const idsqlGuardado = localStorage.getItem("idSqlCoordinadora");
   const idSqlParaConsultar = Number(idsqlGuardado || currentUser.idSql);
 
@@ -339,6 +341,7 @@ async function finalizarPeticion() {
       enviado: false,
       year: parseInt(year.value),
       idAppResponsable: uidParaConsultar,
+      idAppResponsableB: uidParaConsultar2,
     });
 
     if (resVacaciones.data.ok) {

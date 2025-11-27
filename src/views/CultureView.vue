@@ -1,11 +1,13 @@
 <template>
   <router-link to="/crear-video" class="text-decoration-none" v-if="hasPermission('CrearCultura')">
-    <button class="btn colorIconGreen rounded-8 ms-4"><i class="fas fa-plus" /> Nuevo</button>
+    <button class="btn colorIconGreen rounded-8 mt-4 mb-2">
+      <i class="fas fa-plus"></i> Nuevo
+    </button>
   </router-link>
   <div class="card mt-2">
     <div class="card-body cardDocs">
       <div class="row">
-        <template v-if="!hayVideo && !loading">
+        <template v-if="!videoExists && !loading">
           <div class="col-xl-12 col-xs-12 col-12 col-lg-6 text-center">
             <figure class="figure">
               <img
@@ -18,31 +20,30 @@
             </figure>
           </div>
         </template>
-         <div v-if="loading" class="wrap mt-4 text-center">
-            <BsSpinner class="spinner" :style="{ width: '3rem', height: '3rem' }" role="status" />
-            <p class="loading-text">Cargando...</p>
-          </div>
+        <div v-else-if="loading" class="spinner-border" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
         <template v-else>
           <h5>En este apartado conocerás como es el grupo 365 Obrador</h5>
           <hr />
           <div class="row">
             <template v-for="(video, index) in videos" :key="index">
               <div class="col-12 col-md-6 col-lg-4">
-                <div class="mb-4 card video-card shadow-sm" @click="abrirModal(video)">
+                <div class="mb-4 card video-card shadow-sm" @click="openModal(video)">
                   <div class="card-body d-flex flex-column align-items-center">
                     <div class="video-icon mb-3">
                       <i class="fas fa-play-circle"></i>
                     </div>
-                    <h5 class="card-title text-center mb-2">{{ video.titulo }}</h5>
+                    <h5 class="card-title text-center mb-2">{{ video.title }}</h5>
                     <p class="card-text text-center text-muted mb-3" style="min-height: 48px">
-                      {{ video.descripcion }}
+                      {{ video.description }}
                     </p>
                     <div class="d-flex justify-content-center gap-2 w-100">
                       <button
                         type="button"
                         class="btn btn-outline-primary btn-sm"
                         v-if="hasPermission('EditarCultura')"
-                        @click.stop="abrirModalEdita(video)"
+                        @click.stop="openModalEdita(video)"
                       >
                         <i class="fas fa-edit"></i>
                       </button>
@@ -60,7 +61,7 @@
 
                 <!-- Modal para editar el video -->
                 <div
-                  v-if="modalEditar"
+                  v-if="modalEdit"
                   class="modal d-block"
                   tabindex="-1"
                   style="background: rgba(0, 0, 0, 0.5)"
@@ -69,11 +70,7 @@
                     <div class="modal-content">
                       <div class="modal-header">
                         <h5 class="modal-title">Editar video</h5>
-                        <button
-                          type="button"
-                          class="btn-close"
-                          @click="modalEditar = false"
-                        ></button>
+                        <button type="button" class="btn-close" @click="modalEdit = false"></button>
                       </div>
                       <div class="modal-body">
                         <div class="input-group mb-3">
@@ -82,7 +79,7 @@
                             type="text"
                             class="form-control"
                             placeholder="Título"
-                            v-model="videoEditar.titulo"
+                            v-model="videoEdit.title"
                           />
                         </div>
                         <div class="input-group mb-3">
@@ -91,7 +88,7 @@
                             type="text"
                             class="form-control"
                             placeholder="Descripción"
-                            v-model="videoEditar.descripcion"
+                            v-model="videoEdit.description"
                           />
                         </div>
                         <div class="input-group mb-3">
@@ -100,15 +97,15 @@
                             type="text"
                             class="form-control"
                             placeholder="URL del Video"
-                            v-model="videoEditar.urlVideo"
+                            v-model="videoEdit.urlVideo"
                           />
                         </div>
                       </div>
                       <div class="modal-footer">
-                        <button class="btn btn-secondary" @click="modalEditar = false">
+                        <button class="btn btn-secondary" @click="modalEdit = false">
                           Descartar
                         </button>
-                        <button class="btn btn-primary" @click="editarVideo(videoEditar)">
+                        <button class="btn btn-primary" @click="editarVideo(videoEdit)">
                           Modificar
                         </button>
                       </div>
@@ -125,7 +122,7 @@
 
   <!-- Modal para mostrar el video (mejorado) -->
   <div
-    v-if="esModalAbierto"
+    v-if="isModalOpen"
     class="modal d-block"
     tabindex="-1"
     style="background: rgba(0, 0, 0, 0.5)"
@@ -133,11 +130,11 @@
     <div class="modal-dialog modal-fullscreen modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">{{ videoSeleccionado?.titulo }}</h5>
-          <button type="button" class="btn-close" @click="cerrarModal"></button>
+          <h5 class="modal-title">{{ videoSelected?.title }}</h5>
+          <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
         <div class="modal-body text-center">
-          <div v-if="!videoReproducido">
+          <div v-if="!videoReproduced">
             <button type="button" class="btn btn-primary" @click="reproducirVideo">
               Reproducir Video
             </button>
@@ -146,7 +143,7 @@
             <iframe
               width="100%"
               height="400"
-              :src="videoSeleccionado?.urlVideo"
+              :src="videoSelected?.urlVideo"
               frameborder="0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowfullscreen
@@ -154,8 +151,8 @@
           </div>
         </div>
         <div class="modal-footer">
-          <span><i class="fas fa-eye"></i> : {{ videoSeleccionado?.views }}</span>
-          <button type="button" class="btn btn-secondary" @click="cerrarModal">Cerrar</button>
+          <span> <i class="fas fa-eye"></i> : {{ videoSelected?.views }}</span>
+          <button type="button" class="btn btn-secondary" @click="closeModal">Cerrar</button>
         </div>
       </div>
     </div>
@@ -167,36 +164,37 @@ import { onMounted, ref } from "vue";
 import Swal from "sweetalert2";
 import { axiosInstance } from "@/components/axios/axios";
 import { hasPermission } from "@/components/rolesPermisos";
-import BsSpinner from "@/components/365/BsSpinner.vue";
+// import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+// import { faPlus, faPlayCircle, faEdit, faTrash, faEye } from "@fortawesome/free-solid-svg-icons";
 
-const hayVideo = ref(false);
+const videoExists = ref(false);
 const videos: any = ref([]);
 const loading = ref(false);
-const videoSeleccionado: any = ref(null);
-const esModalAbierto = ref(false);
-const contadorVisitas = ref(0);
-const videoReproducido = ref(false);
-const modalEditar = ref(false);
-const videoEditar: any = ref(null);
+const videoSelected: any = ref(null);
+const isModalOpen = ref(false);
+const countVisits = ref(0);
+const videoReproduced = ref(false);
+const modalEdit = ref(false);
+const videoEdit: any = ref(null);
 
-function abrirModal(video: any) {
-  videoSeleccionado.value = video;
-  esModalAbierto.value = true;
+function openModal(video: any) {
+  videoSelected.value = video;
+  isModalOpen.value = true;
 }
 
-function abrirModalEdita(video: any) {
-  videoEditar.value = video;
-  modalEditar.value = true;
+function openModalEdita(video: any) {
+  videoEdit.value = video;
+  modalEdit.value = true;
 }
 
 function editarVideo(video: any) {
   axiosInstance
-    .post("cultura365/updateVideo", video)
+    .post("culture365/updateVideo", video)
     .then((response) => {
       const data = response.data;
       if (data.ok) {
-        modalEditar.value = false;
-        mostrarVideo();
+        modalEdit.value = false;
+        showVideo();
         Swal.fire({
           icon: "success",
           title: "Perfecto",
@@ -227,10 +225,10 @@ function eliminarVideo(video: any) {
   }).then(async (result) => {
     if (result.isConfirmed) {
       axiosInstance
-        .post("cultura365/deleteVideo", video)
+        .post("culture365/deleteVideo", video)
         .then((response) => {
           if (response.data.ok) {
-            mostrarVideo();
+            showVideo();
             Swal.fire({
               icon: "success",
               title: "Perfecto",
@@ -252,15 +250,15 @@ function eliminarVideo(video: any) {
 }
 
 async function reproducirVideo() {
-  videoReproducido.value = true;
+  videoReproduced.value = true;
   // Incrementar el contador en el servidor
   try {
     const response = await axiosInstance.post(
-      `cultura365/contadorViews?videoId=${videoSeleccionado.value._id}`,
+      `culture365/countViews?videoId=${videoSelected.value._id}`,
     );
 
     if (response.data.mensaje === "Contador incrementado con éxito") {
-      contadorVisitas.value = response.data.respvideo;
+      countVisits.value = response.data.respvideo;
     }
   } catch (error) {
     console.error("Hubo un error al incrementar el contador de visitas:", error);
@@ -268,62 +266,54 @@ async function reproducirVideo() {
 }
 
 // Función para cargar el contador de visitas desde el servidor al montar el componente
-async function cargarContadorVisitas() {
+async function loadCountViews() {
   try {
-    const response = await axiosInstance.get("cultura365/views");
-    contadorVisitas.value = response.data.respvideo;
+    const response = await axiosInstance.get("culture365/views");
+    countVisits.value = response.data.respvideo;
   } catch (error) {
     console.error("Hubo un error al cargar el contador de visitas:", error);
   }
 }
 
-async function mostrarVideo() {
+async function showVideo() {
   try {
-    hayVideo.value = true;
+    videoExists.value = true;
     loading.value = true;
     videos.value = [];
-    const resVideo = await axiosInstance.get("cultura365/getVideos");
+    const resVideo = await axiosInstance.get("culture365/getVideos");
     if (resVideo.data.ok) {
       videos.value = resVideo.data.data;
-      hayVideo.value = videos.value?.length > 0;
+      videoExists.value = videos.value?.length > 0;
     } else throw Error("No se han podido cargar los videos");
   } catch (err) {
     console.log(err);
     Swal.fire("Oops...", "Ha habido un error al mostrar el vídeo", "error");
-    hayVideo.value = false;
+    videoExists.value = false;
   } finally {
     loading.value = false;
   }
 }
-function cerrarModal() {
-  esModalAbierto.value = false;
-  videoReproducido.value = false;
-
-  if (videoSeleccionado.value) {
-    videoSeleccionado.value = {
-      ...videoSeleccionado.value,
-      urlVideo: "",
-    };
-  }
+function closeModal() {
+  isModalOpen.value = false;
+  videoReproduced.value = false;
+  videoSelected.value = null;
 }
 
 onMounted(() => {
-  mostrarVideo();
-  cargarContadorVisitas();
+  showVideo();
+  loadCountViews();
 });
 </script>
 
 <style scoped>
-.spinner {
-  color: #e66c5a; /* azul Bootstrap por defecto */
-  margin-bottom: 1rem;
+.spinner-border[role="status"] {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 2rem auto;
+  width: 3rem;
+  height: 3rem;
 }
-
-.loading-text {
-  font-size: 1.2rem;
-  color: #555;
-}
-
 
 .modal.d-block {
   display: block;
@@ -410,40 +400,8 @@ onMounted(() => {
   justify-content: space-between;
 }
 
-.btn-close {
-  background: transparent;
-  border: none;
-  font-size: 2rem;
-  width: 2.2rem;
-  height: 2.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff !important;
-  opacity: 1;
-  margin-left: 1rem;
-  position: relative;
-  transition:
-    background 0.2s,
-    color 0.2s;
-}
-
-.btn-close::before {
-  content: "✕";
-  font-size: 1.5rem;
-  color: #fff;
-  line-height: 1;
-  font-weight: bold;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.btn-close:hover,
-.btn-close:focus {
-  background: rgba(230, 108, 90, 0.15);
-  color: #fff;
-  outline: none;
+.colorIconGreen {
+  background-color: #63ceb0;
+  color: white;
 }
 </style>

@@ -11,7 +11,7 @@
   <!-- Diseño Home para escritorio y tabletas -->
   <div class="d-none d-sm-none d-md-block mb-8">
     <div class="row row-cols-2 justify-content-center mt-4">
-      <ItemMenuDesktop color="#EF5350" titulo="Cultura" icono="fas fa-atlas" link="/videoCultura" />
+      <ItemMenuDesktop color="#EF5350" titulo="Cultura" icono="fas fa-atlas" link="/videoCulture" />
 
       <ItemMenuDesktop
         color="#3381bd"
@@ -134,7 +134,7 @@
   <!-- Diseño Home para movil -->
   <div class="d-block d-sm-block d-md-none mb-8">
     <div class="row row-cols-3 justify-content-center mt-4">
-      <ItemMenuMobile color="#EF5350" titulo="Cultura" icono="fas fa-atlas" link="/videoCultura" />
+      <ItemMenuMobile color="#EF5350" titulo="Cultura" icono="fas fa-atlas" link="/videoCulture" />
       <ItemMenuMobile color="#3381bd" titulo="Cuadrantes" icono="fas fa-clock" link="/cuadrantes" />
 
       <ItemMenuMobile
@@ -290,20 +290,20 @@
         <div
           class="modal-body d-flex flex-column justify-content-center align-items-center text-center"
         >
-          <div class="alert alert-warning" role="alert">
+          <!-- <div class="alert alert-warning" role="alert">
             <h4 class="alert-heading mb-2">⚠️ Funcionalidad deshabilitada temporalmente</h4>
             <p class="mb-0">
               Por favor, realice los pedidos directamente a través del <strong>TPV</strong>.
             </p>
-          </div>
+          </div> -->
 
-          <!-- <iframe
+          <iframe
             :src="reposicionUrl"
             width="100%"
             height="100%"
             frameborder="0"
             allowfullscreen
-          ></iframe> -->
+          ></iframe>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Cerrar</button>
@@ -397,7 +397,7 @@ const mensaje = ref(null);
 const currentUser = computed(() => userStore.user);
 const reposicionModal = ref(false);
 const reposicionModalRef = ref(null);
-// const reposicionUrl = ref("");
+const reposicionUrl = ref("");
 const tiendas = ref<{ value: number; text: string; idExterno: string } | null>(null);
 const codigoEmpleado = ref("");
 const accionPendiente = ref("");
@@ -649,16 +649,16 @@ async function validarCodigoEmpleado() {
 }
 
 async function repocision() {
-  // if (tiendas.value) {
-  //   reposicionUrl.value = `https://hitsystems.cloud/TpvWebReposicion.asp?modo=MENU&codiBotiga=${tiendas.value.idExterno}`;
-  reposicionModal.value = true;
-  //   await nextTick();
-  if (!reposicionModalInstance.value && reposicionModalRef.value) {
-    reposicionModalInstance.value = new Modal(reposicionModalRef.value);
+  if (tiendas.value) {
+    reposicionUrl.value = `https://hitsystems.cloud/TpvWebReposicion.asp?modo=MENU&codiBotiga=${tiendas.value.idExterno}`;
+    reposicionModal.value = true;
+    await nextTick();
+    if (!reposicionModalInstance.value && reposicionModalRef.value) {
+      reposicionModalInstance.value = new Modal(reposicionModalRef.value);
+    }
+    reposicionModalInstance.value?.show();
+    //   console.log(tiendas.value.idExterno);
   }
-  reposicionModalInstance.value?.show();
-  //   console.log(tiendas.value.idExterno);
-  // }
 }
 
 //Obtener el idExterno de las tiendas

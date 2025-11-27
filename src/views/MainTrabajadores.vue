@@ -552,10 +552,9 @@ async function getNotasInformativasCount() {
       },
     });
 
-    if (res.data?.ok) {
+    if (res.data?.ok && Array.isArray(res.data.data)) {
       const notas = res.data.data as Array<{ seen: boolean }>;
       notasInformativasCount.value = notas.filter((n) => !n.seen).length;
-      // notasInformativasCount.value = res.data.data.length;
     }
   } catch (error) {
     console.log(error);

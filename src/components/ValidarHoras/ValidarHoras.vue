@@ -38,18 +38,6 @@
             PAGOS
           </BsButton>
         </div>
-        <div v-if="hasPermission('ResumenHorasValidadas')" class="text-start col-4 mb-2">
-          <BsButton
-            class="w-100"
-            :class="{
-              colorActive: resumen == true,
-              colorInactive: resumen == false,
-            }"
-            @click="moverMenu('resumen')"
-          >
-            RESUMEN
-          </BsButton>
-        </div>
       </div>
 
       <div class="row">
@@ -196,11 +184,6 @@
         <template v-if="pagos">
           <ValidarPagosComponent ref="validarPagosComponentRef" />
         </template>
-
-        <!-- RESUMEN DE HORAS PACTADAS VS REALES -->
-        <template v-if="resumen">
-          <ResumenHoras ref="resumenHorasRef" @cambiarMenu="moverMenu" />
-        </template>
       </div>
 
       <!-- Modal editar horas -->
@@ -337,7 +320,6 @@ import Swal from "sweetalert2";
 import { DateTime } from "luxon";
 import HorasValidadasComponent from "../ValidarHoras/HorasValidadas.vue";
 import ValidarPagosComponent from "../ValidarHoras/ValidarPagos.vue";
-import ResumenHoras from "../ValidarHoras/ResumenHoras.vue";
 import router from "@/router";
 import { hasPermission } from "@/components/rolesPermisos";
 import { useUserStore } from "@/stores/user";
@@ -356,7 +338,6 @@ const horasValidadasComponentRef: Ref<any> = ref(null);
 const validarPagosComponentRef: Ref<any> = ref(null);
 const loading = ref(true);
 const datos: Ref<any[]> = ref([]);
-const resumenHorasRef: Ref<any> = ref(null);
 const aprendizClicked = ref(false);
 
 function convertDecimalToFormattedHours(decimalTime: number) {
@@ -448,12 +429,6 @@ function moverMenu(opcion: string) {
       pagos.value = true;
       validar.value = false;
       resumen.value = false;
-      break;
-    case "resumen":
-      resumen.value = true;
-      aprobadas.value = false;
-      pagos.value = false;
-      validar.value = false;
       break;
     default:
       break;
@@ -733,8 +708,8 @@ async function getHorasValidar() {
         new Set(
           fichajesUnificados
             .map((element: any) => element.idTrabajador)
-            .filter((id: number) => !idsSubordinados.has(id))
-        )
+            .filter((id: number) => !idsSubordinados.has(id)),
+        ),
       );
 
       // Obtener información de trabajadores externos si hay alguno

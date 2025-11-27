@@ -206,6 +206,14 @@ const router = createRouter({
       },
       component: () => import("../components/InspecciónFichajes/InepectorIndexComponent.vue"),
     },
+    {
+      path: "/fichajesTablet",
+      name: "Registro Horario",
+      meta: {
+        requiresAuth: false,
+      },
+      component: () => import("../components/fichajesTablet/fichajesIndex.vue"),
+    },
   ],
 });
 

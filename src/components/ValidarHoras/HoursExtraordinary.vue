@@ -19,6 +19,20 @@
         </div>
 
         <form v-if="selectedUser" @submit.prevent="saveConfiguration">
+          <div class="mb-4">
+            <label for="extraHoursDate" class="form-label fw-bold d-flex align-items-center">
+              <i class="bi bi-calendar-check me-2"></i> Fecha de las horas
+            </label>
+            <input
+              type="date"
+              id="extraHoursDate"
+              class="form-control"
+              v-model="selectedDate"
+              :max="maxSelectableDate"
+              required
+            />
+          </div>
+
           <!-- Trade Union Hours -->
           <div class="mb-4">
             <label for="tradeUnionHours" class="form-label fw-bold d-flex align-items-center">
@@ -150,6 +164,10 @@ const trainingHours = ref(0);
 const confirmationMessage = ref("");
 const arrayTeam = ref<Array<{ text: string; value: any }>>([]);
 const selectedUser = ref<any>("");
+const todayIso =
+  DateTime.now().toISODate() ?? DateTime.now().setLocale("es").toFormat("yyyy-LL-dd");
+const selectedDate = ref<string>(todayIso);
+const maxSelectableDate = todayIso;
 
 function calcularAntiguedad(fechaInicio: any) {
   const inicio = DateTime.fromISO(fechaInicio);
@@ -185,6 +203,18 @@ const saveConfiguration = async () => {
       return;
     }
 
+    if (!selectedDate.value) {
+      Swal.fire("Fecha requerida", "Selecciona la fecha de las horas a registrar", "warning");
+      return;
+    }
+
+    const selectedDateTime = DateTime.fromISO(selectedDate.value);
+
+    if (!selectedDateTime.isValid) {
+      Swal.fire("Fecha inválida", "Selecciona una fecha válida", "warning");
+      return;
+    }
+
     console.log("Extracted user data:", userData);
 
     const senorityDays =
@@ -192,9 +222,12 @@ const saveConfiguration = async () => {
         ? calcularAntiguedad(userData.contratos[0].fechaAntiguedad)
         : 0;
 
+    const selectedDayStart = selectedDateTime.startOf("day");
+    const selectedDayEnd = selectedDateTime.endOf("day");
+
     const payload = {
-      fichajeEntrada: DateTime.now().toJSDate(),
-      fichajeSalida: DateTime.now().toJSDate(),
+      fichajeEntrada: selectedDayStart.toJSDate(),
+      fichajeSalida: selectedDayEnd.toJSDate(),
       idFichajes: {
         entrada: "",
         salida: "",
@@ -211,8 +244,8 @@ const saveConfiguration = async () => {
         marcaTemporal: DateTime.now().toJSDate(),
       },
       cuadrante: {
-        inicio: DateTime.now().startOf("day").toJSDate(),
-        final: DateTime.now().endOf("day").toJSDate(),
+        inicio: selectedDayStart.toJSDate(),
+        final: selectedDayEnd.toJSDate(),
         idTrabajador: Number(userData.id),
         idTienda: Number(userData.idTienda),
         nombre: userData.nombreApellidos || "",
@@ -247,7 +280,7 @@ const saveConfiguration = async () => {
     const resPost = await axiosInstance.post("/fichajes-validados/addFichajeValidado", payload);
 
     if (resPost.data) {
-      confirmationMessage.value = `✅ Configuración guardada: Sindicales ${tradeUnionHours.value}h, Coordinación ${coordinationHours.value}h, Formación ${trainingHours.value}h.`;
+      confirmationMessage.value = `✅ Configuración guardada para ${selectedDateTime.toFormat("dd/LL/yyyy")}: Sindicales ${tradeUnionHours.value}h, Coordinación ${coordinationHours.value}h, Formación ${trainingHours.value}h.`;
 
       Swal.fire({
         icon: "success",

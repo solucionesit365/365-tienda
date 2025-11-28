@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import { createPinia, setActivePinia } from "pinia";
+import { DateTime } from "luxon";
 import HoursExtraordinary from "../HoursExtraordinary.vue";
 
 // Mock de SweetAlert2
@@ -136,6 +137,7 @@ describe("HoursExtraordinary.vue", () => {
       expect(wrapper.vm.confirmationMessage).toBeDefined();
       expect(wrapper.vm.arrayTeam).toBeDefined();
       expect(wrapper.vm.selectedUser).toBeDefined();
+      expect(wrapper.vm.selectedDate).toBeDefined();
     });
   });
 
@@ -309,6 +311,61 @@ describe("HoursExtraordinary.vue", () => {
       expect(callArgs.idTrabajador).toBe(6085);
       expect(callArgs.idTienda).toBe(113);
       expect(callArgs.idResponsable).toBe(1798);
+    });
+
+    it("debe requerir una fecha seleccionada antes de guardar", async () => {
+      const { default: Swal } = await import("sweetalert2");
+      const { axiosInstance } = await import("@/components/axios/axios");
+
+      wrapper.vm.selectedUser = {
+        text: "Test User",
+        value: {
+          id: 1,
+          idTienda: 1,
+          idResponsable: 1,
+          nombreApellidos: "Test User",
+          dni: "123",
+          nPerceptor: 1,
+          contratos: [],
+        },
+      };
+      wrapper.vm.selectedDate = "";
+
+      await wrapper.vm.saveConfiguration();
+
+      expect(Swal.fire).toHaveBeenCalled();
+      expect(axiosInstance.post).not.toHaveBeenCalled();
+    });
+
+    it("debe usar la fecha seleccionada en el payload", async () => {
+      const targetDate = "2025-02-10";
+      wrapper.vm.selectedUser = {
+        text: "Test User",
+        value: {
+          id: 6085,
+          idTienda: 113,
+          idResponsable: 1798,
+          nombreApellidos: "Test User",
+          dni: "12345678A",
+          nPerceptor: 2140,
+          contratos: [],
+        },
+      };
+      wrapper.vm.selectedDate = targetDate;
+
+      const { axiosInstance } = await import("@/components/axios/axios");
+      await wrapper.vm.saveConfiguration();
+
+      const payload = (axiosInstance.post as any).mock.calls[0][1];
+      const entradaISO = DateTime.fromJSDate(payload.fichajeEntrada).toISODate();
+      const salidaISO = DateTime.fromJSDate(payload.fichajeSalida).toISODate();
+      const cuadranteInicioISO = DateTime.fromJSDate(payload.cuadrante.inicio).toISODate();
+      const cuadranteFinalISO = DateTime.fromJSDate(payload.cuadrante.final).toISODate();
+
+      expect(entradaISO).toBe(targetDate);
+      expect(salidaISO).toBe(targetDate);
+      expect(cuadranteInicioISO).toBe(targetDate);
+      expect(cuadranteFinalISO).toBe(targetDate);
     });
   });
 
